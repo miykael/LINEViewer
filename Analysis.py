@@ -1,3 +1,4 @@
+import wx
 import numpy as np
 from scipy.signal import butter, filtfilt
 from scipy.interpolate import NearestNDInterpolator
@@ -229,7 +230,13 @@ def interpolateChannels(self, Data, xyz):
                         for c in Data.Specs.channels2Interpolate],
                        reverse=True)
 
-    for epoch in Data.Orig.epochs:
+    # Create Progressbar for interpolation
+    progressMax = Data.Orig.epochs.shape[0]
+    dlg = wx.ProgressDialog(
+        "Interpolation Progress", "Time remaining", progressMax,
+        style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
+
+    for count, epoch in enumerate(Data.Orig.epochs):
 
         newSignal = []
         for i in range(epoch.shape[1]):
@@ -241,3 +248,7 @@ def interpolateChannels(self, Data, xyz):
 
         for i, channelID in enumerate(id2interp):
             epoch[channelID] = np.array(newSignal)[:, i]
+
+        dlg.Update(count)
+
+    dlg.Destroy()
