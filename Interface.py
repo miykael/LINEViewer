@@ -1,14 +1,14 @@
 ﻿import wx
-import Analysis
 import PanelData
 import PanelSpecs
 import PanelVisualize
+from Analysis import Results
 
 
 class MainFrame(wx.Frame):
 
     """
-    Initiation of MainFrame with PanelData, PanelOption and ButtonStart
+    Initiation of MainFrame with PanelData, PanelOption and PanelSpecs
     """
 
     def __init__(self):
@@ -17,43 +17,51 @@ class MainFrame(wx.Frame):
         # self.Maximize(True)
 
         # Default variables
-        self.fileDirectory = ''
-        self.Files = []
-        self.Datasets = []
-        self.Results = Analysis.Results(self)
+        self.Data = type('Data', (object,), {})()
+        self.Data.DirPath = ''
+        self.Data.Filenames = []
+        self.Data.Datasets = []
+        self.Data.Results = Results()
 
         # Panel: MainFrame
-        self.panel = wx.Panel(self, wx.ID_ANY)
+        MainPanel = wx.Panel(self, wx.ID_ANY)
 
         # Specify BoxSizer
         sizerMainH = wx.BoxSizer(wx.HORIZONTAL)
 
         # Panel: Data
-        self.PanelData = PanelData.Selecter(self.panel, self)
-        sizerMainH.Add(self.PanelData, 0, wx.EXPAND)
+        PanelDataInput = PanelData.Selecter(MainPanel, self.Data)
+        sizerMainH.Add(PanelDataInput, 0, wx.EXPAND)
 
         # Panel: Visualization
-        self.PanelOption = wx.Notebook(self.panel, wx.ID_ANY,
+        self.PanelOption = wx.Notebook(MainPanel, wx.ID_ANY,
                                        style=wx.NB_TOP, size=(1000, 1000))
-        self.GFPDetailed = PanelVisualize.GFPDetailed(self.PanelOption, self)
-        self.GFPSummary = PanelVisualize.GFPSummary(self.PanelOption, self)
-        self.PanelOption.AddPage(self.GFPSummary, 'GFP - Summary')
-        self.PanelOption.AddPage(self.GFPDetailed, 'GFP - Detailed')
-        self.GFPSummary.SetFocus()
+        self.Data.GFPDetailed = PanelVisualize.GFPDetailed(
+            self.PanelOption, self.Data)
+        self.Data.EpochMarkerDetail = PanelVisualize.EpochMarkerDetail(
+            self.PanelOption, self.Data)
+        self.Data.GFPSummary = PanelVisualize.GFPSummary(
+            self.PanelOption, self.Data)
+
+        self.PanelOption.AddPage(self.Data.GFPSummary, 'GFP - Summary')
+        self.PanelOption.AddPage(self.Data.GFPDetailed, 'GFP - Detailed')
+        self.PanelOption.AddPage(
+            self.Data.EpochMarkerDetail, 'Epoch - Marker Detail')
+        self.Data.GFPSummary.SetFocus()
         sizerMainH.Add(self.PanelOption, wx.ID_ANY, wx.EXPAND)
 
         # Panel: Specs
-        self.PanelSpecs = PanelSpecs.Specification(self.panel, self)
-        sizerMainH.Add(self.PanelSpecs, 0, wx.EXPAND)
+        PanelSpecsInput = PanelSpecs.Specification(MainPanel, self.Data)
+        sizerMainH.Add(PanelSpecsInput, 0, wx.EXPAND)
 
         # Setup MainFrame
-        self.panel.SetSizer(sizerMainH)
+        MainPanel.SetSizer(sizerMainH)
         self.Show(True)
 
         # Specification of events
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
-        self.PanelData.SetFocus()
+        PanelDataInput.SetFocus()
 
         # MenuBar
         menuBar = wx.MenuBar()

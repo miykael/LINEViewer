@@ -23,7 +23,7 @@ class LINEViewerSplashScreen(wx.SplashScreen):
     def __init__(self, parent=None):
         aBitmap = wx.Image(name="LINEViewer_logo.png").ConvertToBitmap()
         splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
-        splashDuration = 2000
+        splashDuration = 1000
         wx.SplashScreen.__init__(self, aBitmap, splashStyle,
                                  splashDuration, parent)
         self.Bind(wx.EVT_CLOSE, self.OnExit)

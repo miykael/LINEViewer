@@ -5,54 +5,54 @@ from scipy.interpolate import NearestNDInterpolator
 
 class Results():
 
-    def __init__(self, MainFrame):
+    def __init__(self):
+        """EMPTY INITIATION"""
 
-        # Specify relevant variables
-        self.MainFrame = MainFrame
-
-    def updateAll(self):
+    def updateAll(self, Data):
 
         # Get Specifications
-        PanelSpecs = self.MainFrame.PanelSpecs
-        self.newReference = PanelSpecs.DropDownNewRef.GetValue()
-        self.average = PanelSpecs.CheckboxAverage.GetValue()
-        self.removeDC = PanelSpecs.CheckboxDC.GetValue()
+        self.newReference = Data.Specs.DropDownNewRef.GetValue()
+        self.average = Data.Specs.CheckboxAverage.GetValue()
+        self.removeDC = Data.Specs.CheckboxDC.GetValue()
 
         try:
-            self.highcut = float(PanelSpecs.HighPass.GetValue())
+            self.highcut = float(Data.Specs.HighPass.GetValue())
         except ValueError:
             self.highcut = 0.1
-            PanelSpecs.HighPass.SetValue(str(self.highcut))
+            Data.Specs.HighPass.SetValue(str(self.highcut))
         try:
-            self.lowcut = float(PanelSpecs.LowPass.GetValue())
+            self.lowcut = float(Data.Specs.LowPass.GetValue())
         except ValueError:
             self.lowcut = 80.0
-            PanelSpecs.LowPass.SetValue(str(self.lowcut))
+            Data.Specs.LowPass.SetValue(str(self.lowcut))
         try:
-            self.preEpoch = float(PanelSpecs.PreEpoch.GetValue())
+            self.preEpoch = float(Data.Specs.PreEpoch.GetValue())
         except ValueError:
             self.preEpoch = 100.0
-            PanelSpecs.PreEpoch.SetValue(str(self.preEpoch))
+            Data.Specs.PreEpoch.SetValue(str(self.preEpoch))
         try:
-            self.postEpoch = float(PanelSpecs.PostEpoch.GetValue())
+            self.postEpoch = float(Data.Specs.PostEpoch.GetValue())
         except ValueError:
             self.postEpoch = 500.0
-            PanelSpecs.PostEpoch.SetValue(str(self.postEpoch))
+            Data.Specs.PostEpoch.SetValue(str(self.postEpoch))
         try:
-            self.notchValue = float(PanelSpecs.Notch.GetValue())
+            self.notchValue = float(Data.Specs.Notch.GetValue())
         except ValueError:
             self.notchValue = 50.0
-            PanelSpecs.Notch.SetValue(str(self.notch))
+            Data.Specs.Notch.SetValue(str(self.notch))
 
-        self.doNotch = PanelSpecs.CheckboxNotch.GetValue()
-        self.sampleRate = self.MainFrame.Datasets[0].sampleRate
+        self.doPass = Data.Specs.CheckboxPass.GetValue()
+        self.doNotch = Data.Specs.CheckboxNotch.GetValue()
+        self.sampleRate = Data.Datasets[0].sampleRate
         self.preFrame = int(np.round(self.preEpoch * self.sampleRate * 0.001))
         self.postFrame = int(
             np.round(self.postEpoch * self.sampleRate * 0.001))
-        self.channels2Interpolate = PanelSpecs.channels2Interpolate
+
+        # Data object to save original epoch information
+        Data.Orig = type('Orig', (object,), {})()
 
         # Filter Channel Signal
-        for i, d in enumerate(self.MainFrame.Datasets):
+        for i, d in enumerate(Data.Datasets):
             dataset = np.copy(d.rawdata)
 
             # Average or specific reference
@@ -64,9 +64,12 @@ class Results():
 
             # Remove DC
             if self.removeDC:
-                dataset = butter_bandpass_filter(dataset,
-                                                 d.sampleRate,
-                                                 DC=True)
+                # TODO: Check which approach is correct
+                # dataset = butter_bandpass_filter(dataset,
+                #                                  d.sampleRate,
+                #                                  DC=True)
+                dataset = np.array([channel - channel.mean()
+                                    for channel in dataset])
 
             # Notch Filter
             if self.doNotch:
@@ -75,56 +78,58 @@ class Results():
                                                  notch=self.notchValue)
 
             # Run Butterworth Low-, High- or Bandpassfilter
-            if self.lowcut != 0 and self.highcut != 0:
-                dataset = butter_bandpass_filter(dataset,
-                                                 d.sampleRate,
-                                                 highcut=self.highcut,
-                                                 lowcut=self.lowcut)
+            if self.doPass:
+                if self.lowcut != 0 and self.highcut != 0:
+                    dataset = butter_bandpass_filter(dataset,
+                                                     d.sampleRate,
+                                                     highcut=self.highcut,
+                                                     lowcut=self.lowcut)
 
             # Create epochs
             epochs = np.array([dataset[:, m - self.preFrame:m + self.postFrame]
                                for m in d.markerTime])
 
-            # accumulate datasets
+            # Accumulate epoch information
             if i == 0:
-                self.epochs = epochs
-                self.markers = d.markerValue
-                self.labelsChannel = d.labelsChannel
+                Data.Orig.epochs = epochs
+                Data.Orig.markers = d.markerValue
+                Data.Orig.labelsChannel = d.labelsChannel
             else:
-                self.epochs = np.vstack((self.epochs, epochs))
-                self.markers = np.hstack((self.markers, d.markerValue))
+                Data.Orig.epochs = np.vstack((Data.Orig.epochs, epochs))
+                Data.Orig.markers = np.hstack((Data.Orig.markers,
+                                               d.markerValue))
 
             del dataset
 
-        # Interpolate channels in epochs
-        if self.channels2Interpolate != []:
-            interpolateChannels(self, '../biosemi_128.xyz')
+        self.interpolationCheck(Data)
 
-        # Update epochs
-        self.updateEpochs()
+    def interpolationCheck(self, Data):
 
-    def updateEpochs(self):
+        if Data.Specs.channels2Interpolate != []:
+            interpolateChannels(self, Data, Data.Specs.xyzFile)
 
-        PanelSpecs = self.MainFrame.PanelSpecs
+        self.updateEpochs(Data)
+
+    def updateEpochs(self, Data):
 
         # Get Specifications
-        self.baselineCorr = PanelSpecs.CheckboxBaseline.GetValue()
+        self.baselineCorr = Data.Specs.CheckboxBaseline.GetValue()
         try:
-            self.threshold = float(PanelSpecs.ThreshValue.GetValue())
+            self.threshold = float(Data.Specs.ThreshValue.GetValue())
         except ValueError:
             self.threshold = 80.0
-            PanelSpecs.ThreshValue.SetValue(str(self.threshold))
+            Data.Specs.ThreshValue.SetValue(str(self.threshold))
         try:
-            self.window = float(PanelSpecs.ThreshWindow.GetValue())
+            self.window = float(Data.Specs.ThreshWindow.GetValue())
         except ValueError:
             self.window = 100.0
-            PanelSpecs.ThreshWindow.SetValue(str(self.window))
-        self.thresholdEpochs = PanelSpecs.CheckboxThreshold.GetValue()
-        self.excludeChannel = PanelSpecs.channels2exclude
+            Data.Specs.ThreshWindow.SetValue(str(self.window))
+        self.thresholdEpochs = Data.Specs.CheckboxThreshold.GetValue()
+        self.excludeChannel = Data.Specs.channels2exclude
 
         # Copy epoch and marker values
-        epochs = np.copy(self.epochs)
-        markers = np.copy(self.markers)
+        epochs = np.copy(Data.Orig.epochs)
+        markers = np.copy(Data.Orig.markers)
 
         # Baseline Correction
         if self.baselineCorr:
@@ -139,10 +144,10 @@ class Results():
             # Exclude Channels
             if self.excludeChannel != []:
                 channelID = [
-                    i for i, e in enumerate(self.labelsChannel)
+                    i for i, e in enumerate(Data.Orig.labelsChannel)
                     if e not in self.excludeChannel]
             else:
-                channelID = range(self.labelsChannel.shape[0])
+                channelID = range(Data.Orig.labelsChannel.shape[0])
 
             # Check threshold in selected channels
             windowSteps = int(self.window * self.sampleRate / 1000.)
@@ -157,19 +162,21 @@ class Results():
             # Check threshold in selected channels
             self.okID = [
                 i for i in range(epochs.shape[0]) if i not in self.badID]
+        else:
+            self.okID = [i for i in range(epochs.shape[0])]
 
-            # Drop bad Epochs
-            epochs = epochs[self.okID]
-            markers = markers[self.okID]
+        # Drop bad Epochs
+        self.epochs = epochs[self.okID]
+        self.markers = markers[self.okID]
 
         # Create average epochs
-        self.uniqueMarkers = np.unique(markers)
-        avgEpochs = [epochs[np.where(markers == u)].mean(axis=0)
-                     for u in self.uniqueMarkers]
-        self.avgGFP = [calculateGFP(a) for a in avgEpochs]
+        self.uniqueMarkers = np.unique(self.markers)
+        self.avgEpochs = [self.epochs[np.where(self.markers == u)].mean(axis=0)
+                          for u in self.uniqueMarkers]
+        self.avgGFP = [calculateGFP(a) for a in self.avgEpochs]
 
-        self.MainFrame.GFPDetailed.update(self)
-        self.MainFrame.GFPSummary.update(self)
+        Data.GFPDetailed.update(self)
+        Data.GFPSummary.update(self)
 
 
 def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,
@@ -202,7 +209,7 @@ def calculateGFP(dataset):
     return dataset.std(axis=0)
 
 
-def interpolateChannels(self, xyz):
+def interpolateChannels(self, Data, xyz):
 
     with open(xyz) as f:
         content = f.readlines()
@@ -219,10 +226,10 @@ def interpolateChannels(self, xyz):
         labels = np.array(labels)
 
     id2interp = sorted([np.where(labels == c)[0][0]
-                        for c in self.channels2Interpolate],
+                        for c in Data.Specs.channels2Interpolate],
                        reverse=True)
 
-    for epoch in self.epochs:
+    for epoch in Data.Orig.epochs:
 
         newSignal = []
         for i in range(epoch.shape[1]):
