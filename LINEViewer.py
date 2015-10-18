@@ -40,4 +40,3 @@ class LINEViewerSplashScreen(wx.SplashScreen):
 if __name__ == "__main__":
     app = StartLINEViewer()
     app.MainLoop()
-

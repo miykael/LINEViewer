@@ -56,27 +56,17 @@ class Results():
         for i, d in enumerate(Data.Datasets):
             dataset = np.copy(d.rawdata)
 
+            # Remove DC
+            if self.removeDC:
+                dataset = np.array([channel - channel.mean()
+                                    for channel in dataset])
+
             # Average or specific reference
             if self.average:
                 dataset -= dataset.mean(axis=0)
             elif self.newReference != '':
                 electrodeID = np.where(d.labelsChannel == self.newReference)[0]
                 dataset -= dataset[electrodeID]
-
-            # Remove DC
-            if self.removeDC:
-                # TODO: Check which approach is correct
-                # dataset = butter_bandpass_filter(dataset,
-                #                                  d.sampleRate,
-                #                                  DC=True)
-                dataset = np.array([channel - channel.mean()
-                                    for channel in dataset])
-
-            # Notch Filter
-            if self.doNotch:
-                dataset = butter_bandpass_filter(dataset,
-                                                 d.sampleRate,
-                                                 notch=self.notchValue)
 
             # Run Butterworth Low-, High- or Bandpassfilter
             if self.doPass:
@@ -85,6 +75,12 @@ class Results():
                                                      d.sampleRate,
                                                      highcut=self.highcut,
                                                      lowcut=self.lowcut)
+
+            # Notch Filter
+            if self.doNotch:
+                dataset = butter_bandpass_filter(dataset,
+                                                 d.sampleRate,
+                                                 notch=self.notchValue)
 
             # Create epochs
             epochs = np.array([dataset[:, m - self.preFrame:m + self.postFrame]
@@ -181,27 +177,23 @@ class Results():
 
 
 def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,
-                           order=2, notch=-1.0, DC=False):
+                           order=2, notch=-1.0):
 
-    # Why these formulas work is complicated
-    N = np.log2(fs)
-    divisorHigh = float(2**(N - 1) + 2**(N - 3))
-    divisorLow = float(2**(N - 2) + 2**(N - 3) + 2**(N - 5))
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    notch = notch / nyq
 
-    if DC:
-        b, a = butter(order, 1. / divisorHigh, btype='high')
-    elif notch > 0:
-        b, a = butter(order, [(notch / divisorHigh) - 1. / divisorHigh,
-                              (notch / divisorLow) + 1. / divisorLow],
+    if notch > 0:
+        b, a = butter(order, [notch - 1. / nyq, notch + 1. / nyq],
                       btype='bandstop')
     else:
         if lowcut == 0:
-            b, a = butter(order, highcut / divisorHigh, btype='high')
+            b, a = butter(order, high, btype='high')
         elif highcut == 0:
-            b, a = butter(order, lowcut / divisorLow, btype='low')
+            b, a = butter(order, low, btype='low')
         else:
-            b, a = butter(order, [highcut / divisorHigh, lowcut / divisorLow],
-                          btype='band')
+            b, a = butter(order, [high, low], btype='band')
     return filtfilt(b, a, data)
 
 
