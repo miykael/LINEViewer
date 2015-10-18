@@ -12,20 +12,26 @@ class Results():
     def updateAll(self, Data):
 
         # Get Specifications
-        self.newReference = Data.Specs.DropDownNewRef.GetValue()
-        self.average = Data.Specs.CheckboxAverage.GetValue()
         self.removeDC = Data.Specs.CheckboxDC.GetValue()
-
-        try:
-            self.highcut = float(Data.Specs.HighPass.GetValue())
-        except ValueError:
-            self.highcut = 0.1
-            Data.Specs.HighPass.SetValue(str(self.highcut))
+        self.average = Data.Specs.CheckboxAverage.GetValue()
+        self.newReference = Data.Specs.DropDownNewRef.GetValue()
+        self.doPass = Data.Specs.CheckboxPass.GetValue()
         try:
             self.lowcut = float(Data.Specs.LowPass.GetValue())
         except ValueError:
             self.lowcut = 80.0
             Data.Specs.LowPass.SetValue(str(self.lowcut))
+        try:
+            self.highcut = float(Data.Specs.HighPass.GetValue())
+        except ValueError:
+            self.highcut = 0.1
+            Data.Specs.HighPass.SetValue(str(self.highcut))
+        self.doNotch = Data.Specs.CheckboxNotch.GetValue()
+        try:
+            self.notchValue = float(Data.Specs.Notch.GetValue())
+        except ValueError:
+            self.notchValue = 50.0
+            Data.Specs.Notch.SetValue(str(self.notch))
         try:
             self.preEpoch = float(Data.Specs.PreEpoch.GetValue())
         except ValueError:
@@ -36,14 +42,6 @@ class Results():
         except ValueError:
             self.postEpoch = 500.0
             Data.Specs.PostEpoch.SetValue(str(self.postEpoch))
-        try:
-            self.notchValue = float(Data.Specs.Notch.GetValue())
-        except ValueError:
-            self.notchValue = 50.0
-            Data.Specs.Notch.SetValue(str(self.notch))
-
-        self.doPass = Data.Specs.CheckboxPass.GetValue()
-        self.doNotch = Data.Specs.CheckboxNotch.GetValue()
         self.sampleRate = Data.Datasets[0].sampleRate
         self.preFrame = int(np.round(self.preEpoch * self.sampleRate * 0.001))
         self.postFrame = int(

@@ -30,6 +30,35 @@ class Specification(wx.Panel):
         TxtSpecData.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerPanelSpecs.Add(TxtSpecData, 0, wx.EXPAND)
 
+        # Use DC Filter
+        self.Data.Specs.CheckboxDC = wx.CheckBox(PanelSpecs, wx.ID_ANY,
+                                                 'Remove DC')
+        self.Data.Specs.CheckboxDC.SetValue(True)
+        sizerPanelSpecs.Add(self.Data.Specs.CheckboxDC, 0, wx.EXPAND)
+
+        # Average Reference
+        self.Data.Specs.CheckboxAverage = wx.CheckBox(PanelSpecs, wx.ID_ANY,
+                                                      'Average Reference')
+        self.Data.Specs.CheckboxAverage.SetValue(True)
+        sizerPanelSpecs.Add(self.Data.Specs.CheckboxAverage, 0, wx.EXPAND)
+
+        # Specific Reference
+        PanelNewRef = wx.Panel(PanelSpecs, wx.ID_ANY)
+        sizerNewRef = wx.BoxSizer(wx.HORIZONTAL)
+        sizerNewRef.AddSpacer(5)
+        TextNewRef = wx.StaticText(PanelNewRef, wx.ID_ANY,
+                                   label="Reference", style=wx.CENTRE)
+        sizerNewRef.Add(TextNewRef, 0, wx.CENTER)
+        sizerNewRef.AddSpacer(5)
+
+        self.Data.Specs.DropDownNewRef = wx.ComboBox(PanelNewRef, wx.ID_ANY,
+                                                     value='', choices=[],
+                                                     style=wx.CB_READONLY,
+                                                     size=(100, 25))
+        sizerNewRef.Add(self.Data.Specs.DropDownNewRef, 0, wx.EXPAND)
+        PanelNewRef.SetSizer(sizerNewRef)
+        sizerPanelSpecs.Add(PanelNewRef, 0, wx.EXPAND)
+
         # High- & Lowpass Filter
         self.Data.Specs.CheckboxPass = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                    'Use Pass Filters')
@@ -86,35 +115,6 @@ class Specification(wx.Panel):
         sizerNotch.Add(self.Data.Specs.Notch, 0, wx.EXPAND)
         PanelNotch.SetSizer(sizerNotch)
         sizerPanelSpecs.Add(PanelNotch, 0, wx.EXPAND)
-
-        # Use DC Filter
-        self.Data.Specs.CheckboxDC = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                 'Remove DC')
-        self.Data.Specs.CheckboxDC.SetValue(True)
-        sizerPanelSpecs.Add(self.Data.Specs.CheckboxDC, 0, wx.EXPAND)
-
-        # Average Reference
-        self.Data.Specs.CheckboxAverage = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                      'Average Reference')
-        self.Data.Specs.CheckboxAverage.SetValue(True)
-        sizerPanelSpecs.Add(self.Data.Specs.CheckboxAverage, 0, wx.EXPAND)
-
-        # Specific Reference
-        PanelNewRef = wx.Panel(PanelSpecs, wx.ID_ANY)
-        sizerNewRef = wx.BoxSizer(wx.HORIZONTAL)
-        sizerNewRef.AddSpacer(5)
-        TextNewRef = wx.StaticText(PanelNewRef, wx.ID_ANY,
-                                   label="Reference", style=wx.CENTRE)
-        sizerNewRef.Add(TextNewRef, 0, wx.CENTER)
-        sizerNewRef.AddSpacer(5)
-
-        self.Data.Specs.DropDownNewRef = wx.ComboBox(PanelNewRef, wx.ID_ANY,
-                                                     value='', choices=[],
-                                                     style=wx.CB_READONLY,
-                                                     size=(100, 25))
-        sizerNewRef.Add(self.Data.Specs.DropDownNewRef, 0, wx.EXPAND)
-        PanelNewRef.SetSizer(sizerNewRef)
-        sizerPanelSpecs.Add(PanelNewRef, 0, wx.EXPAND)
         sizerPanelSpecs.AddSpacer(40)
 
         # Text: Data Interpolation Specifications
