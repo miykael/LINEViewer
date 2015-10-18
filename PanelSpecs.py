@@ -23,24 +23,24 @@ class Specification(wx.Panel):
         PanelSpecs = wx.Panel(self, wx.ID_ANY)
         sizerPanelSpecs = wx.BoxSizer(wx.VERTICAL)
 
-        # Text: Data Filters Specifications
-        TxtSpecData = wx.StaticText(PanelSpecs,
-                                    wx.ID_ANY, style=wx.CENTRE,
-                                    label=" Dataset Filters")
-        TxtSpecData.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
-        sizerPanelSpecs.Add(TxtSpecData, 0, wx.EXPAND)
+        # Box: Data Filters Specifications
+        BoxSpecData = wx.StaticBox(PanelSpecs,
+                                   wx.ID_ANY, style=wx.CENTRE,
+                                   label="Dataset Filters")
+        BoxSpecData.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+        sizerBoxData = wx.StaticBoxSizer(BoxSpecData, wx.VERTICAL)
 
         # Use DC Filter
         self.Data.Specs.CheckboxDC = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                  'Remove DC')
         self.Data.Specs.CheckboxDC.SetValue(True)
-        sizerPanelSpecs.Add(self.Data.Specs.CheckboxDC, 0, wx.EXPAND)
+        sizerBoxData.Add(self.Data.Specs.CheckboxDC, 0, wx.EXPAND)
 
         # Average Reference
         self.Data.Specs.CheckboxAverage = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                       'Average Reference')
         self.Data.Specs.CheckboxAverage.SetValue(True)
-        sizerPanelSpecs.Add(self.Data.Specs.CheckboxAverage, 0, wx.EXPAND)
+        sizerBoxData.Add(self.Data.Specs.CheckboxAverage, 0, wx.EXPAND)
 
         # Specific Reference
         PanelNewRef = wx.Panel(PanelSpecs, wx.ID_ANY)
@@ -57,13 +57,13 @@ class Specification(wx.Panel):
                                                      size=(100, 25))
         sizerNewRef.Add(self.Data.Specs.DropDownNewRef, 0, wx.EXPAND)
         PanelNewRef.SetSizer(sizerNewRef)
-        sizerPanelSpecs.Add(PanelNewRef, 0, wx.EXPAND)
+        sizerBoxData.Add(PanelNewRef, 0, wx.EXPAND)
 
         # High- & Lowpass Filter
         self.Data.Specs.CheckboxPass = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                    'Use Pass Filters')
         self.Data.Specs.CheckboxPass.SetValue(True)
-        sizerPanelSpecs.Add(self.Data.Specs.CheckboxPass, 0, wx.EXPAND)
+        sizerBoxData.Add(self.Data.Specs.CheckboxPass, 0, wx.EXPAND)
 
         PanelPassTitle = wx.Panel(PanelSpecs, wx.ID_ANY)
         sizerPassTitle = wx.BoxSizer(wx.HORIZONTAL)
@@ -77,8 +77,8 @@ class Specification(wx.Panel):
                                     label="Lowpass [Hz]")
         sizerPassTitle.Add(TextLowPass, 0, wx.EXPAND)
         PanelPassTitle.SetSizer(sizerPassTitle)
-        sizerPanelSpecs.Add(PanelPassTitle, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(2)
+        sizerBoxData.Add(PanelPassTitle, 0, wx.EXPAND)
+        sizerBoxData.AddSpacer(2)
 
         PanelPassField = wx.Panel(PanelSpecs, wx.ID_ANY)
         sizerPassField = wx.BoxSizer(wx.HORIZONTAL)
@@ -97,8 +97,8 @@ class Specification(wx.Panel):
                                               value=str(80.0))
         sizerPassField.Add(self.Data.Specs.LowPass, 0, wx.EXPAND)
         PanelPassField.SetSizer(sizerPassField)
-        sizerPanelSpecs.Add(PanelPassField, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(5)
+        sizerBoxData.Add(PanelPassField, 0, wx.EXPAND)
+        sizerBoxData.AddSpacer(5)
 
         # Notch Filter
         PanelNotch = wx.Panel(PanelSpecs, wx.ID_ANY)
@@ -114,31 +114,37 @@ class Specification(wx.Panel):
         sizerNotch.AddSpacer(5)
         sizerNotch.Add(self.Data.Specs.Notch, 0, wx.EXPAND)
         PanelNotch.SetSizer(sizerNotch)
-        sizerPanelSpecs.Add(PanelNotch, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(40)
+        sizerBoxData.Add(PanelNotch, 0, wx.EXPAND)
+        sizerPanelSpecs.Add(sizerBoxData, 0, wx.EXPAND)
+        sizerPanelSpecs.AddSpacer(25)
 
-        # Text: Data Interpolation Specifications
-        TxtInterpolation = wx.StaticText(PanelSpecs,
-                                         wx.ID_ANY, style=wx.CENTRE,
-                                         label=" Channel Interpolation")
-        TxtInterpolation.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
-        sizerPanelSpecs.Add(TxtInterpolation, 0, wx.EXPAND)
+        # Box: Interpolation Specifications
+        BoxSpecInterpolation = wx.StaticBox(PanelSpecs,
+                                            wx.ID_ANY, style=wx.CENTRE,
+                                            label="Interpolation")
+        BoxSpecInterpolation.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,
+                                             wx.BOLD))
+        sizerBoxInterpolation = wx.StaticBoxSizer(BoxSpecInterpolation,
+                                                  wx.VERTICAL)
 
         self.ButtonInterpolate = wx.Button(
             PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
             label="&Channels to interpolate")
         self.ButtonInterpolate.Enable()
         self.Data.Specs.channels2Interpolate = []
-        sizerPanelSpecs.Add(self.ButtonInterpolate, 0, wx.EXPAND)
+        sizerBoxInterpolation.Add(self.ButtonInterpolate, 0, wx.EXPAND)
         self.Data.Specs.xyzFile = ''
-        sizerPanelSpecs.AddSpacer(40)
+        self.TextInterpolated = wx.StaticText(
+            PanelSpecs, wx.ID_ANY, label='No interpolated channels\n\n')
+        sizerBoxInterpolation.Add(self.TextInterpolated, 0, wx.EXPAND)
+        sizerPanelSpecs.Add(sizerBoxInterpolation, 0, wx.EXPAND)
+        sizerPanelSpecs.AddSpacer(25)
 
-        # Text: Epoch Filters Specifications
-        TxtSpecEpoch = wx.StaticText(PanelSpecs,
-                                     wx.ID_ANY, style=wx.CENTRE,
-                                     label=" Epoch Filters")
-        TxtSpecEpoch.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
-        sizerPanelSpecs.Add(TxtSpecEpoch, 0, wx.EXPAND)
+        # Box: Epoch Filters Specifications
+        BoxSpecEpoch = wx.StaticBox(PanelSpecs, wx.ID_ANY, style=wx.CENTRE,
+                                    label="Epoch Filters")
+        BoxSpecEpoch.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+        sizerBoxEpoch = wx.StaticBoxSizer(BoxSpecEpoch, wx.VERTICAL)
 
         # Epoch Specification
         PanelEpochTitle = wx.Panel(PanelSpecs, wx.ID_ANY)
@@ -155,8 +161,8 @@ class Specification(wx.Panel):
                                      label="Post [ms]")
         sizerEpochTitle.Add(TextLowEpoch, 0, wx.EXPAND)
         PanelEpochTitle.SetSizer(sizerEpochTitle)
-        sizerPanelSpecs.Add(PanelEpochTitle, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(2)
+        sizerBoxEpoch.Add(PanelEpochTitle, 0, wx.EXPAND)
+        sizerBoxEpoch.AddSpacer(2)
 
         PanelEpochField = wx.Panel(PanelSpecs, wx.ID_ANY)
         sizerEpochField = wx.BoxSizer(wx.HORIZONTAL)
@@ -175,22 +181,21 @@ class Specification(wx.Panel):
                                                 value=str(500.0))
         sizerEpochField.Add(self.Data.Specs.PostEpoch, 0, wx.EXPAND)
         PanelEpochField.SetSizer(sizerEpochField)
-        sizerPanelSpecs.Add(PanelEpochField, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(5)
+        sizerBoxEpoch.Add(PanelEpochField, 0, wx.EXPAND)
+        sizerBoxEpoch.AddSpacer(5)
 
         # Baseline Correction
         self.Data.Specs.CheckboxBaseline = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                        'Baseline Correction')
         self.Data.Specs.CheckboxBaseline.SetValue(True)
-        sizerPanelSpecs.Add(self.Data.Specs.CheckboxBaseline, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(5)
+        sizerBoxEpoch.Add(self.Data.Specs.CheckboxBaseline, 0, wx.EXPAND)
 
         # Threshold Specification
         self.Data.Specs.CheckboxThreshold = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                         'Threshold Correction')
         self.Data.Specs.CheckboxThreshold.SetValue(True)
-        sizerPanelSpecs.Add(self.Data.Specs.CheckboxThreshold, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(5)
+        sizerBoxEpoch.Add(self.Data.Specs.CheckboxThreshold, 0, wx.EXPAND)
+        sizerBoxEpoch.AddSpacer(5)
 
         PanelThreshTitle = wx.Panel(PanelSpecs, wx.ID_ANY)
         sizerThreshTitle = wx.BoxSizer(wx.HORIZONTAL)
@@ -205,8 +210,8 @@ class Specification(wx.Panel):
                                          label="Window [ms]")
         sizerThreshTitle.Add(TextThreshWindow, 0, wx.EXPAND)
         PanelThreshTitle.SetSizer(sizerThreshTitle)
-        sizerPanelSpecs.Add(PanelThreshTitle, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(2)
+        sizerBoxEpoch.Add(PanelThreshTitle, 0, wx.EXPAND)
+        sizerBoxEpoch.AddSpacer(2)
 
         PanelThreshField = wx.Panel(PanelSpecs, wx.ID_ANY)
         sizerThreshField = wx.BoxSizer(wx.HORIZONTAL)
@@ -225,21 +230,23 @@ class Specification(wx.Panel):
                                                    value=str(100.0))
         sizerThreshField.Add(self.Data.Specs.ThreshWindow, 0, wx.EXPAND)
         PanelThreshField.SetSizer(sizerThreshField)
-        sizerPanelSpecs.Add(PanelThreshField, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(5)
+        sizerBoxEpoch.Add(PanelThreshField, 0, wx.EXPAND)
+        sizerBoxEpoch.AddSpacer(5)
 
         self.ButtonExclude = wx.Button(
             PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="&Exclude Channels for Thr.")
+            label="&Exclude channels from Thr.")
         self.ButtonExclude.Enable()
         self.Data.Specs.channels2exclude = []
-        sizerPanelSpecs.Add(self.ButtonExclude, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(40)
+        sizerBoxEpoch.Add(self.ButtonExclude, 0, wx.EXPAND)
+
+        sizerPanelSpecs.Add(sizerBoxEpoch, 0, wx.EXPAND)
+        sizerPanelSpecs.AddSpacer(25)
 
         # Text: Marker Specifications
         TxtSpecMarker = wx.StaticText(PanelSpecs,
                                       wx.ID_ANY, style=wx.CENTRE,
-                                      label=" Marker Options")
+                                      label="Marker Options")
         TxtSpecMarker.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerPanelSpecs.Add(TxtSpecMarker, 0, wx.EXPAND)
 
@@ -342,13 +349,21 @@ class Specification(wx.Panel):
                 else:
                     self.xyzPath = dirname(self.Data.Specs.xyzFile)
 
-                dlgXYZ = wx.FileDialog(None, "Load xyz file",
-                                       defaultDir=self.xyzPath,
-                                       wildcard='*.xyz')
-                if dlgXYZ.ShowModal() == wx.ID_OK:
-                    self.Data.Specs.xyzFile = dlgXYZ.GetPath()
-                dlgXYZ.Destroy()
-
+                if self.Data.Specs.channels2Interpolate != []:
+                    dlgXYZ = wx.FileDialog(None, "Load xyz file",
+                                           defaultDir=self.xyzPath,
+                                           wildcard='*.xyz')
+                    if dlgXYZ.ShowModal() == wx.ID_OK:
+                        self.Data.Specs.xyzFile = dlgXYZ.GetPath()
+                    dlgXYZ.Destroy()
+                    labeltxt = 'Interpolated Channels:\n' + \
+                        ''.join([e + ', ' if i % 7 != 6
+                                 else e + ',\n'
+                                 for i, e in enumerate(
+                                     self.Data.Specs.channels2Interpolate)])
+                else:
+                    labeltxt = 'No interpolated channels\n\n'
+                self.TextInterpolated.SetLabel(labeltxt)
                 self.Data.Results.interpolationCheck(self.Data)
             dlgSelect.Destroy()
         event.Skip()
