@@ -116,7 +116,7 @@ class Specification(wx.Panel):
         PanelNotch.SetSizer(sizerNotch)
         sizerBoxData.Add(PanelNotch, 0, wx.EXPAND)
         sizerPanelSpecs.Add(sizerBoxData, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(25)
+        sizerPanelSpecs.AddSpacer(20)
 
         # Box: Interpolation Specifications
         BoxSpecInterpolation = wx.StaticBox(PanelSpecs,
@@ -138,7 +138,7 @@ class Specification(wx.Panel):
             PanelSpecs, wx.ID_ANY, label='No interpolated channels\n\n')
         sizerBoxInterpolation.Add(self.TextInterpolated, 0, wx.EXPAND)
         sizerPanelSpecs.Add(sizerBoxInterpolation, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(25)
+        sizerPanelSpecs.AddSpacer(20)
 
         # Box: Epoch Filters Specifications
         BoxSpecEpoch = wx.StaticBox(PanelSpecs, wx.ID_ANY, style=wx.CENTRE,
@@ -253,7 +253,7 @@ class Specification(wx.Panel):
         sizerBoxEpoch.Add(self.ButtonExclude, 0, wx.EXPAND)
 
         sizerPanelSpecs.Add(sizerBoxEpoch, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(25)
+        sizerPanelSpecs.AddSpacer(20)
 
         # Text: Marker Specifications
         TxtSpecMarker = wx.StaticText(PanelSpecs,
