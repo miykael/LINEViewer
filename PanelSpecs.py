@@ -190,6 +190,18 @@ class Specification(wx.Panel):
         self.Data.Specs.CheckboxBaseline.SetValue(True)
         sizerBoxEpoch.Add(self.Data.Specs.CheckboxBaseline, 0, wx.EXPAND)
 
+        # Bridge Specification
+        self.Data.Specs.CheckboxBridge = wx.CheckBox(PanelSpecs, wx.ID_ANY,
+                                                     'Bridge Correction')
+        self.Data.Specs.CheckboxBridge.SetValue(False)
+        sizerBoxEpoch.Add(self.Data.Specs.CheckboxBridge, 0, wx.EXPAND)
+
+        # Alpha Specification
+        self.Data.Specs.CheckboxAlpha = wx.CheckBox(PanelSpecs, wx.ID_ANY,
+                                                    'Alpha Power Correction')
+        self.Data.Specs.CheckboxAlpha.SetValue(False)
+        sizerBoxEpoch.Add(self.Data.Specs.CheckboxAlpha, 0, wx.EXPAND)
+
         # Threshold Specification
         self.Data.Specs.CheckboxThreshold = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                         'Threshold Correction')
@@ -299,6 +311,10 @@ class Specification(wx.Panel):
                         self.useThreshold)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBaseline,
                         self.Data.Specs.CheckboxBaseline.Id, self.drawEpochs)
+        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBridge,
+                        self.Data.Specs.CheckboxBridge.Id, self.drawEpochs)
+        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxAlpha,
+                        self.Data.Specs.CheckboxAlpha.Id, self.drawEpochs)
 
         wx.EVT_BUTTON(self.ButtonMarker, self.ButtonMarker.Id,
                       self.selectMarkers)
