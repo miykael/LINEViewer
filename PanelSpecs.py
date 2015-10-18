@@ -332,7 +332,7 @@ class Specification(wx.Panel):
                         self.Data.Specs.CheckboxAlpha.Id, self.drawEpochs)
 
         wx.EVT_BUTTON(self.ButtonMarker, self.ButtonMarker.Id,
-                      self.selectMarkers)
+                      self.hideMarkers)
         wx.EVT_BUTTON(self.ButtonMarkerCollapse, self.ButtonMarkerCollapse.Id,
                       self.collapseMarkers)
         wx.EVT_BUTTON(self.ButtonMarkerReset, self.ButtonMarkerReset.Id,
@@ -445,7 +445,7 @@ class Specification(wx.Panel):
             self.Data.Results.updateAll(self.Data)
         event.Skip()
 
-    def selectMarkers(self, event):
+    def hideMarkers(self, event):
 
         if self.Data.Datasets != []:
             if not hasattr(self.Data.Results, 'collapsedMarkers'):
