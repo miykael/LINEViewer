@@ -51,8 +51,8 @@ class MainFrame(wx.Frame):
         sizerMainH.Add(self.PanelOption, wx.ID_ANY, wx.EXPAND)
 
         # Panel: Specs
-        PanelSpecsInput = PanelSpecs.Specification(MainPanel, self.Data)
-        sizerMainH.Add(PanelSpecsInput, 0, wx.EXPAND)
+        self.PanelSpecsInput = PanelSpecs.Specification(MainPanel, self.Data)
+        sizerMainH.Add(self.PanelSpecsInput, 0, wx.EXPAND)
 
         # Setup MainFrame
         MainPanel.SetSizer(sizerMainH)

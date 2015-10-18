@@ -8,13 +8,20 @@ from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
 
 
-def newFigure(self):
+def newFigure(self, showGrid=False):
     self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
     self.canvas = FigureCanvas(self, wx.ID_ANY, self.figure)
     self.toolbar = NavigationToolbar(self.canvas)
 
     self.sizer = wx.BoxSizer(wx.VERTICAL)
     self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+
+    if showGrid:
+        self.CheckboxGrid = wx.CheckBox(self, wx.ID_ANY, 'Show Grid')
+        self.CheckboxGrid.SetValue(True)
+        self.sizer.Add(self.CheckboxGrid, 0, wx.EXPAND)
+        wx.EVT_CHECKBOX(self.CheckboxGrid, self.CheckboxGrid.Id, self.showGrid)
+
     self.sizer.Add(self.toolbar, 0, wx.EXPAND)
     self.SetSizer(self.sizer)
     self.Fit()
@@ -43,11 +50,15 @@ class GFPSummary(wx.Panel):
 
         # Specify relevant variables
         self.Data = Data
-        newFigure(self)
+        self.ParentFrame = ParentFrame
+        newFigure(self, showGrid=True)
+
+        # Figure events
+        self.canvas.mpl_connect('button_press_event', self.gotoDetailedGFP)
 
     def update(self, Results):
         if self.Data.Datasets == []:
-            newFigure(self)
+            newFigure(self, showGrid=True)
         else:
             self.figure.clear()
             xaxis = getXaxis(Results)
@@ -60,8 +71,29 @@ class GFPSummary(wx.Panel):
                                         bottom=0.04,
                                         right=0.98,
                                         top=0.97)
-            plt.grid(True)
+            plt.grid(self.CheckboxGrid.IsChecked())
             self.canvas.draw()
+
+    def gotoDetailedGFP(self, event):
+        ax = event.inaxes
+        if ax is None:
+            return
+        if event.button is 1:
+            if event.dblclick:
+                self.ParentFrame.SetSelection(1)
+                self.canvas.ReleaseMouse()
+        elif event.button is 3:
+            if event.dblclick:
+                if hasattr(self.Data.Results, 'collapsedMarkers'):
+                    del self.Data.Results.collapsedMarkers
+                self.canvas.ReleaseMouse()
+                self.Data.markers2hide = []
+                self.Data.Results.updateEpochs(self.Data)
+
+    def showGrid(self, event):
+        if self.Data.Datasets != []:
+            self.Data.GFPSummary.update(self.Data.Results)
+        event.Skip()
 
 
 class GFPDetailed(wx.Panel):
@@ -74,7 +106,7 @@ class GFPDetailed(wx.Panel):
         # Specify relevant variables
         self.Data = Data
         self.ParentFrame = ParentFrame
-        newFigure(self)
+        newFigure(self, showGrid=True)
 
         # Figure events
         self.canvas.mpl_connect('button_press_event', self.zoomInDetailedGFP)
@@ -82,7 +114,7 @@ class GFPDetailed(wx.Panel):
     def update(self, Results):
 
         if self.Data.Datasets == []:
-            newFigure(self)
+            newFigure(self, showGrid=True)
         else:
             self.figure.clear()
             figureShape = findSquare(Results.uniqueMarkers.shape[0])
@@ -96,7 +128,7 @@ class GFPDetailed(wx.Panel):
                     Results.markers == Results.uniqueMarkers[i])[0].shape[0]
                 axes.title.set_text(
                     'Marker: %s [N=%s]' % (Results.uniqueMarkers[i], nMarkers))
-                axes.grid(True)
+                axes.grid(self.CheckboxGrid.IsChecked())
             self.figure.subplots_adjust(left=0.03,
                                         bottom=0.03,
                                         right=0.98,
@@ -104,6 +136,11 @@ class GFPDetailed(wx.Panel):
                                         wspace=0.20,
                                         hspace=0.24)
             self.canvas.draw()
+
+    def showGrid(self, event):
+        if self.Data.Datasets != []:
+            self.Data.GFPDetailed.update(self.Data.Results)
+        event.Skip()
 
     def zoomInDetailedGFP(self, event):
         ax = event.inaxes
