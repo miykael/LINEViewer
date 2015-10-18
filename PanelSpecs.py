@@ -255,19 +255,34 @@ class Specification(wx.Panel):
         sizerPanelSpecs.Add(sizerBoxEpoch, 0, wx.EXPAND)
         sizerPanelSpecs.AddSpacer(20)
 
-        # Text: Marker Specifications
-        TxtSpecMarker = wx.StaticText(PanelSpecs,
-                                      wx.ID_ANY, style=wx.CENTRE,
-                                      label="Marker Options")
-        TxtSpecMarker.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
-        sizerPanelSpecs.Add(TxtSpecMarker, 0, wx.EXPAND)
+        # Box: Marker Specifications
+        BoxSpecMarker = wx.StaticBox(PanelSpecs, wx.ID_ANY, style=wx.CENTRE,
+                                     label="Marker Options")
+        BoxSpecMarker.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
+        sizerBoxMarker = wx.StaticBoxSizer(BoxSpecMarker, wx.VERTICAL)
 
+        # Box: Marker Specifications
         self.ButtonMarker = wx.Button(
             PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="Choose &markers to show")
+            label="Hide &markers")
         self.ButtonMarker.Enable()
-        self.markers2use = []
-        sizerPanelSpecs.Add(self.ButtonMarker, 0, wx.EXPAND)
+        self.Data.markers2hide = []
+        sizerBoxMarker.Add(self.ButtonMarker, 0, wx.EXPAND)
+
+        self.ButtonMarkerCollapse = wx.Button(
+            PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
+            label="Collapse markers")
+        self.ButtonMarkerCollapse.Enable()
+        sizerBoxMarker.Add(self.ButtonMarkerCollapse, 0, wx.EXPAND)
+
+        self.ButtonMarkerReset = wx.Button(
+            PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
+            label="Reset markers")
+        self.ButtonMarkerReset.Enable()
+        sizerBoxMarker.Add(self.ButtonMarkerReset, 0, wx.EXPAND)
+
+        sizerPanelSpecs.Add(sizerBoxMarker, 0, wx.EXPAND)
+        sizerPanelSpecs.AddSpacer(20)
 
         # Create vertical structure of Data Handler Frame
         sizerFrame = wx.BoxSizer(wx.VERTICAL)
@@ -318,6 +333,10 @@ class Specification(wx.Panel):
 
         wx.EVT_BUTTON(self.ButtonMarker, self.ButtonMarker.Id,
                       self.selectMarkers)
+        wx.EVT_BUTTON(self.ButtonMarkerCollapse, self.ButtonMarkerCollapse.Id,
+                      self.collapseMarkers)
+        wx.EVT_BUTTON(self.ButtonMarkerReset, self.ButtonMarkerReset.Id,
+                      self.resetMarkers)
 
     def drawAll(self, event):
         if self.Data.Datasets != []:
@@ -428,29 +447,65 @@ class Specification(wx.Panel):
 
     def selectMarkers(self, event):
 
-        # TODO: This function doesnt do anything right now
-
         if self.Data.Datasets != []:
-            markers = np.unique([m.markerValue
-                                 for m in self.Data.Datasets])
+            if not hasattr(self.Data.Results, 'collapsedMarkers'):
+                markers = np.copy(self.Data.Orig.markers)
+            else:
+                markers = self.Data.Results.collapsedMarkers
+            markers = np.unique(markers)
             markerTxt = [str(m) for m in markers]
             dlg = wx.MultiChoiceDialog(
-                self, caption="Select markers to show",
-                message='Which markers should be visualized?',
+                self, caption="Select markers to hide",
+                message='Which markers should be considered ' +
+                        'in further analysis?',
                 choices=markerTxt)
-            if self.markers2use == []:
-                selected = range(
-                    np.unique([m.markerValue
-                               for m in self.Data.Datasets]).shape[0])
+            if self.Data.markers2hide == []:
+                selected = []
             else:
                 selected = [i for i, e in enumerate(markers)
-                            if e in self.markers2use]
+                            if e in self.Data.markers2hide]
             dlg.SetSelections(selected)
             if dlg.ShowModal() == wx.ID_OK:
-                self.markers2use = [markers[x]
-                                    for x in dlg.GetSelections()]
+                self.Data.markers2hide = [markers[x]
+                                          for x in dlg.GetSelections()]
+                self.drawEpochs(event)
+            dlg.Destroy()
+        event.Skip()
+
+    def collapseMarkers(self, event):
+
+        if self.Data.Datasets != []:
+            markers = np.unique(self.Data.Results.markers)
+            markerTxt = [str(m) for m in markers]
+            dlg = wx.MultiChoiceDialog(
+                self, caption="Select markers to collapse",
+                message='Which markers should be collapsed?',
+                choices=markerTxt)
+            if dlg.ShowModal() == wx.ID_OK:
+                selected = dlg.GetSelections()
             dlg.Destroy()
 
+            dlg = wx.TextEntryDialog(
+                None, 'What should be the new value of the marker?\n' +
+                'Only integer values are accepted!')
+            if dlg.ShowModal() == wx.ID_OK:
+                newMarkerName = dlg.GetValue()
+            dlg.Destroy()
+
+            markers2collapse = np.array(markerTxt, dtype='uint8')[selected]
+            if not hasattr(self.Data.Results, 'collapsedMarkers'):
+                rawMarkers = np.copy(self.Data.Orig.markers)
+            else:
+                rawMarkers = self.Data.Results.collapsedMarkers
+            for i, e in enumerate(markers2collapse):
+                rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
+            self.Data.Results.collapsedMarkers = rawMarkers
+            self.drawEpochs(event)
+        event.Skip()
+
+    def resetMarkers(self, event):
+        del self.Data.Results.collapsedMarkers
+        self.drawEpochs(event)
         event.Skip()
 
 

@@ -60,7 +60,7 @@ class ReadBDF:
         status = status - np.median(status)
         timepoint = (np.diff(status) != 0).nonzero()[0] + 1
         markerTime = timepoint[np.where(status[timepoint] != 0)]
-        markerValue = np.int8(status[markerTime] * 32)
+        markerValue = np.uint8(status[markerTime] * 32)
 
         # Prepare output
         self.rawdata = rawdata[:-1, :]

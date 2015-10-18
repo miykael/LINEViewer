@@ -109,6 +109,9 @@ class Results():
 
         # Get Specifications
         self.baselineCorr = Data.Specs.CheckboxBaseline.GetValue()
+        self.bridgeCorr = Data.Specs.CheckboxBridge.GetValue()
+        self.alphaCorr = Data.Specs.CheckboxAlpha.GetValue()
+        self.thresholdCorr = Data.Specs.CheckboxThreshold.GetValue()
         try:
             self.threshold = float(Data.Specs.ThreshValue.GetValue())
         except ValueError:
@@ -119,12 +122,20 @@ class Results():
         except ValueError:
             self.window = 100.0
             Data.Specs.ThreshWindow.SetValue(str(self.window))
-        self.thresholdEpochs = Data.Specs.CheckboxThreshold.GetValue()
         self.excludeChannel = Data.Specs.channels2exclude
 
         # Copy epoch and marker values
         epochs = np.copy(Data.Orig.epochs)
-        markers = np.copy(Data.Orig.markers)
+        if not hasattr(self, 'collapsedMarkers'):
+            markers = np.copy(Data.Orig.markers)
+        else:
+            markers = self.collapsedMarkers
+
+        # Hide Markers
+        if Data.markers2hide != []:
+            for h in Data.markers2hide:
+                epochs = np.delete(epochs, np.where(markers == h), axis=0)
+                markers = np.delete(markers, np.where(markers == h))
 
         # Baseline Correction
         if self.baselineCorr:
@@ -134,7 +145,7 @@ class Results():
                 e -= baselineAvg
 
         # Threshold epochs
-        if self.thresholdEpochs:
+        if self.thresholdCorr:
 
             # Exclude Channels
             if self.excludeChannel != []:

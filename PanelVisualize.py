@@ -63,20 +63,6 @@ class GFPSummary(wx.Panel):
             plt.grid(True)
             self.canvas.draw()
 
-    """
-    a1 = epochs[:,0,:]
-    a1Mean=a1.mean(axis=0)
-    a1STD=a1.std(axis=0)
-    #plt.figure()
-    plt.plot(a1Mean, 'b')
-    plt.fill_between(range(a1Mean.shape[0]),
-                           a1Mean-2*a1STD,
-                           a1Mean+2*a1STD,
-                           color='b',
-                           alpha=0.2)
-    plt.show()
-    """
-
 
 class GFPDetailed(wx.Panel):
 
