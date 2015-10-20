@@ -87,8 +87,8 @@ class ReadXYZ:
                 if i != 0:
                     coord = e.split()
                     self.coord.append([float(coord[0]),
-                                     float(coord[1]),
-                                     float(coord[2])])
+                                       float(coord[1]),
+                                       float(coord[2])])
                     self.labels.append(coord[3])
             self.coord = np.array(self.coord)
             self.labels = np.array(self.labels)

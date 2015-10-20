@@ -131,7 +131,7 @@ class Specification(wx.Panel):
             PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
             label="&Channels to interpolate")
         self.ButtonInterpolate.Enable()
-        self.Data.Specs.channels2Interpolate = []
+        self.Data.Specs.channels2interpolate = []
         sizerBoxInterpolation.Add(self.ButtonInterpolate, 0, wx.EXPAND)
         self.Data.Specs.xyzFile = ''
         self.TextInterpolated = wx.StaticText(
@@ -373,10 +373,10 @@ class Specification(wx.Panel):
                 message='Which channels should be interpolated?',
                 choices=channels)
             selected = [i for i, e in enumerate(channels)
-                        if e in self.Data.Specs.channels2Interpolate]
+                        if e in self.Data.Specs.channels2interpolate]
             dlgSelect.SetSelections(selected)
             if dlgSelect.ShowModal() == wx.ID_OK:
-                self.Data.Specs.channels2Interpolate = [
+                self.Data.Specs.channels2interpolate = [
                     channels[x] for x in dlgSelect.GetSelections()]
 
                 if self.Data.Specs.xyzFile == '':
@@ -384,7 +384,7 @@ class Specification(wx.Panel):
                 else:
                     self.xyzPath = dirname(self.Data.Specs.xyzFile)
 
-                if self.Data.Specs.channels2Interpolate != []:
+                if self.Data.Specs.channels2interpolate != []:
                     dlgXYZ = wx.FileDialog(None, "Load xyz file",
                                            defaultDir=self.xyzPath,
                                            wildcard='*.xyz')
@@ -395,7 +395,7 @@ class Specification(wx.Panel):
                         ''.join([e + ', ' if i % 7 != 6
                                  else e + ',\n'
                                  for i, e in enumerate(
-                                     self.Data.Specs.channels2Interpolate)])
+                                     self.Data.Specs.channels2interpolate)])
                 else:
                     labeltxt = 'No interpolated channels\n\n'
                 self.TextInterpolated.SetLabel(labeltxt)

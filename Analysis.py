@@ -2,7 +2,6 @@ import wx
 import numpy as np
 from FileHandler import ReadXYZ
 from scipy.signal import butter, filtfilt
-from scipy.interpolate import NearestNDInterpolator
 
 
 class Results():
@@ -101,8 +100,8 @@ class Results():
 
     def interpolationCheck(self, Data):
 
-        if Data.Specs.channels2Interpolate != []:
-            interpolateChannels(self, Data, Data.Specs.xyzFile)
+        if Data.Specs.channels2interpolate != []:
+            Data = interpolateChannels(self, Data, Data.Specs.xyzFile)
 
         self.updateEpochs(Data)
 
@@ -214,10 +213,27 @@ def calculateGFP(dataset):
 def interpolateChannels(self, Data, xyz):
 
     xyz = ReadXYZ(xyz)
+    channels2interpolate = Data.Specs.channels2interpolate
 
-    id2interp = sorted([np.where(xyz.labels == c)[0][0]
-                        for c in Data.Specs.channels2Interpolate],
-                       reverse=True)
+    id2interp = [i for i, e in enumerate(xyz.labels)
+                 if e in channels2interpolate]
+    id2keep = [i for i, e in enumerate(xyz.labels)
+               if e not in channels2interpolate]
+
+    matriceE = np.array([np.insert(e, 0, 1)
+                         for e in xyz.coord[id2keep]])
+    matriceK = np.zeros((len(id2keep), len(id2keep)))
+    for i, r1 in enumerate(xyz.coord[id2keep]):
+        for j, r2 in enumerate(xyz.coord[id2keep]):
+            if i == j:
+                matriceK[i, j] = 0
+            else:
+                Diff = (np.square(r1 - r2)).sum()
+                matriceK[i, j] = Diff * np.log(Diff)
+    matrice = np.concatenate((matriceK, matriceE), axis=1)
+    addZeros = np.concatenate((matriceE.T, np.zeros((4, 4))), axis=1)
+    matrice = np.concatenate((matrice, addZeros), axis=0)
+    matriceInv = np.linalg.inv(matrice)
 
     # Create Progressbar for interpolation
     progressMax = Data.Orig.epochs.shape[0]
@@ -227,17 +243,30 @@ def interpolateChannels(self, Data, xyz):
 
     for count, epoch in enumerate(Data.Orig.epochs):
 
-        newSignal = []
-        for i in range(epoch.shape[1]):
-            values = np.delete(epoch[:, i], id2interp)
-            points = np.delete(xyz.coord, id2interp, axis=0)
-            coord = xyz.coord[id2interp]
-            interpolate = NearestNDInterpolator(points, values)
-            newSignal.append(interpolate(coord))
+        signal = np.copy(epoch.T)
 
-        for i, channelID in enumerate(id2interp):
-            epoch[channelID] = np.array(newSignal)[:, i]
+        Coef = []
+        potential = np.concatenate((signal[:, id2keep],
+                                    np.zeros((signal.shape[0], 4))),
+                                   axis=1)
+        for v in potential:
+            Coef.append(np.dot(matriceInv, v))
+        Coef = np.array(Coef)
+
+        for b in id2interp:
+            xyzInter = xyz.coord[b]
+            Q = np.insert(xyzInter, 0, 1)
+            CorrectCoord = xyz.coord[id2keep]
+            Diff = np.array([np.square(xyzInter - c).sum()
+                             for c in CorrectCoord])
+            K = Diff * np.log(Diff)
+            K[np.isnan(K)] = 0
+            IntData = np.dot(Coef, np.concatenate((K, Q), axis=0))
+            signal[:, b] = IntData
+        Data.Orig.epochs[count] = signal.T
 
         dlg.Update(count)
 
     dlg.Destroy()
+
+    return Data
