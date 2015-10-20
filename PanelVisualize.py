@@ -8,39 +8,6 @@ from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
 
 
-def newFigure(self, showGrid=False):
-    self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
-    self.canvas = FigureCanvas(self, wx.ID_ANY, self.figure)
-    self.toolbar = NavigationToolbar(self.canvas)
-
-    self.sizer = wx.BoxSizer(wx.VERTICAL)
-    self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
-
-    if showGrid:
-        self.CheckboxGrid = wx.CheckBox(self, wx.ID_ANY, 'Show Grid')
-        self.CheckboxGrid.SetValue(True)
-        self.sizer.Add(self.CheckboxGrid, 0, wx.EXPAND)
-        wx.EVT_CHECKBOX(self.CheckboxGrid, self.CheckboxGrid.Id, self.showGrid)
-
-    self.sizer.Add(self.toolbar, 0, wx.EXPAND)
-    self.SetSizer(self.sizer)
-    self.Fit()
-
-
-def findSquare(number):
-    s1 = int(np.round(np.sqrt(number)))
-    s2 = int(np.ceil(1.0 * number / s1))
-    return s1, s2
-
-
-def getXaxis(Results):
-    stepSize = (Results.preEpoch + Results.postEpoch) / \
-        (Results.preFrame + Results.postFrame)
-    xaxis = [int(i * stepSize - Results.preEpoch)
-             for i in range(Results.preFrame + Results.postFrame)]
-    return xaxis
-
-
 class GFPSummary(wx.Panel):
 
     def __init__(self, ParentFrame, Data):
@@ -152,9 +119,40 @@ class GFPDetailed(wx.Panel):
                 markerID = self.Data.Results.uniqueMarkers[subplotID]
 
                 # On left click, zoom the selected axes
+                self.Data.EpochSummary.update(markerID)
                 self.Data.EpochMarkerDetail.update(markerID)
                 self.ParentFrame.SetSelection(2)
                 self.canvas.ReleaseMouse()
+
+
+class EpochSummary(wx.Panel):
+
+    def __init__(self, ParentFrame, Data):
+
+        # Create Data Frame window
+        wx.Panel.__init__(self, parent=ParentFrame, style=wx.SUNKEN_BORDER)
+
+        # Specify relevant variables
+        self.Data = Data
+        self.ParentFrame = ParentFrame
+        newFigure(self)
+
+    def update(self, markerValue):
+        if self.Data.Datasets == []:
+            newFigure(self)
+        else:
+            self.figure.clear()
+            xaxis = getXaxis(self.Data.Results)
+            plt.plot(xaxis, np.transpose(self.Data.Results.avgGFP))
+            plt.xlabel('time [ms]')
+            plt.ylabel('GFP')
+            plt.title('GFP Overview')
+            plt.legend(self.Data.Results.uniqueMarkers)
+            self.figure.subplots_adjust(left=0.03,
+                                        bottom=0.04,
+                                        right=0.98,
+                                        top=0.97)
+            self.canvas.draw()
 
 
 class EpochMarkerDetail(wx.Panel):
@@ -215,3 +213,36 @@ class EpochMarkerDetail(wx.Panel):
                                     wspace=0.20,
                                     hspace=0.24)
         self.canvas.draw()
+
+
+def newFigure(self, showGrid=False):
+    self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
+    self.canvas = FigureCanvas(self, wx.ID_ANY, self.figure)
+    self.toolbar = NavigationToolbar(self.canvas)
+
+    self.sizer = wx.BoxSizer(wx.VERTICAL)
+    self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+
+    if showGrid:
+        self.CheckboxGrid = wx.CheckBox(self, wx.ID_ANY, 'Show Grid')
+        self.CheckboxGrid.SetValue(True)
+        self.sizer.Add(self.CheckboxGrid, 0, wx.EXPAND)
+        wx.EVT_CHECKBOX(self.CheckboxGrid, self.CheckboxGrid.Id, self.showGrid)
+
+    self.sizer.Add(self.toolbar, 0, wx.EXPAND)
+    self.SetSizer(self.sizer)
+    self.Fit()
+
+
+def findSquare(number):
+    s1 = int(np.round(np.sqrt(number)))
+    s2 = int(np.ceil(1.0 * number / s1))
+    return s1, s2
+
+
+def getXaxis(Results):
+    stepSize = (Results.preEpoch + Results.postEpoch) / \
+        (Results.preFrame + Results.postFrame)
+    xaxis = [int(i * stepSize - Results.preEpoch)
+             for i in range(Results.preFrame + Results.postFrame)]
+    return xaxis

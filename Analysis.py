@@ -180,7 +180,6 @@ class Results():
         self.avgEpochs = [self.epochs[np.where(self.markers == u)].mean(axis=0)
                           for u in self.uniqueMarkers]
         self.avgGFP = [calculateGFP(a) for a in self.avgEpochs]
-
         Data.GFPDetailed.update(self)
         Data.GFPSummary.update(self)
 
