@@ -1,5 +1,6 @@
 import wx
 import numpy as np
+from FileHandler import ReadXYZ
 from scipy.signal import butter, filtfilt
 from scipy.interpolate import NearestNDInterpolator
 
@@ -212,21 +213,9 @@ def calculateGFP(dataset):
 
 def interpolateChannels(self, Data, xyz):
 
-    with open(xyz) as f:
-        content = f.readlines()
-        xyz = []
-        labels = []
-        for i, e in enumerate(content):
-            if i != 0:
-                coord = e.split()
-                xyz.append([float(coord[0]),
-                            float(coord[1]),
-                            float(coord[2])])
-                labels.append(coord[3])
-        xyz = np.array(xyz)
-        labels = np.array(labels)
+    xyz = ReadXYZ(xyz)
 
-    id2interp = sorted([np.where(labels == c)[0][0]
+    id2interp = sorted([np.where(xyz.labels == c)[0][0]
                         for c in Data.Specs.channels2Interpolate],
                        reverse=True)
 
@@ -241,8 +230,8 @@ def interpolateChannels(self, Data, xyz):
         newSignal = []
         for i in range(epoch.shape[1]):
             values = np.delete(epoch[:, i], id2interp)
-            points = np.delete(xyz, id2interp, axis=0)
-            coord = xyz[id2interp]
+            points = np.delete(xyz.coord, id2interp, axis=0)
+            coord = xyz.coord[id2interp]
             interpolate = NearestNDInterpolator(points, values)
             newSignal.append(interpolate(coord))
 

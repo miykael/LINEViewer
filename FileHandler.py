@@ -75,6 +75,25 @@ class ReadBDF:
         self.markerValue = markerValue
 
 
+class ReadXYZ:
+
+    def __init__(self, filename):
+
+        with open(filename) as f:
+            content = f.readlines()
+            self.coord = []
+            self.labels = []
+            for i, e in enumerate(content):
+                if i != 0:
+                    coord = e.split()
+                    self.coord.append([float(coord[0]),
+                                     float(coord[1]),
+                                     float(coord[2])])
+                    self.labels.append(coord[3])
+            self.coord = np.array(self.coord)
+            self.labels = np.array(self.labels)
+
+
 class SaveH5:
 
     def __init__(self, filename, bdffiles):
