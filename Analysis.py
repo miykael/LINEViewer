@@ -180,6 +180,8 @@ class Results():
         self.avgEpochs = [self.epochs[np.where(self.markers == u)].mean(axis=0)
                           for u in self.uniqueMarkers]
         self.avgGFP = [calculateGFP(a) for a in self.avgEpochs]
+        self.avgGMD = [calculateGMD(a) for a in self.avgEpochs]
+
         Data.GFPDetailed.update(self)
         Data.GFPSummary.update(self)
 
@@ -208,6 +210,14 @@ def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,
 def calculateGFP(dataset):
     # Global Field Potential
     return dataset.std(axis=0)
+
+
+def calculateGMD(dataset):
+    # Global Map Dissimilarity
+    GFP = calculateGFP(dataset)
+    unitaryStrength = dataset / GFP
+    GMD = np.diff(unitaryStrength).std(axis=0)
+    return np.insert(GMD, 0, 0)
 
 
 def interpolateChannels(self, Data, xyz):
