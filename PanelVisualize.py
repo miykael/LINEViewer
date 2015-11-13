@@ -189,7 +189,7 @@ class EpochSummary(wx.Panel):
 
         axes.set_ylim(minmax)
         axes.get_yaxis().set_visible(False)
-        axes.vlines(10, minmax[0], minmax[1], linestyles='dotted')
+        axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
         self.figure.subplots_adjust(left=0.03,
                                     bottom=0.03,
@@ -240,6 +240,7 @@ class EpochMarkerDetail(wx.Panel):
             alphaID = np.where(
                 alphaPower > alphaPower.mean() + alphaPower.std() * 5)[0]
 
+            minmax = [0, 0]
             for j, c in enumerate(epochs[i]):
                 if np.sum(c > 80.) != 0:
                     color = 'r'
@@ -249,7 +250,21 @@ class EpochMarkerDetail(wx.Panel):
                     color = 'g'
                 else:
                     color = 'gray'
-                axes.plot(xaxis, c / sizer - j, color)
+                lines = axes.plot(xaxis, c / sizer - j, color)
+                ydata = lines[0].get_ydata()
+                lineMin = ydata.min()
+                lineMax = ydata.max()
+                if minmax[0] > lineMin:
+                    minmax[0] = lineMin
+                if minmax[1] < lineMax:
+                    minmax[1] = lineMax
+
+            delta = np.abs(minmax).sum()*.01
+            minmax = [minmax[0] - delta, minmax[1] + delta]
+
+            axes.set_ylim(minmax)
+            axes.get_yaxis().set_visible(False)
+            axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
         self.figure.subplots_adjust(left=0.03,
                                     bottom=0.03,
