@@ -513,6 +513,11 @@ class Specification(wx.Panel):
 TODO: Create a figure that shows 1 electrode per marker and overlays mean and
       std for the epoch
 
+Have statistic overview:
+ - which channels are bad
+ - how many epochs per markers have to be dropped, etc.
+ - impedence stuff like in Biosemi software
+
 ERP ANALYSIS (under development)
 data normalization (according to GFP, yes or no)
 
@@ -522,4 +527,7 @@ write or load tvas
 create and save figures
 
 https://sites.google.com/site/cartoolcommunity/user-s-guide/analysis/artefacts-rejection-single-subjects-averages
+
+Visualize also frequency domain, summary?
+and multiple epochs like http://mne-tools.github.io/mne-python-intro/_images/epochs_image.png
 """

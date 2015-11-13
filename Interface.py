@@ -107,4 +107,3 @@ class MainFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.DestroyChildren()
             self.Destroy()
-        event.Skip()

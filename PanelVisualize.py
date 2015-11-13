@@ -135,25 +135,69 @@ class EpochSummary(wx.Panel):
 
         # Specify relevant variables
         self.Data = Data
-        self.ParentFrame = ParentFrame
         newFigure(self)
 
     def update(self, markerValue):
-        if self.Data.Datasets == []:
-            newFigure(self)
-        else:
-            self.figure.clear()
-            xaxis = getXaxis(self.Data.Results)
-            plt.plot(xaxis, np.transpose(self.Data.Results.avgGFP))
-            plt.xlabel('time [ms]')
-            plt.ylabel('GFP')
-            plt.title('GFP Overview')
-            plt.legend(self.Data.Results.uniqueMarkers)
-            self.figure.subplots_adjust(left=0.03,
-                                        bottom=0.04,
-                                        right=0.98,
-                                        top=0.97)
-            self.canvas.draw()
+        epochs = self.Data.Results.epochs[
+            np.where(self.Data.Results.markers == markerValue)]
+        epoch = epochs.mean(axis=0)
+
+        preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
+        postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
+        samplingPoints = epoch.shape[1]
+
+        xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
+                     samplingPoints - preEpoch) for i in range(samplingPoints)]
+
+        axes = self.figure.add_subplot(1, 1, 1)
+        sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
+
+        corrMatrix = np.where(np.abs(np.corrcoef(epoch)) > .999)
+        corrID = np.unique([corrMatrix[0][m]
+                            for m in range(corrMatrix[0].shape[0])
+                            if corrMatrix[0][m] != corrMatrix[1][m]])
+
+        ps = np.abs(np.fft.rfft(epoch))**2  # **2 for power specturm
+        freq = np.linspace(0, 512. / 2, ps.shape[1])
+        alphaFreq = [a for a in [b for b, f in enumerate(freq)
+                                 if f > 7.5] if freq[a] < 12.5]
+        alphaPower = ps[:, alphaFreq].sum(axis=1)
+        alphaID = np.where(
+            alphaPower > alphaPower.mean() + alphaPower.std() * 5)[0]
+
+        minmax = [0, 0]
+        for j, c in enumerate(epoch):
+            if np.sum(c > 80.) != 0:
+                color = 'r'
+            elif j in corrID:
+                color = 'b'
+            elif j in alphaID:
+                color = 'g'
+            else:
+                color = 'gray'
+            lines = axes.plot(xaxis, c / sizer - j, color)
+            ydata = lines[0].get_ydata()
+            lineMin = ydata.min()
+            lineMax = ydata.max()
+            if minmax[0] > lineMin:
+                minmax[0] = lineMin
+            if minmax[1] < lineMax:
+                minmax[1] = lineMax
+
+        delta = np.abs(minmax).sum()*.01
+        minmax = [minmax[0] - delta, minmax[1] + delta]
+
+        axes.set_ylim(minmax)
+        axes.get_yaxis().set_visible(False)
+        axes.vlines(10, minmax[0], minmax[1], linestyles='dotted')
+
+        self.figure.subplots_adjust(left=0.03,
+                                    bottom=0.03,
+                                    right=0.98,
+                                    top=0.97,
+                                    wspace=0.20,
+                                    hspace=0.24)
+        self.canvas.draw()
 
 
 class EpochMarkerDetail(wx.Panel):
