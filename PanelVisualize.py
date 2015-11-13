@@ -91,6 +91,7 @@ class GFPDetailed(wx.Panel):
                                                figureShape[1],
                                                i + 1)
                 axes.plot(xaxis, Results.avgGFP[i], 'b')
+                axes.plot(xaxis, Results.avgGMD[i], 'r')
                 nMarkers = np.where(
                     Results.markers == Results.uniqueMarkers[i])[0].shape[0]
                 axes.title.set_text(
