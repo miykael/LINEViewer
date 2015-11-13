@@ -510,7 +510,8 @@ class Specification(wx.Panel):
 
 
 """
-TODO: Create a figure that shows 1 electrode per marker and overlays mean and std for the epoch
+TODO: Create a figure that shows 1 electrode per marker and overlays mean and
+      std for the epoch
 
 ERP ANALYSIS (under development)
 data normalization (according to GFP, yes or no)

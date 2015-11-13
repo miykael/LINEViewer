@@ -127,6 +127,7 @@ class GFPDetailed(wx.Panel):
                 self.canvas.ReleaseMouse()
         event.Skip()
 
+
 class EpochSummary(wx.Panel):
 
     def __init__(self, ParentFrame, Data):
