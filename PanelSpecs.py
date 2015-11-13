@@ -510,24 +510,15 @@ class Specification(wx.Panel):
 
 
 """
-PREPROCESSING (under development)
-?? envelope filter (only if high and low pass)
-?? if yes, than absolute or power: both have averagign window in ms
-interpolation: how?
-calculate also Global Map Dissimilarity (GMD)
-check that GFP is calculated correct (GFP of average or average of GFPs?)
 TODO: Create a figure that shows 1 electrode per marker and overlays mean and std for the epoch
-"""
-"""
+
 ERP ANALYSIS (under development)
 data normalization (according to GFP, yes or no)
-"""
-"""
+
 OUTPUT (under development)
 write eph, marker and tva files (also marker for origin)
 write or load tvas
 create and save figures
-"""
-"""
+
 https://sites.google.com/site/cartoolcommunity/user-s-guide/analysis/artefacts-rejection-single-subjects-averages
 """
