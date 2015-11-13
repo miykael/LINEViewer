@@ -56,7 +56,6 @@ class GFPSummary(wx.Panel):
                 self.canvas.ReleaseMouse()
                 self.Data.markers2hide = []
                 self.Data.Results.updateEpochs(self.Data)
-        event.Skip()
 
     def showGrid(self, event):
         if self.Data.Datasets != []:
@@ -125,7 +124,6 @@ class GFPDetailed(wx.Panel):
                 self.Data.EpochMarkerDetail.update(markerID)
                 self.ParentFrame.SetSelection(2)
                 self.canvas.ReleaseMouse()
-        event.Skip()
 
 
 class EpochSummary(wx.Panel):
