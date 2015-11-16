@@ -256,6 +256,7 @@ class EpochMarkerDetail(wx.Panel):
         preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
         postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
         samplingPoints = self.Data.Results.epochs.shape[2]
+        labelsChannel = self.Data.Datasets[0].labelsChannel
 
         xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
                      samplingPoints - preEpoch) for i in range(samplingPoints)]
@@ -272,10 +273,9 @@ class EpochMarkerDetail(wx.Panel):
         # Draw the epochs
         for k, i in enumerate(range(shiftView, tiles + shiftView)):
             axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
-
             if i < len(self.id2Show):
                 epochID = self.id2Show[i]
-                epoch = self.Data.Results.epochs[epochID]
+                epoch = self.Data.Orig.epochs[epochID]
 
                 sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
 
@@ -283,10 +283,16 @@ class EpochMarkerDetail(wx.Panel):
                 for j, c in enumerate(epoch):
                     if self.Data.Results.badEpochThreshold[epochID][j]:
                         color = 'r'
+                        axes.text(postEpoch, c[-1] / sizer - j,
+                                  labelsChannel[j], color='r')
                     elif self.Data.Results.badEpochBridge[epochID][j]:
                         color = 'b'
+                        axes.text(postEpoch, c[-1] / sizer - j,
+                                  labelsChannel[j], color='b')
                     elif self.Data.Results.badEpochAlpha[epochID][j]:
                         color = 'g'
+                        axes.text(postEpoch, c[-1] / sizer - j,
+                                  labelsChannel[j], color='g')
                     else:
                         color = 'gray'
                     lines = axes.plot(xaxis, c / sizer - j, color)
@@ -303,6 +309,7 @@ class EpochMarkerDetail(wx.Panel):
 
                 axes.set_ylim(minmax)
                 axes.get_yaxis().set_visible(False)
+                axes.title.set_text('Epoch: %s' % epochID)
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
         self.figure.subplots_adjust(left=0.03,
