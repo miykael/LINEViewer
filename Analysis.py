@@ -153,17 +153,18 @@ class Results():
             channelID = range(Data.Orig.labelsChannel.shape[0])
 
         # Correct epochs for threshold, bridges or alpha waves
-        if self.thresholdCorr or self.bridgeCorr or self.alphaCorr:
-            self.badEpochThreshold = []
-            self.badEpochBridge = []
-            self.badEpochAlpha = []
+        self.badEpochThreshold = []
+        self.badEpochBridge = []
+        self.badEpochAlpha = []
 
-            self.badChannelThreshold = np.zeros(128, dtype=int)
-            self.badChannelBridge = np.zeros(128, dtype=int)
-            self.badChannelAlpha = np.zeros(128, dtype=int)
+        if self.thresholdCorr or self.bridgeCorr or self.alphaCorr:
 
             # Go through all the epochs
             for i, e in enumerate(epochs):
+
+                badThresholds = np.zeros(epochs[0].shape[0], dtype=int)
+                badBridges = np.zeros(epochs[0].shape[0], dtype=int)
+                badAlpha = np.zeros(epochs[0].shape[0], dtype=int)
 
                 # correct for threshold
                 if self.thresholdCorr:
@@ -172,9 +173,7 @@ class Results():
                         channelThresholdOff = np.ptp(
                             e[:, j:j + windowSteps], axis=1) > self.threshold
                         if np.sum(channelThresholdOff) != 0:
-                            if i not in self.badEpochThreshold:
-                                self.badEpochThreshold.append(i)
-                                self.badChannelThreshold += channelThresholdOff
+                            badThresholds += channelThresholdOff
 
                 # correct for bridges
                 if self.bridgeCorr:
@@ -184,13 +183,13 @@ class Results():
                             [corrMatrix[0][m]
                              for m in range(corrMatrix[0].shape[0])
                              if corrMatrix[0][m] != corrMatrix[1][m]])
-                        self.badEpochBridge.append(i)
-                        self.badChannelBridge[corrID] += 1
+                        badBridges[corrID] += 1
 
                 # correct for alpha
                 if self.alphaCorr:
                     ps = np.abs(np.fft.rfft(e))**2  # **2 for power specturm
-                    freq = np.linspace(0, 512. / 2, ps.shape[1])
+                    freq = np.linspace(0, Data.Results.sampleRate / 2,
+                                       ps.shape[1])
                     alphaFreq = [
                         a for a in [b for b, f in enumerate(freq) if f > 7.5]
                         if freq[a] < 12.5]
@@ -198,17 +197,26 @@ class Results():
                     alphaID = np.where(
                         alphaPower > alphaPower.mean() +
                         alphaPower.std() * 10)[0]
-
                     if alphaID.shape[0] != 0:
-                        self.badEpochAlpha.append(i)
-                        self.badChannelAlpha[alphaID] += 1
+                        badAlpha[alphaID] += 1
 
-        # Create list of epochs that should be kept
-        self.badID = np.unique(self.badEpochThreshold + self.badEpochBridge +
-                               self.badEpochAlpha)
-        if self.badEpochThreshold != []:
-            self.okID = [i for i in range(epochs.shape[0])
-                         if i not in self.badID]
+                # Add information of bad channels
+                self.badEpochThreshold.append(badThresholds != 0)
+                self.badEpochBridge.append(badBridges.astype('bool'))
+                self.badEpochAlpha.append(badAlpha.astype('bool'))
+
+            # Turn channel information into numpy arrays
+            self.badEpochThreshold = np.array(self.badEpochThreshold)
+            self.badEpochBridge = np.array(self.badEpochBridge)
+            self.badEpochAlpha = np.array(self.badEpochAlpha)
+
+            # Create list of epochs that should be kept
+            self.okID = []
+            for i in range(epochs.shape[0]):
+                if not np.any(self.badEpochThreshold[i] == 1) and \
+                        not np.any(self.badEpochBridge[i] == 1) and \
+                        not np.any(self.badEpochAlpha[i] == 1):
+                    self.okID.append(i)
         else:
             self.okID = [i for i in range(epochs.shape[0])]
 

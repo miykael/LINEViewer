@@ -154,26 +154,55 @@ class EpochSummary(wx.Panel):
         axes = self.figure.add_subplot(1, 1, 1)
         sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
 
-        corrMatrix = np.where(np.abs(np.corrcoef(epoch)) > .999)
-        corrID = np.unique([corrMatrix[0][m]
-                            for m in range(corrMatrix[0].shape[0])
-                            if corrMatrix[0][m] != corrMatrix[1][m]])
+        # correct for threshold
+        badChannelThreshold = np.zeros(epoch.shape[0], dtype=int)
+        if self.Data.Specs.CheckboxThreshold.GetValue():
+            windowSteps = int(
+                self.Data.Results.window * self.Data.Results.sampleRate / 1000.)
+            for j in range(epoch.shape[1] - windowSteps):
+                channelThresholdOff = np.ptp(
+                    epoch[:, j:j + windowSteps], axis=1) > self.Data.Results.threshold
+                if np.sum(channelThresholdOff) != 0:
+                    badChannelThreshold += channelThresholdOff
 
-        ps = np.abs(np.fft.rfft(epoch))**2  # **2 for power specturm
-        freq = np.linspace(0, 512. / 2, ps.shape[1])
-        alphaFreq = [a for a in [b for b, f in enumerate(freq)
-                                 if f > 7.5] if freq[a] < 12.5]
-        alphaPower = ps[:, alphaFreq].sum(axis=1)
-        alphaID = np.where(
-            alphaPower > alphaPower.mean() + alphaPower.std() * 5)[0]
+        # correct for bridges
+        badChannelBridge = np.zeros(epoch.shape[0], dtype=int)
+        if self.Data.Specs.CheckboxBridge.GetValue():
+            corrMatrix = np.where(np.corrcoef(epoch) > .99999)
+            if epoch.shape[0] != corrMatrix[0].shape[0]:
+                corrID = np.unique(
+                    [corrMatrix[0][m]
+                     for m in range(corrMatrix[0].shape[0])
+                     if corrMatrix[0][m] != corrMatrix[1][m]])
+                badChannelBridge[corrID] += 1
+
+        # correct for alpha
+        badChannelAlpha = np.zeros(epoch.shape[0], dtype=int)
+        if self.Data.Specs.CheckboxAlpha.GetValue():
+            ps = np.abs(np.fft.rfft(epoch))**2  # **2 for power specturm
+            freq = np.linspace(
+                0, self.Data.Results.sampleRate / 2, ps.shape[1])
+            alphaFreq = [
+                a for a in [b for b, f in enumerate(freq) if f > 7.5]
+                if freq[a] < 12.5]
+            alphaPower = ps[:, alphaFreq].sum(axis=1)
+            alphaID = np.where(
+                alphaPower > alphaPower.mean() +
+                alphaPower.std() * 10)[0]
+            if alphaID.shape[0] != 0:
+                badChannelAlpha[alphaID] += 1
+
+        badChannelIDThreshold = np.where(badChannelThreshold != 0)
+        badChannelIDBridge = np.where(badChannelBridge != 0)
+        badChannelIDAlpha = np.where(badChannelAlpha != 0)
 
         minmax = [0, 0]
         for j, c in enumerate(epoch):
-            if np.sum(c > 80.) != 0:
+            if j in badChannelIDThreshold:
                 color = 'r'
-            elif j in corrID:
+            elif j in badChannelIDBridge:
                 color = 'b'
-            elif j in alphaID:
+            elif j in badChannelIDAlpha:
                 color = 'g'
             else:
                 color = 'gray'
@@ -292,19 +321,22 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False):
         self.CheckboxGrid = wx.CheckBox(self, wx.ID_ANY, 'Show Grid')
         self.CheckboxGrid.SetValue(True)
         self.hbox.Add(self.CheckboxGrid, 0, border=3, flag=flags)
-        wx.EVT_CHECKBOX(self.CheckboxGrid, self.CheckboxGrid.Id, self.updateFigure)
+        wx.EVT_CHECKBOX(
+            self.CheckboxGrid, self.CheckboxGrid.Id, self.updateFigure)
 
     if showGFP:
         self.CheckboxGFP = wx.CheckBox(self, wx.ID_ANY, 'Show GFP')
         self.CheckboxGFP.SetValue(True)
         self.hbox.Add(self.CheckboxGFP, 0, border=3, flag=flags)
-        wx.EVT_CHECKBOX(self.CheckboxGFP, self.CheckboxGFP.Id, self.updateFigure)
+        wx.EVT_CHECKBOX(
+            self.CheckboxGFP, self.CheckboxGFP.Id, self.updateFigure)
 
     if showGMD:
         self.CheckboxGMD = wx.CheckBox(self, wx.ID_ANY, 'Show GMD')
         self.CheckboxGMD.SetValue(True)
         self.hbox.Add(self.CheckboxGMD, 0, border=3, flag=flags)
-        wx.EVT_CHECKBOX(self.CheckboxGMD, self.CheckboxGMD.Id, self.updateFigure)
+        wx.EVT_CHECKBOX(
+            self.CheckboxGMD, self.CheckboxGMD.Id, self.updateFigure)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
@@ -314,9 +346,12 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False):
 
 
 def findSquare(number):
-    s1 = int(np.round(np.sqrt(number)))
-    s2 = int(np.ceil(1.0 * number / s1))
-    return s1, s2
+    if number == 0:
+        return 1, 1
+    else:
+        s1 = int(np.round(np.sqrt(number)))
+        s2 = int(np.ceil(1.0 * number / s1))
+        return s1, s2
 
 
 def getXaxis(Results):
