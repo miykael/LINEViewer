@@ -8,6 +8,19 @@ from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
 
 
+class Overview(wx.Panel):
+
+    def __init__(self, ParentFrame, Data):
+
+        # Create Data Frame window
+        wx.Panel.__init__(self, parent=ParentFrame, style=wx.SUNKEN_BORDER)
+
+        # Specify relevant variables
+        self.Data = Data
+        self.ParentFrame = ParentFrame
+        newFigure(self)
+
+
 class GFPSummary(wx.Panel):
 
     def __init__(self, ParentFrame, Data):

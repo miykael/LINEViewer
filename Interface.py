@@ -36,19 +36,22 @@ class MainFrame(wx.Frame):
         # Panel: Visualization
         self.PanelOption = wx.Notebook(MainPanel, wx.ID_ANY,
                                        style=wx.NB_TOP, size=(1000, 1000))
-        self.Data.EpochMarkerDetail = PanelVisualize.EpochMarkerDetail(
-            self.PanelOption, self.Data)
         self.Data.EpochSummary = PanelVisualize.EpochSummary(
             self.PanelOption, self.Data)
         self.Data.GFPDetailed = PanelVisualize.GFPDetailed(
             self.PanelOption, self.Data)
+        self.Data.EpochMarkerDetail = PanelVisualize.EpochMarkerDetail(
+            self.PanelOption, self.Data)
+        self.Data.Overview = PanelVisualize.Overview(self.PanelOption,
+                                                     self.Data)
         self.Data.GFPSummary = PanelVisualize.GFPSummary(
             self.PanelOption, self.Data)
 
+        self.PanelOption.AddPage(self.Data.Overview, 'Overview')
         self.PanelOption.AddPage(self.Data.GFPSummary, 'GFP - Summary')
         self.PanelOption.AddPage(self.Data.GFPDetailed, 'GFP - Detailed')
         self.PanelOption.AddPage(self.Data.EpochMarkerDetail,
-                                 'Epoch - Marker Detail')
+                                 'Epochs - Detailed')
         self.PanelOption.AddPage(self.Data.EpochSummary, 'Epoch - Summary')
         self.Data.GFPSummary.SetFocus()
         sizerMainH.Add(self.PanelOption, wx.ID_ANY, wx.EXPAND)
