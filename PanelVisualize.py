@@ -116,12 +116,12 @@ class GFPDetailed(wx.Panel):
         ax = event.inaxes
         if ax is None:
             return
-        if event.button is 1:
-            if event.dblclick:
+        if event.dblclick:
+            # On left click, zoom the selected axes
+            if event.button is 1:
                 subplotID = event.inaxes.get_subplotspec().num1
                 markerID = self.Data.Results.uniqueMarkers[subplotID]
 
-                # On left click, zoom the selected axes
                 self.Data.EpochSummary.update(markerID)
                 self.Data.EpochMarkerDetail.update(markerID)
                 self.ParentFrame.SetSelection(2)

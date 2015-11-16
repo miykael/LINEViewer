@@ -144,30 +144,71 @@ class Results():
                                np.mean(e[:, :self.preFrame], axis=1)]
                 e -= baselineAvg
 
-        # Threshold epochs
-        if self.thresholdCorr:
+        # Exclude Channels
+        if self.excludeChannel != []:
+            channelID = [
+                i for i, e in enumerate(Data.Orig.labelsChannel)
+                if e not in self.excludeChannel]
+        else:
+            channelID = range(Data.Orig.labelsChannel.shape[0])
 
-            # Exclude Channels
-            if self.excludeChannel != []:
-                channelID = [
-                    i for i, e in enumerate(Data.Orig.labelsChannel)
-                    if e not in self.excludeChannel]
-            else:
-                channelID = range(Data.Orig.labelsChannel.shape[0])
+        # Correct epochs for threshold, bridges or alpha waves
+        if self.thresholdCorr or self.bridgeCorr or self.alphaCorr:
+            self.badEpochThreshold = []
+            self.badEpochBridge = []
+            self.badEpochAlpha = []
 
-            # Check threshold in selected channels
-            windowSteps = int(self.window * self.sampleRate / 1000.)
-            self.badID = []
+            self.badChannelThreshold = np.zeros(128, dtype=int)
+            self.badChannelBridge = np.zeros(128, dtype=int)
+            self.badChannelAlpha = np.zeros(128, dtype=int)
+
+            # Go through all the epochs
             for i, e in enumerate(epochs):
-                for j in range(e[channelID].shape[1] - windowSteps):
-                    if np.sum(np.ptp(e[:, j:j + windowSteps],
-                                     axis=1) > self.threshold) != 0:
-                        self.badID.append(i)
-                        break
 
-            # Check threshold in selected channels
-            self.okID = [
-                i for i in range(epochs.shape[0]) if i not in self.badID]
+                # correct for threshold
+                if self.thresholdCorr:
+                    windowSteps = int(self.window * self.sampleRate / 1000.)
+                    for j in range(e[channelID].shape[1] - windowSteps):
+                        channelThresholdOff = np.ptp(
+                            e[:, j:j + windowSteps], axis=1) > self.threshold
+                        if np.sum(channelThresholdOff) != 0:
+                            if i not in self.badEpochThreshold:
+                                self.badEpochThreshold.append(i)
+                                self.badChannelThreshold += channelThresholdOff
+
+                # correct for bridges
+                if self.bridgeCorr:
+                    corrMatrix = np.where(np.corrcoef(e) > .99999)
+                    if e.shape[0] != corrMatrix[0].shape[0]:
+                        corrID = np.unique(
+                            [corrMatrix[0][m]
+                             for m in range(corrMatrix[0].shape[0])
+                             if corrMatrix[0][m] != corrMatrix[1][m]])
+                        self.badEpochBridge.append(i)
+                        self.badChannelBridge[corrID] += 1
+
+                # correct for alpha
+                if self.alphaCorr:
+                    ps = np.abs(np.fft.rfft(e))**2  # **2 for power specturm
+                    freq = np.linspace(0, 512. / 2, ps.shape[1])
+                    alphaFreq = [
+                        a for a in [b for b, f in enumerate(freq) if f > 7.5]
+                        if freq[a] < 12.5]
+                    alphaPower = ps[:, alphaFreq].sum(axis=1)
+                    alphaID = np.where(
+                        alphaPower > alphaPower.mean() +
+                        alphaPower.std() * 10)[0]
+
+                    if alphaID.shape[0] != 0:
+                        self.badEpochAlpha.append(i)
+                        self.badChannelAlpha[alphaID] += 1
+
+        # Create list of epochs that should be kept
+        self.badID = np.unique(self.badEpochThreshold + self.badEpochBridge +
+                               self.badEpochAlpha)
+        if self.badEpochThreshold != []:
+            self.okID = [i for i in range(epochs.shape[0])
+                         if i not in self.badID]
         else:
             self.okID = [i for i in range(epochs.shape[0])]
 
