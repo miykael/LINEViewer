@@ -262,9 +262,10 @@ class EpochMarkerDetail(wx.Panel):
                      samplingPoints - preEpoch) for i in range(samplingPoints)]
 
         # Compute number of subplots needed
-        if len(self.id2Show) < 6:
-            tiles = len(self.id2Show)
-            hPlots, vPlots = findSquare(len(self.id2Show))
+        tiles2Show = len(self.id2Show) - self.shiftView
+        if tiles2Show < 6:
+            tiles = tiles2Show
+            hPlots, vPlots = findSquare(tiles2Show)
         else:
             tiles = 6
             vPlots = 3
@@ -311,6 +312,9 @@ class EpochMarkerDetail(wx.Panel):
                 axes.get_yaxis().set_visible(False)
                 axes.title.set_text('Epoch: %s' % epochID)
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
+
+        self.TextPages.SetLabel('Page: %s/%s' % ((self.shiftView / 6) + 1,
+                                                 (len(self.id2Show) / 6) + 1))
 
         self.figure.subplots_adjust(left=0.03,
                                     bottom=0.03,
@@ -386,6 +390,7 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
             self.CheckboxEpochs, self.CheckboxEpochs.Id, self.updateFigure)
 
         self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<")
+        self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0')
         self.goRightButton = wx.Button(self, wx.ID_ANY, ">>")
         wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
                       self.shiftViewLeft)
@@ -393,6 +398,7 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
                       self.shiftViewRight)
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
         self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
+        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
