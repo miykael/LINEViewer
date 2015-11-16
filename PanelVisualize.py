@@ -157,11 +157,12 @@ class EpochSummary(wx.Panel):
         # correct for threshold
         badChannelThreshold = np.zeros(epoch.shape[0], dtype=int)
         if self.Data.Specs.CheckboxThreshold.GetValue():
-            windowSteps = int(
-                self.Data.Results.window * self.Data.Results.sampleRate / 1000.)
+            windowSteps = int(self.Data.Results.window *
+                              self.Data.Results.sampleRate / 1000.)
             for j in range(epoch.shape[1] - windowSteps):
                 channelThresholdOff = np.ptp(
-                    epoch[:, j:j + windowSteps], axis=1) > self.Data.Results.threshold
+                    epoch[:, j:j + windowSteps],
+                    axis=1) > self.Data.Results.threshold
                 if np.sum(channelThresholdOff) != 0:
                     badChannelThreshold += channelThresholdOff
 
@@ -240,62 +241,69 @@ class EpochMarkerDetail(wx.Panel):
 
         # Specify relevant variables
         self.Data = Data
-        newFigure(self)
+        newFigure(self, showDetailedEpochs=True)
 
-    def update(self, markerValue):
-        epochs = self.Data.Results.epochs[
-            np.where(self.Data.Results.markers == markerValue)]
+    def update(self, markerValue, shiftView=0):
+        self.figure.clear()
+        self.shiftView = shiftView
+        self.markerValue = markerValue
+        self.id2Show = np.where(
+            self.Data.Results.markers == self.markerValue)[0]
+        if self.CheckboxEpochs.IsChecked():
+            self.id2Show = [
+                i for i in self.id2Show if i in self.Data.Results.badID]
 
         preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
         postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
-        samplingPoints = epochs.shape[2]
+        samplingPoints = self.Data.Results.epochs.shape[2]
 
         xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
                      samplingPoints - preEpoch) for i in range(samplingPoints)]
 
-        for i in range(6):
-            axes = self.figure.add_subplot(3, 2, i + 1)
-            sizer = np.sqrt(
-                np.sum(np.ptp(epochs[i], axis=1) / epochs[i].shape[0]))
+        # Compute number of subplots needed
+        if len(self.id2Show) < 6:
+            tiles = len(self.id2Show)
+            hPlots, vPlots = findSquare(len(self.id2Show))
+        else:
+            tiles = 6
+            vPlots = 3
+            hPlots = 2
 
-            corrMatrix = np.where(np.abs(np.corrcoef(epochs[i])) > .999)
-            corrID = np.unique([corrMatrix[0][m]
-                                for m in range(corrMatrix[0].shape[0])
-                                if corrMatrix[0][m] != corrMatrix[1][m]])
+        # Draw the epochs
+        for k, i in enumerate(range(shiftView, tiles + shiftView)):
+            axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
 
-            ps = np.abs(np.fft.rfft(epochs[i]))**2  # **2 for power specturm
-            freq = np.linspace(0, 512. / 2, ps.shape[1])
-            alphaFreq = [a for a in [b for b, f in enumerate(freq)
-                                     if f > 7.5] if freq[a] < 12.5]
-            alphaPower = ps[:, alphaFreq].sum(axis=1)
-            alphaID = np.where(
-                alphaPower > alphaPower.mean() + alphaPower.std() * 5)[0]
+            if i < len(self.id2Show):
+                epochID = self.id2Show[i]
+                epoch = self.Data.Results.epochs[epochID]
 
-            minmax = [0, 0]
-            for j, c in enumerate(epochs[i]):
-                if np.sum(c > 80.) != 0:
-                    color = 'r'
-                elif j in corrID:
-                    color = 'b'
-                elif j in alphaID:
-                    color = 'g'
-                else:
-                    color = 'gray'
-                lines = axes.plot(xaxis, c / sizer - j, color)
-                ydata = lines[0].get_ydata()
-                lineMin = ydata.min()
-                lineMax = ydata.max()
-                if minmax[0] > lineMin:
-                    minmax[0] = lineMin
-                if minmax[1] < lineMax:
-                    minmax[1] = lineMax
+                sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
 
-            delta = np.abs(minmax).sum() * .01
-            minmax = [minmax[0] - delta, minmax[1] + delta]
+                minmax = [0, 0]
+                for j, c in enumerate(epoch):
+                    if self.Data.Results.badEpochThreshold[epochID][j]:
+                        color = 'r'
+                    elif self.Data.Results.badEpochBridge[epochID][j]:
+                        color = 'b'
+                    elif self.Data.Results.badEpochAlpha[epochID][j]:
+                        color = 'g'
+                    else:
+                        color = 'gray'
+                    lines = axes.plot(xaxis, c / sizer - j, color)
+                    ydata = lines[0].get_ydata()
+                    lineMin = ydata.min()
+                    lineMax = ydata.max()
+                    if minmax[0] > lineMin:
+                        minmax[0] = lineMin
+                    if minmax[1] < lineMax:
+                        minmax[1] = lineMax
 
-            axes.set_ylim(minmax)
-            axes.get_yaxis().set_visible(False)
-            axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
+                delta = np.abs(minmax).sum() * .01
+                minmax = [minmax[0] - delta, minmax[1] + delta]
+
+                axes.set_ylim(minmax)
+                axes.get_yaxis().set_visible(False)
+                axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
         self.figure.subplots_adjust(left=0.03,
                                     bottom=0.03,
@@ -305,8 +313,32 @@ class EpochMarkerDetail(wx.Panel):
                                     hspace=0.24)
         self.canvas.draw()
 
+    def updateFigure(self, event):
+        if self.Data.Datasets != []:
+            self.Data.EpochMarkerDetail.update(
+                self.Data.EpochMarkerDetail.markerValue)
+        event.Skip()
 
-def newFigure(self, showGrid=False, showGFP=False, showGMD=False):
+    def shiftViewLeft(self, event):
+        if self.Data.Datasets != []:
+            if self.Data.EpochMarkerDetail.shiftView != 0:
+                viewShift = self.Data.EpochMarkerDetail.shiftView - 6
+                self.Data.EpochMarkerDetail.update(
+                    self.Data.EpochMarkerDetail.markerValue, viewShift)
+        event.Skip()
+
+    def shiftViewRight(self, event):
+        if self.Data.Datasets != []:
+            if self.Data.EpochMarkerDetail.shiftView + 6 \
+                    < len(self.Data.EpochMarkerDetail.id2Show):
+                viewShift = self.Data.EpochMarkerDetail.shiftView + 6
+                self.Data.EpochMarkerDetail.update(
+                    self.Data.EpochMarkerDetail.markerValue, viewShift)
+        event.Skip()
+
+
+def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
+              showDetailedEpochs=False):
     self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
     self.canvas = FigureCanvas(self, wx.ID_ANY, self.figure)
     self.toolbar = NavigationToolbar(self.canvas)
@@ -337,6 +369,23 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False):
         self.hbox.Add(self.CheckboxGMD, 0, border=3, flag=flags)
         wx.EVT_CHECKBOX(
             self.CheckboxGMD, self.CheckboxGMD.Id, self.updateFigure)
+
+    if showDetailedEpochs:
+        self.CheckboxEpochs = wx.CheckBox(self, wx.ID_ANY,
+                                          'Show only dropped Epochs')
+        self.CheckboxEpochs.SetValue(True)
+        self.hbox.Add(self.CheckboxEpochs, 0, border=3, flag=flags)
+        wx.EVT_CHECKBOX(
+            self.CheckboxEpochs, self.CheckboxEpochs.Id, self.updateFigure)
+
+        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<")
+        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>")
+        wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
+                      self.shiftViewLeft)
+        wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
+                      self.shiftViewRight)
+        self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
+        self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 

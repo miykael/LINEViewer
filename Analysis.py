@@ -212,13 +212,17 @@ class Results():
 
             # Create list of epochs that should be kept
             self.okID = []
+            self.badID = []
             for i in range(epochs.shape[0]):
                 if not np.any(self.badEpochThreshold[i] == 1) and \
                         not np.any(self.badEpochBridge[i] == 1) and \
                         not np.any(self.badEpochAlpha[i] == 1):
                     self.okID.append(i)
+                else:
+                    self.badID.append(i)
         else:
             self.okID = [i for i in range(epochs.shape[0])]
+            self.badID = []
 
         # Drop bad Epochs
         self.epochs = epochs[self.okID]

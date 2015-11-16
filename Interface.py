@@ -47,9 +47,9 @@ class MainFrame(wx.Frame):
 
         self.PanelOption.AddPage(self.Data.GFPSummary, 'GFP - Summary')
         self.PanelOption.AddPage(self.Data.GFPDetailed, 'GFP - Detailed')
-        self.PanelOption.AddPage(self.Data.EpochSummary, 'Epoch - Summary')
         self.PanelOption.AddPage(self.Data.EpochMarkerDetail,
                                  'Epoch - Marker Detail')
+        self.PanelOption.AddPage(self.Data.EpochSummary, 'Epoch - Summary')
         self.Data.GFPSummary.SetFocus()
         sizerMainH.Add(self.PanelOption, wx.ID_ANY, wx.EXPAND)
 
