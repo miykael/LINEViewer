@@ -57,7 +57,7 @@ class GFPSummary(wx.Panel):
                 self.Data.markers2hide = []
                 self.Data.Results.updateEpochs(self.Data)
 
-    def showGrid(self, event):
+    def updateFigure(self, event):
         if self.Data.Datasets != []:
             self.Data.GFPSummary.update(self.Data.Results)
         event.Skip()
@@ -73,7 +73,7 @@ class GFPDetailed(wx.Panel):
         # Specify relevant variables
         self.Data = Data
         self.ParentFrame = ParentFrame
-        newFigure(self, showGrid=True)
+        newFigure(self, showGrid=True, showGFP=True, showGMD=True)
 
         # Figure events
         self.canvas.mpl_connect('button_press_event', self.zoomInDetailedGFP)
@@ -81,7 +81,7 @@ class GFPDetailed(wx.Panel):
     def update(self, Results):
 
         if self.Data.Datasets == []:
-            newFigure(self, showGrid=True)
+            newFigure(self, showGrid=True, showGFP=True, showGMD=True)
         else:
             self.figure.clear()
             figureShape = findSquare(Results.uniqueMarkers.shape[0])
@@ -90,8 +90,10 @@ class GFPDetailed(wx.Panel):
                 axes = self.figure.add_subplot(figureShape[0],
                                                figureShape[1],
                                                i + 1)
-                axes.plot(xaxis, Results.avgGFP[i], 'b')
-                axes.plot(xaxis, Results.avgGMD[i], 'r')
+                if self.CheckboxGFP.IsChecked():
+                    axes.plot(xaxis, Results.avgGFP[i], 'b')
+                if self.CheckboxGMD.IsChecked():
+                    axes.plot(xaxis, Results.avgGMD[i], 'r')
                 nMarkers = np.where(
                     Results.markers == Results.uniqueMarkers[i])[0].shape[0]
                 axes.title.set_text(
@@ -105,7 +107,7 @@ class GFPDetailed(wx.Panel):
                                         hspace=0.24)
             self.canvas.draw()
 
-    def showGrid(self, event):
+    def updateFigure(self, event):
         if self.Data.Datasets != []:
             self.Data.GFPDetailed.update(self.Data.Results)
         event.Skip()
@@ -184,7 +186,7 @@ class EpochSummary(wx.Panel):
             if minmax[1] < lineMax:
                 minmax[1] = lineMax
 
-        delta = np.abs(minmax).sum()*.01
+        delta = np.abs(minmax).sum() * .01
         minmax = [minmax[0] - delta, minmax[1] + delta]
 
         axes.set_ylim(minmax)
@@ -259,7 +261,7 @@ class EpochMarkerDetail(wx.Panel):
                 if minmax[1] < lineMax:
                     minmax[1] = lineMax
 
-            delta = np.abs(minmax).sum()*.01
+            delta = np.abs(minmax).sum() * .01
             minmax = [minmax[0] - delta, minmax[1] + delta]
 
             axes.set_ylim(minmax)
@@ -275,7 +277,7 @@ class EpochMarkerDetail(wx.Panel):
         self.canvas.draw()
 
 
-def newFigure(self, showGrid=False):
+def newFigure(self, showGrid=False, showGFP=False, showGMD=False):
     self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
     self.canvas = FigureCanvas(self, wx.ID_ANY, self.figure)
     self.toolbar = NavigationToolbar(self.canvas)
@@ -283,11 +285,28 @@ def newFigure(self, showGrid=False):
     self.sizer = wx.BoxSizer(wx.VERTICAL)
     self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
 
+    self.hbox = wx.BoxSizer(wx.HORIZONTAL)
+    flags = wx.ALIGN_LEFT | wx.ALL | wx.ALIGN_CENTER_VERTICAL
+
     if showGrid:
         self.CheckboxGrid = wx.CheckBox(self, wx.ID_ANY, 'Show Grid')
         self.CheckboxGrid.SetValue(True)
-        self.sizer.Add(self.CheckboxGrid, 0, wx.EXPAND)
-        wx.EVT_CHECKBOX(self.CheckboxGrid, self.CheckboxGrid.Id, self.showGrid)
+        self.hbox.Add(self.CheckboxGrid, 0, border=3, flag=flags)
+        wx.EVT_CHECKBOX(self.CheckboxGrid, self.CheckboxGrid.Id, self.updateFigure)
+
+    if showGFP:
+        self.CheckboxGFP = wx.CheckBox(self, wx.ID_ANY, 'Show GFP')
+        self.CheckboxGFP.SetValue(True)
+        self.hbox.Add(self.CheckboxGFP, 0, border=3, flag=flags)
+        wx.EVT_CHECKBOX(self.CheckboxGFP, self.CheckboxGFP.Id, self.updateFigure)
+
+    if showGMD:
+        self.CheckboxGMD = wx.CheckBox(self, wx.ID_ANY, 'Show GMD')
+        self.CheckboxGMD.SetValue(True)
+        self.hbox.Add(self.CheckboxGMD, 0, border=3, flag=flags)
+        wx.EVT_CHECKBOX(self.CheckboxGMD, self.CheckboxGMD.Id, self.updateFigure)
+
+    self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
     self.sizer.Add(self.toolbar, 0, wx.EXPAND)
     self.SetSizer(self.sizer)
