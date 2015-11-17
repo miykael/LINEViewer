@@ -60,7 +60,7 @@ class GFPSummary(wx.Panel):
             return
         if event.button is 1:
             if event.dblclick:
-                self.ParentFrame.SetSelection(1)
+                self.ParentFrame.SetSelection(2)
                 self.canvas.ReleaseMouse()
         elif event.button is 3:
             if event.dblclick:
@@ -137,8 +137,143 @@ class GFPDetailed(wx.Panel):
 
                 self.Data.EpochSummary.update(markerID)
                 self.Data.EpochMarkerDetail.update(markerID)
-                self.ParentFrame.SetSelection(2)
+                self.ParentFrame.SetSelection(3)
                 self.canvas.ReleaseMouse()
+
+
+class EpochMarkerDetail(wx.Panel):
+
+    def __init__(self, ParentFrame, Data):
+
+        # Create Data Frame window
+        wx.Panel.__init__(self, parent=ParentFrame, style=wx.SUNKEN_BORDER)
+
+        # Specify relevant variables
+        self.Data = Data
+        newFigure(self, showDetailedEpochs=True)
+
+        # Figure events
+        self.canvas.callbacks.connect('pick_event', self.onPick)
+
+    def update(self, markerValue, shiftView=0):
+        self.figure.clear()
+        self.shiftView = shiftView
+        self.markerValue = markerValue
+        self.id2Show = np.where(
+            self.Data.Results.markers == self.markerValue)[0]
+        if self.CheckboxEpochs.IsChecked():
+            self.id2Show = [
+                i for i in self.id2Show if i in self.Data.Results.badID]
+
+        preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
+        postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
+        samplingPoints = self.Data.Results.epochs.shape[2]
+        self.labelsChannel = self.Data.Datasets[0].labelsChannel
+
+        xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
+                     samplingPoints - preEpoch) for i in range(samplingPoints)]
+
+        # Compute number of subplots needed
+        tiles2Show = len(self.id2Show) - self.shiftView
+        if tiles2Show < 4:
+            tiles = tiles2Show
+            hPlots, vPlots = findSquare(tiles2Show)
+        else:
+            tiles = 4
+            vPlots = 2
+            hPlots = 2
+
+        # Draw the epochs
+        for k, i in enumerate(range(shiftView, tiles + shiftView)):
+            axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
+            if i < len(self.id2Show):
+                epochID = self.id2Show[i]
+                epoch = self.Data.Orig.epochs[epochID]
+
+                sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
+
+                minmax = [0, 0]
+                for j, c in enumerate(epoch):
+                    if self.Data.Results.badEpochThreshold[epochID][j]:
+                        color = 'r'
+                        axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                  self.labelsChannel[j], color='r')
+                    elif self.Data.Results.badEpochBridge[epochID][j]:
+                        color = 'b'
+                        axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                  self.labelsChannel[j], color='b')
+                    elif self.Data.Results.badEpochAlpha[epochID][j]:
+                        color = 'g'
+                        axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                  self.labelsChannel[j], color='g')
+                    else:
+                        color = 'gray'
+                    lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
+                    ydata = lines[0].get_ydata()
+                    lineMin = ydata.min()
+                    lineMax = ydata.max()
+                    if minmax[0] > lineMin:
+                        minmax[0] = lineMin
+                    if minmax[1] < lineMax:
+                        minmax[1] = lineMax
+
+                delta = np.abs(minmax).sum() * .01
+                minmax = [minmax[0] - delta, minmax[1] + delta]
+
+                axes.set_ylim(minmax)
+                axes.get_yaxis().set_visible(False)
+                axes.title.set_text('Epoch: %s' % epochID)
+                axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
+
+        currentPage = (self.shiftView / 6) + 1
+        totalPage = (len(self.id2Show) - 1) / 6 + 1
+        if totalPage == 0:
+            currentPage = 0
+
+        self.TextPages.SetLabel('Page: %s/%s' % (currentPage, totalPage))
+
+        self.figure.subplots_adjust(left=0.03,
+                                    bottom=0.03,
+                                    right=0.98,
+                                    top=0.97,
+                                    wspace=0.20,
+                                    hspace=0.24)
+        self.canvas.draw()
+
+    def updateFigure(self, event):
+        if self.Data.Datasets != []:
+            self.Data.EpochMarkerDetail.update(
+                self.Data.EpochMarkerDetail.markerValue)
+        event.Skip()
+
+    def shiftViewLeft(self, event):
+        if self.Data.Datasets != []:
+            if self.Data.EpochMarkerDetail.shiftView != 0:
+                viewShift = self.Data.EpochMarkerDetail.shiftView - 6
+                self.Data.EpochMarkerDetail.update(
+                    self.Data.EpochMarkerDetail.markerValue, viewShift)
+        event.Skip()
+
+    def shiftViewRight(self, event):
+        if self.Data.Datasets != []:
+            if self.Data.EpochMarkerDetail.shiftView + 6 \
+                    < len(self.Data.EpochMarkerDetail.id2Show):
+                viewShift = self.Data.EpochMarkerDetail.shiftView + 6
+                self.Data.EpochMarkerDetail.update(
+                    self.Data.EpochMarkerDetail.markerValue, viewShift)
+        event.Skip()
+
+    def onPick(self, event):
+        # only if left mouse button is pressed
+        if event.mouseevent.button == 1:
+            event.artist.set_color('black')
+            linenumber = int(event.artist.get_label()[5:])
+            xValue = -float(self.Data.Specs.PreEpoch.GetValue()) * 1.2
+            yValue = event.artist.get_data()[1][0]
+            event.artist.axes.text(xValue, yValue,
+                                   self.labelsChannel[linenumber],
+                                   color='black')
+            self.canvas.draw()
 
 
 class EpochSummary(wx.Panel):
@@ -153,6 +288,7 @@ class EpochSummary(wx.Panel):
         newFigure(self)
 
     def update(self, markerValue):
+        self.figure.clear()
         epochs = self.Data.Results.epochs[
             np.where(self.Data.Results.markers == markerValue)]
         epoch = epochs.mean(axis=0)
@@ -245,122 +381,6 @@ class EpochSummary(wx.Panel):
         self.canvas.draw()
 
 
-class EpochMarkerDetail(wx.Panel):
-
-    def __init__(self, ParentFrame, Data):
-
-        # Create Data Frame window
-        wx.Panel.__init__(self, parent=ParentFrame, style=wx.SUNKEN_BORDER)
-
-        # Specify relevant variables
-        self.Data = Data
-        newFigure(self, showDetailedEpochs=True)
-
-    def update(self, markerValue, shiftView=0):
-        self.figure.clear()
-        self.shiftView = shiftView
-        self.markerValue = markerValue
-        self.id2Show = np.where(
-            self.Data.Results.markers == self.markerValue)[0]
-        if self.CheckboxEpochs.IsChecked():
-            self.id2Show = [
-                i for i in self.id2Show if i in self.Data.Results.badID]
-
-        preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
-        postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
-        samplingPoints = self.Data.Results.epochs.shape[2]
-        labelsChannel = self.Data.Datasets[0].labelsChannel
-
-        xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
-                     samplingPoints - preEpoch) for i in range(samplingPoints)]
-
-        # Compute number of subplots needed
-        tiles2Show = len(self.id2Show) - self.shiftView
-        if tiles2Show < 6:
-            tiles = tiles2Show
-            hPlots, vPlots = findSquare(tiles2Show)
-        else:
-            tiles = 6
-            vPlots = 3
-            hPlots = 2
-
-        # Draw the epochs
-        for k, i in enumerate(range(shiftView, tiles + shiftView)):
-            axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
-            if i < len(self.id2Show):
-                epochID = self.id2Show[i]
-                epoch = self.Data.Orig.epochs[epochID]
-
-                sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
-
-                minmax = [0, 0]
-                for j, c in enumerate(epoch):
-                    if self.Data.Results.badEpochThreshold[epochID][j]:
-                        color = 'r'
-                        axes.text(postEpoch, c[-1] / sizer - j,
-                                  labelsChannel[j], color='r')
-                    elif self.Data.Results.badEpochBridge[epochID][j]:
-                        color = 'b'
-                        axes.text(postEpoch, c[-1] / sizer - j,
-                                  labelsChannel[j], color='b')
-                    elif self.Data.Results.badEpochAlpha[epochID][j]:
-                        color = 'g'
-                        axes.text(postEpoch, c[-1] / sizer - j,
-                                  labelsChannel[j], color='g')
-                    else:
-                        color = 'gray'
-                    lines = axes.plot(xaxis, c / sizer - j, color)
-                    ydata = lines[0].get_ydata()
-                    lineMin = ydata.min()
-                    lineMax = ydata.max()
-                    if minmax[0] > lineMin:
-                        minmax[0] = lineMin
-                    if minmax[1] < lineMax:
-                        minmax[1] = lineMax
-
-                delta = np.abs(minmax).sum() * .01
-                minmax = [minmax[0] - delta, minmax[1] + delta]
-
-                axes.set_ylim(minmax)
-                axes.get_yaxis().set_visible(False)
-                axes.title.set_text('Epoch: %s' % epochID)
-                axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
-
-        self.TextPages.SetLabel('Page: %s/%s' % ((self.shiftView / 6) + 1,
-                                                 (len(self.id2Show) / 6) + 1))
-
-        self.figure.subplots_adjust(left=0.03,
-                                    bottom=0.03,
-                                    right=0.98,
-                                    top=0.97,
-                                    wspace=0.20,
-                                    hspace=0.24)
-        self.canvas.draw()
-
-    def updateFigure(self, event):
-        if self.Data.Datasets != []:
-            self.Data.EpochMarkerDetail.update(
-                self.Data.EpochMarkerDetail.markerValue)
-        event.Skip()
-
-    def shiftViewLeft(self, event):
-        if self.Data.Datasets != []:
-            if self.Data.EpochMarkerDetail.shiftView != 0:
-                viewShift = self.Data.EpochMarkerDetail.shiftView - 6
-                self.Data.EpochMarkerDetail.update(
-                    self.Data.EpochMarkerDetail.markerValue, viewShift)
-        event.Skip()
-
-    def shiftViewRight(self, event):
-        if self.Data.Datasets != []:
-            if self.Data.EpochMarkerDetail.shiftView + 6 \
-                    < len(self.Data.EpochMarkerDetail.id2Show):
-                viewShift = self.Data.EpochMarkerDetail.shiftView + 6
-                self.Data.EpochMarkerDetail.update(
-                    self.Data.EpochMarkerDetail.markerValue, viewShift)
-        event.Skip()
-
-
 def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
               showDetailedEpochs=False):
     self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
@@ -396,7 +416,7 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
 
     if showDetailedEpochs:
         self.CheckboxEpochs = wx.CheckBox(self, wx.ID_ANY,
-                                          'Show only dropped Epochs')
+                                          'Show only Outliers')
         self.CheckboxEpochs.SetValue(True)
         self.hbox.Add(self.CheckboxEpochs, 0, border=3, flag=flags)
         wx.EVT_CHECKBOX(
@@ -410,8 +430,8 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
                       self.shiftViewRight)
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
-        self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
         self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
+        self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
