@@ -202,24 +202,25 @@ class Selecter(wx.Panel):
 
             sampleRate = self.Data.Datasets[0].sampleRate
             labelsChannel = self.Data.Datasets[0].labelsChannel
-            infotext = '#Dataset\t\t\t%i\n' % len(self.Data.Datasets) + \
-                '#Channels\t\t%i\n' % labelsChannel.shape[0] + \
-                'Sampling Rate\t%i [Hz]\n\n' % sampleRate
+            infotext = 'Datasets loaded: %i\n' % len(self.Data.Datasets) + \
+                'Channels: %i\n' % labelsChannel.shape[0] + \
+                'Sampling Rate: %i [Hz]\n\n' % sampleRate
 
             for d in self.Data.Datasets:
                 name = os.path.basename(d.lvFile)[:-3]
-                recordtime = '%s at %s:%s' % (d.startDate,
-                                              d.startTime[:2],
-                                              d.startTime[3:5])
+                recordtime = 'at %s:%s, %s' % (d.startTime[:2],
+                                               d.startTime[3:5],
+                                               d.startDate)
                 duration = round(1.0 * d.dataRecorded * d.durationRecorded, 1)
                 epochs = len(d.markerValue)
                 markers = len(np.unique(d.markerValue))
+                length = (int(duration) / 60, int(duration) % 60)
 
-                infotext += 'Name\t\t%s\n' % name + \
-                    '#Epochs\t%s\n' % epochs + \
-                    '#Markers\t%s\n' % markers + \
-                    'Duration\t%s [s]\n' % duration + \
-                    'Recorded\t%s\n\n' % recordtime
+                infotext += 'Name: %s\n' % name + \
+                    'Epochs:  \t%s\n' % epochs + \
+                    'Markers:\t%s\n' % markers + \
+                    'Length:\t%sm%ss\n' % length + \
+                    'Recorded %s\n\n' % recordtime
 
             dropdown = ['Average'] + labelsChannel.tolist()
 
