@@ -280,8 +280,8 @@ class EpochMarkerDetail(wx.Panel):
         if event.mouseevent.button == 1:
             event.artist.set_color('black')
             linenumber = int(event.artist.get_label()[5:])
-            xValue = -float(self.Data.Specs.PreEpoch.GetValue()) * 1.2
-            yValue = event.artist.get_data()[1][0]
+            xValue = float(self.Data.Specs.PostEpoch.GetValue()) + 1
+            yValue = event.artist.get_data()[1][-1]
             event.artist.axes.text(xValue, yValue,
                                    self.labelsChannel[linenumber],
                                    color='black')
