@@ -20,6 +20,18 @@ class Overview(wx.Panel):
         self.ParentFrame = ParentFrame
         newFigure(self)
 
+    def update(self, Results):
+        if self.Data.Datasets == []:
+            newFigure(self)
+        else:
+            badAlpha = self.Data.Results.badEpochAlpha
+            badThreshold = self.Data.Results.badEpochThreshold
+            badBridge = self.Data.Results.badEpochBridge
+            badID = self.Data.Results.badID
+            okID = self.Data.Results.okID
+            labelsChannel = self.Data.Orig.labelsChannel
+            markers = self.Data.Orig.markers
+            
 
 class GFPSummary(wx.Panel):
 
@@ -203,9 +215,9 @@ class EpochMarkerDetail(wx.Panel):
                         axes.text(postEpoch + 1, c[-1] / sizer - j,
                                   self.labelsChannel[j], color='b')
                     elif self.Data.Results.badEpochAlpha[epochID][j]:
-                        color = 'g'
+                        color = 'm'
                         axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                  self.labelsChannel[j], color='g')
+                                  self.labelsChannel[j], color='m')
                     else:
                         color = 'gray'
                     lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
@@ -315,7 +327,7 @@ class EpochSummary(wx.Panel):
                 if np.sum(channelThresholdOff) != 0:
                     badChannelThreshold += channelThresholdOff
 
-        # correct for bridges
+        # correct for bridge
         badChannelBridge = np.zeros(epoch.shape[0], dtype=int)
         if self.Data.Specs.CheckboxBridge.GetValue():
             corrMatrix = np.where(np.corrcoef(epoch) > .99999)
@@ -353,7 +365,7 @@ class EpochSummary(wx.Panel):
             elif j in badChannelIDBridge:
                 color = 'b'
             elif j in badChannelIDAlpha:
-                color = 'g'
+                color = 'm'
             else:
                 color = 'gray'
             lines = axes.plot(xaxis, c / sizer - j, color)
