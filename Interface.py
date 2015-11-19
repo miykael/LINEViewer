@@ -40,7 +40,7 @@ class MainFrame(wx.Frame):
             self.PanelOption, self.Data)
         self.Data.GFPDetailed = PanelVisualize.GFPDetailed(
             self.PanelOption, self.Data)
-        self.Data.EpochMarkerDetail = PanelVisualize.EpochMarkerDetail(
+        self.Data.EpochDetail = PanelVisualize.EpochDetail(
             self.PanelOption, self.Data)
         self.Data.Overview = PanelVisualize.Overview(self.PanelOption,
                                                      self.Data)
@@ -50,9 +50,10 @@ class MainFrame(wx.Frame):
         self.PanelOption.AddPage(self.Data.Overview, 'Overview')
         self.PanelOption.AddPage(self.Data.GFPSummary, 'GFP - Summary')
         self.PanelOption.AddPage(self.Data.GFPDetailed, 'GFP - Detailed')
-        self.PanelOption.AddPage(self.Data.EpochMarkerDetail,
-                                 'Epochs - Detailed')
-        self.PanelOption.AddPage(self.Data.EpochSummary, 'Epoch - Summary')
+        self.PanelOption.AddPage(self.Data.EpochDetail,
+                                 'Epoch - Detailed')
+        self.PanelOption.AddPage(self.Data.EpochSummary,
+                                 'Marker - Epoch Average')
         self.Data.GFPSummary.SetFocus()
         sizerMainH.Add(self.PanelOption, wx.ID_ANY, wx.EXPAND)
 

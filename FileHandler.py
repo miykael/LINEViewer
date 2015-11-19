@@ -17,7 +17,7 @@ class ReadBDF:
             offset += 68
             f.seek(offset)
             dataRecorded = int(f.read(8))
-            durationRecorded = int(f.read(8))  # in seconds
+            durationRecorded = int(f.read(8))
             nbChannels = int(f.read(4))
             labelsChannel = np.array(
                 [f.read(16).strip() for i in range(nbChannels)])

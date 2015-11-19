@@ -235,8 +235,10 @@ class Results():
         self.avgGFP = [calculateGFP(a) for a in self.avgEpochs]
         self.avgGMD = [calculateGMD(a) for a in self.avgEpochs]
 
-        Data.GFPDetailed.update(self)
+        Data.Overview.update(self)
         Data.GFPSummary.update(self)
+        Data.GFPDetailed.update(self)
+        Data.EpochDetail.update([])
 
 
 def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,
