@@ -277,7 +277,7 @@ class Specification(wx.Panel):
 
         self.ButtonMarkerReset = wx.Button(
             PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="Reset markers")
+            label="Reset marker options")
         self.ButtonMarkerReset.Enable()
         sizerBoxMarker.Add(self.ButtonMarkerReset, 0, wx.EXPAND)
 
@@ -390,6 +390,7 @@ class Specification(wx.Panel):
                                            wildcard='*.xyz')
                     if dlgXYZ.ShowModal() == wx.ID_OK:
                         self.Data.Specs.xyzFile = dlgXYZ.GetPath()
+                        self.Data.Results.interpolationCheck(self.Data)
                     dlgXYZ.Destroy()
                     labeltxt = 'Interpolated Channels:\n' + \
                         ''.join([e + ', ' if i % 7 != 6
@@ -399,7 +400,6 @@ class Specification(wx.Panel):
                 else:
                     labeltxt = 'No interpolated channels\n\n'
                 self.TextInterpolated.SetLabel(labeltxt)
-                self.Data.Results.interpolationCheck(self.Data)
             dlgSelect.Destroy()
         event.Skip()
 
@@ -456,8 +456,8 @@ class Specification(wx.Panel):
             markerTxt = [str(m) for m in markers]
             dlg = wx.MultiChoiceDialog(
                 self, caption="Select markers to hide",
-                message='Which markers should be considered ' +
-                        'in further analysis?',
+                message='Which markers should be excluded ' +
+                        'from further analysis?',
                 choices=markerTxt)
             if self.Data.markers2hide == []:
                 selected = []
@@ -475,7 +475,11 @@ class Specification(wx.Panel):
     def collapseMarkers(self, event):
 
         if self.Data.Datasets != []:
-            markers = np.unique(self.Data.Results.markers)
+            if not hasattr(self.Data.Results, 'collapsedMarkers'):
+                markers = np.copy(self.Data.Orig.markers)
+            else:
+                markers = self.Data.Results.collapsedMarkers
+            markers = np.unique(markers)
             markerTxt = [str(m) for m in markers]
             dlg = wx.MultiChoiceDialog(
                 self, caption="Select markers to collapse",
@@ -490,21 +494,23 @@ class Specification(wx.Panel):
                 'Only integer values are accepted!')
             if dlg.ShowModal() == wx.ID_OK:
                 newMarkerName = dlg.GetValue()
-            dlg.Destroy()
+                dlg.Destroy()
 
-            markers2collapse = np.array(markerTxt, dtype='uint8')[selected]
-            if not hasattr(self.Data.Results, 'collapsedMarkers'):
-                rawMarkers = np.copy(self.Data.Orig.markers)
-            else:
-                rawMarkers = self.Data.Results.collapsedMarkers
-            for i, e in enumerate(markers2collapse):
-                rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
-            self.Data.Results.collapsedMarkers = rawMarkers
-            self.drawEpochs(event)
+                markers2collapse = np.array(markerTxt, dtype='uint8')[selected]
+                if not hasattr(self.Data.Results, 'collapsedMarkers'):
+                    rawMarkers = np.copy(self.Data.Orig.markers)
+                else:
+                    rawMarkers = self.Data.Results.collapsedMarkers
+                for i, e in enumerate(markers2collapse):
+                    rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
+                self.Data.Results.collapsedMarkers = rawMarkers
+                self.drawEpochs(event)
         event.Skip()
 
     def resetMarkers(self, event):
-        del self.Data.Results.collapsedMarkers
+        if hasattr(self.Data.Results, 'collapsedMarkers'):
+            del self.Data.Results.collapsedMarkers
+        self.Data.markers2hide = []
         self.drawEpochs(event)
         event.Skip()
 
