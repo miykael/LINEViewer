@@ -24,14 +24,145 @@ class Overview(wx.Panel):
         if self.Data.Datasets == []:
             newFigure(self)
         else:
-            badAlpha = self.Data.Results.badEpochAlpha
-            badThreshold = self.Data.Results.badEpochThreshold
-            badBridge = self.Data.Results.badEpochBridge
-            badID = self.Data.Results.badID
-            okID = self.Data.Results.okID
-            labelsChannel = self.Data.Orig.labelsChannel
-            markers = self.Data.Orig.markers
-            
+            # Get relevant information
+            labelsChannel = np.copy(self.Data.Orig.labelsChannel)
+            if hasattr(self.Data.Results, 'collapsedMarkers'):
+                markers = self.Data.Results.collapsedMarkers
+            else:
+                markers = np.copy(self.Data.Orig.markers)
+            uniqueMarkers = np.unique(markers)
+
+            emptyMatrix = np.zeros((len(markers),
+                                    len(labelsChannel))).astype('bool')
+            if self.Data.Results.badEpochThreshold == []:
+                matrixThreshold = emptyMatrix
+            else:
+                matrixThreshold = np.copy(self.Data.Results.badEpochThreshold)
+            if self.Data.Results.badEpochBridge == []:
+                matrixBridge = emptyMatrix
+            else:
+                matrixBridge = np.copy(self.Data.Results.badEpochBridge)
+            if self.Data.Results.badEpochAlpha == []:
+                matrixAlpha = emptyMatrix
+            else:
+                matrixAlpha = np.copy(self.Data.Results.badEpochAlpha)
+
+            # Check for broken Epochs; if 25% of channels are over threshold
+            brokenID = np.where(matrixThreshold.sum(axis=1)
+                                > matrixThreshold.shape[1] * .25)[0]
+            matrixThreshold[brokenID] *= False
+
+            matrixBad = matrixThreshold + matrixBridge + matrixAlpha
+            badChannelsID = np.where(matrixBad.sum(axis=0))[0]
+            badChannelsLabel = np.append(
+                'Broken', labelsChannel[badChannelsID])
+
+            # Get distribution of channels
+            distChannelThreshold = np.append(
+                0, matrixThreshold[:, badChannelsID].sum(axis=0))
+            distChannelBridge = np.append(
+                0, matrixBridge[:, badChannelsID].sum(axis=0))
+            distChannelAlpha = np.append(
+                0, matrixAlpha[:, badChannelsID].sum(axis=0))
+            distChannelEye = np.append(
+                len(brokenID), np.zeros(len(badChannelsID)))
+
+            # Get distribution of markers
+            markerIDThreshold = list(
+                np.where(matrixThreshold.sum(axis=1).astype('bool'))[0])
+            markerIDBridge = list(
+                np.where(matrixBridge.sum(axis=1).astype('bool'))[0])
+            markerIDBridge = [
+                m for m in markerIDBridge if m not in markerIDThreshold]
+            markerIDAlpha = list(
+                np.where(matrixAlpha.sum(axis=1).astype('bool'))[0])
+            markerIDAlpha = [
+                m for m in markerIDAlpha
+                if m not in markerIDThreshold + markerIDBridge]
+
+            if self.Data.markers2hide != []:
+                uniqueMarkers = np.array([u for u in uniqueMarkers
+                                          if u not in self.Data.markers2hide])
+
+            distMarkerThreshold = [
+                list(markers[markerIDThreshold]).count(u)
+                for u in uniqueMarkers]
+            distMarkerBridge = [
+                list(markers[markerIDBridge]).count(u) for u in uniqueMarkers]
+            distMarkerAlpha = [
+                list(markers[markerIDAlpha]).count(u) for u in uniqueMarkers]
+            distMarkerOK = [
+                [m for i, m in enumerate(markers)
+                 if i not in markerIDThreshold + markerIDBridge
+                 + markerIDAlpha].count(u) for u in uniqueMarkers]
+
+            # Check if subplot layout has 2 or 1 figures
+            if badChannelsID != []:
+                layout = [2, 1, 2]
+
+                # Create bad channel histogram
+                self.figure.clear()
+                axes = self.figure.add_subplot(2, 1, 1)
+
+                nChannels = np.arange(badChannelsID.shape[0] + 1)
+                axes.bar(nChannels, distChannelEye, 0.75, color='c',
+                         label='Broken', alpha=0.5)
+                axes.bar(nChannels, distChannelThreshold, 0.75, color='r',
+                         label='Threshold', alpha=0.5)
+                axes.bar(nChannels, distChannelBridge, 0.75, color='b',
+                         bottom=distChannelThreshold, label='Bridge',
+                         alpha=0.5)
+                axes.bar(nChannels, distChannelAlpha, 0.75, color='m',
+                         bottom=np.sum(np.vstack((distChannelThreshold,
+                                                  distChannelBridge)), axis=0),
+                         label='Alpha', alpha=0.5)
+
+                axes.title.set_text(
+                    'Channel Overview - %s Epochs Total' % markers.shape[0])
+                axes.grid(True, axis='y')
+                axes.set_xlabel('Channel')
+                axes.set_ylabel('Epochs')
+                axes.set_xticks(nChannels + .75 / 2)
+                axes.set_xticklabels(badChannelsLabel)
+
+            else:
+                layout = [1, 1, 1]
+                self.figure.clear()
+
+            # Create bad marker histogram
+            axes = self.figure.add_subplot(layout[0], layout[1], layout[2])
+
+            nMarker = np.arange(uniqueMarkers.shape[0])
+            axes.bar(nMarker, distMarkerOK, 0.75, color='g',
+                     label='OK', alpha=0.5)
+            axes.bar(nMarker, distMarkerThreshold, 0.75, color='r',
+                     bottom=distMarkerOK, label='Threshold', alpha=0.5)
+            axes.bar(nMarker, distMarkerBridge, 0.75, color='b',
+                     bottom=np.sum(np.vstack((distMarkerOK,
+                                              distMarkerThreshold)), axis=0),
+                     label='Bridge', alpha=0.5)
+            axes.bar(nMarker, distMarkerAlpha, 0.75, color='m',
+                     bottom=np.sum(np.vstack((distMarkerOK,
+                                              distMarkerThreshold,
+                                              distMarkerBridge)), axis=0),
+                     label='Alpha', alpha=0.5)
+
+            axes.title.set_text('Marker Overview')
+            axes.grid(True, axis='y')
+            axes.set_xlabel('Marker')
+            axes.set_ylabel('Epochs')
+            axes.set_xticks(nMarker + .75 / 2)
+            axes.set_xticklabels(uniqueMarkers.astype('str'))
+
+            # Adjust and draw histograms
+            self.figure.subplots_adjust(left=0.05,
+                                        bottom=0.05,
+                                        right=0.95,
+                                        top=0.95,
+                                        wspace=0.20,
+                                        hspace=0.20)
+            self.canvas.draw()
+
 
 class GFPSummary(wx.Panel):
 
@@ -84,7 +215,9 @@ class GFPSummary(wx.Panel):
 
     def updateFigure(self, event):
         if self.Data.Datasets != []:
+            self.Data.Overview.update(self)
             self.Data.GFPSummary.update(self.Data.Results)
+            self.Data.EpochDetail.update([])
         event.Skip()
 
 
@@ -148,12 +281,13 @@ class GFPDetailed(wx.Panel):
                 markerID = self.Data.Results.uniqueMarkers[subplotID]
 
                 self.Data.EpochSummary.update(markerID)
-                self.Data.EpochMarkerDetail.update(markerID)
+                self.Data.EpochDetail.CheckboxMarkers.SetValue(False)
+                self.Data.EpochDetail.update(markerID)
                 self.ParentFrame.SetSelection(3)
                 self.canvas.ReleaseMouse()
 
 
-class EpochMarkerDetail(wx.Panel):
+class EpochDetail(wx.Panel):
 
     def __init__(self, ParentFrame, Data):
 
@@ -173,6 +307,9 @@ class EpochMarkerDetail(wx.Panel):
         self.markerValue = markerValue
         self.id2Show = np.where(
             self.Data.Results.markers == self.markerValue)[0]
+        if self.markerValue == []:
+            self.CheckboxMarkers.SetValue(True)
+            self.id2Show = np.arange(self.Data.Results.markers.shape[0])
         if self.CheckboxEpochs.IsChecked():
             self.id2Show = [
                 i for i in self.id2Show if i in self.Data.Results.badID]
@@ -200,24 +337,34 @@ class EpochMarkerDetail(wx.Panel):
             axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
             if i < len(self.id2Show):
                 epochID = self.id2Show[i]
+                markerID = self.Data.Results.markers[epochID]
                 epoch = self.Data.Orig.epochs[epochID]
 
                 sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
 
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
-                    if self.Data.Results.badEpochThreshold[epochID][j]:
-                        color = 'r'
-                        axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                  self.labelsChannel[j], color='r')
-                    elif self.Data.Results.badEpochBridge[epochID][j]:
-                        color = 'b'
-                        axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                  self.labelsChannel[j], color='b')
-                    elif self.Data.Results.badEpochAlpha[epochID][j]:
-                        color = 'm'
-                        axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                  self.labelsChannel[j], color='m')
+                    if self.Data.Results.badEpochThreshold != []:
+                        if self.Data.Results.badEpochThreshold[epochID][j]:
+                            color = 'r'
+                            axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                      self.labelsChannel[j], color='r')
+                            axes.patch.set_facecolor('r')
+                            axes.patch.set_alpha(0.05)
+                        elif self.Data.Results.badEpochBridge[epochID][j]:
+                            color = 'b'
+                            axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                      self.labelsChannel[j], color='b')
+                            axes.patch.set_facecolor('b')
+                            axes.patch.set_alpha(0.05)
+                        elif self.Data.Results.badEpochAlpha[epochID][j]:
+                            color = 'm'
+                            axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                      self.labelsChannel[j], color='m')
+                            axes.patch.set_facecolor('m')
+                            axes.patch.set_alpha(0.05)
+                        else:
+                            color = 'gray'
                     else:
                         color = 'gray'
                     lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
@@ -234,15 +381,16 @@ class EpochMarkerDetail(wx.Panel):
 
                 axes.set_ylim(minmax)
                 axes.get_yaxis().set_visible(False)
-                axes.title.set_text('Epoch: %s' % epochID)
+                axes.title.set_text('Marker %s - Epoch %s' % (markerID,
+                                                              epochID))
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
-        currentPage = (self.shiftView / 6) + 1
-        totalPage = (len(self.id2Show) - 1) / 6 + 1
+        currentPage = (self.shiftView / 4) + 1
+        totalPage = (len(self.id2Show) - 1) / 4 + 1
         if totalPage == 0:
             currentPage = 0
 
-        self.TextPages.SetLabel('Page: %s/%s' % (currentPage, totalPage))
+        self.TextPages.SetLabel('Page: %s/%s   ' % (currentPage, totalPage))
 
         self.figure.subplots_adjust(left=0.03,
                                     bottom=0.03,
@@ -254,25 +402,27 @@ class EpochMarkerDetail(wx.Panel):
 
     def updateFigure(self, event):
         if self.Data.Datasets != []:
-            self.Data.EpochMarkerDetail.update(
-                self.Data.EpochMarkerDetail.markerValue)
+            if self.CheckboxMarkers.GetValue():
+                self.Data.EpochDetail.markerValue = []
+            self.Data.EpochDetail.update(
+                self.Data.EpochDetail.markerValue)
         event.Skip()
 
     def shiftViewLeft(self, event):
         if self.Data.Datasets != []:
-            if self.Data.EpochMarkerDetail.shiftView != 0:
-                viewShift = self.Data.EpochMarkerDetail.shiftView - 6
-                self.Data.EpochMarkerDetail.update(
-                    self.Data.EpochMarkerDetail.markerValue, viewShift)
+            if self.Data.EpochDetail.shiftView != 0:
+                viewShift = self.Data.EpochDetail.shiftView - 4
+                self.Data.EpochDetail.update(
+                    self.Data.EpochDetail.markerValue, viewShift)
         event.Skip()
 
     def shiftViewRight(self, event):
         if self.Data.Datasets != []:
-            if self.Data.EpochMarkerDetail.shiftView + 6 \
-                    < len(self.Data.EpochMarkerDetail.id2Show):
-                viewShift = self.Data.EpochMarkerDetail.shiftView + 6
-                self.Data.EpochMarkerDetail.update(
-                    self.Data.EpochMarkerDetail.markerValue, viewShift)
+            if self.Data.EpochDetail.shiftView + 4 \
+                    < len(self.Data.EpochDetail.id2Show):
+                viewShift = self.Data.EpochDetail.shiftView + 4
+                self.Data.EpochDetail.update(
+                    self.Data.EpochDetail.markerValue, viewShift)
         event.Skip()
 
     def onPick(self, event):
@@ -427,23 +577,30 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
             self.CheckboxGMD, self.CheckboxGMD.Id, self.updateFigure)
 
     if showDetailedEpochs:
-        self.CheckboxEpochs = wx.CheckBox(self, wx.ID_ANY,
-                                          'Show only Outliers')
-        self.CheckboxEpochs.SetValue(True)
-        self.hbox.Add(self.CheckboxEpochs, 0, border=3, flag=flags)
-        wx.EVT_CHECKBOX(
-            self.CheckboxEpochs, self.CheckboxEpochs.Id, self.updateFigure)
-
         self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<")
-        self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0')
+        self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
         self.goRightButton = wx.Button(self, wx.ID_ANY, ">>")
         wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
                       self.shiftViewLeft)
         wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
                       self.shiftViewRight)
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
-        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
         self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
+        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
+
+        self.CheckboxEpochs = wx.CheckBox(self, wx.ID_ANY,
+                                          'Outliers only')
+        self.CheckboxEpochs.SetValue(True)
+        self.hbox.Add(self.CheckboxEpochs, 0, border=3, flag=flags)
+        wx.EVT_CHECKBOX(
+            self.CheckboxEpochs, self.CheckboxEpochs.Id, self.updateFigure)
+
+        self.CheckboxMarkers = wx.CheckBox(self, wx.ID_ANY,
+                                           'All Markers')
+        self.CheckboxMarkers.SetValue(True)
+        self.hbox.Add(self.CheckboxMarkers, 0, border=3, flag=flags)
+        wx.EVT_CHECKBOX(
+            self.CheckboxMarkers, self.CheckboxMarkers.Id, self.updateFigure)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
@@ -467,3 +624,20 @@ def getXaxis(Results):
     xaxis = [int(i * stepSize - Results.preEpoch)
              for i in range(Results.preFrame + Results.postFrame)]
     return xaxis
+
+
+"""
+TODO:
+
+Cardiac artifact - http://www.slideshare.net/SudhakarMarella/eeg-artifacts-15175461
+Pulse artefact
+pop of electrode
+Electrode movement artifact (oscillation)
+flat electordes (perhaps if STD is very low or almost zero?)
+muscle artifact (perhaps high STD over certain time period)
+blink artifacts / eye movement
+perhaps something like common movement - if suddenly all electrodes spike in a same way
+
+check that "Channel Overview" displays the right values if markers are hidden
+Bridges are not shown in Epoch - Detailed
+"""
