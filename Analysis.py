@@ -43,9 +43,6 @@ class Results():
             self.postEpoch = 500.0
             Data.Specs.PostEpoch.SetValue(str(self.postEpoch))
         self.sampleRate = Data.Datasets[0].sampleRate
-        self.preFrame = int(np.round(self.preEpoch * self.sampleRate * 0.001))
-        self.postFrame = int(
-            np.round(self.postEpoch * self.sampleRate * 0.001))
 
         # Data object to save original epoch information
         Data.Orig = type('Orig', (object,), {})()
@@ -81,7 +78,20 @@ class Results():
                                                  notch=self.notchValue)
 
             # Create epochs
-            epochs = np.array([dataset[:, m - self.preFrame:m + self.postFrame]
+            self.preFrame = int(
+                np.round(self.preEpoch * self.sampleRate * 0.001))
+            self.preCut = np.copy(self.preFrame)
+            self.postFrame = int(
+                np.round(self.postEpoch * self.sampleRate * 0.001))
+            self.postCut = np.copy(self.postFrame)
+            # time pre stimuli should be at least 200ms for visualization
+            if self.preEpoch < 200.0:
+                self.preCut = int(self.sampleRate*.2)
+            # time post stimuli should be at least 1000ms for visualization
+            if self.postEpoch < 1000.0:
+                self.postCut = self.sampleRate
+
+            epochs = np.array([dataset[:, m - self.preCut:m + self.postCut]
                                for m in d.markerTime])
 
             # Accumulate epoch information
@@ -89,13 +99,10 @@ class Results():
                 Data.Orig.epochs = epochs
                 Data.Orig.markers = d.markerValue
                 Data.Orig.labelsChannel = d.labelsChannel
-                Data.Orig.markerTime = d.markerTime
             else:
                 Data.Orig.epochs = np.vstack((Data.Orig.epochs, epochs))
                 Data.Orig.markers = np.hstack((Data.Orig.markers,
                                                d.markerValue))
-                Data.Orig.markerTime = np.vstack((Data.Orig.markerTime, markerTime))
-
             del dataset
 
         self.interpolationCheck(Data)
@@ -146,58 +153,86 @@ class Results():
         if self.baselineCorr:
             for e in epochs:
                 baselineAvg = [[c] for c in
-                               np.mean(e[:, :self.preFrame], axis=1)]
+                               np.mean(e[:, self.preCut-self.preFrame:self.preCut], axis=1)]
                 e -= baselineAvg
 
+        """
         # Exclude Channels
+        # TODO: check that this information is considered
         if self.excludeChannel != []:
             channelID = [
                 i for i, e in enumerate(Data.Orig.labelsChannel)
                 if e not in self.excludeChannel]
         else:
             channelID = range(Data.Orig.labelsChannel.shape[0])
+        """
 
         # Correct Epochs for Threshold, Bridge and Blink outliers
         if self.thresholdCorr or self.bridgeCorr or self.blinkCorr:
+
+            # Create Progressbar for outlier detection
+            progressMax = epochs.shape[0]
+            dlg = wx.ProgressDialog(
+                "Outlier detection progress", "Time remaining", progressMax,
+                style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
 
             # Common parameters
             emptyMatrix = np.zeros((epochs.shape[0], epochs.shape[1])).astype('bool')
             self.matrixThreshold = np.copy(emptyMatrix)
             self.matrixBridge = np.copy(emptyMatrix)
-            self.matrixBlink = np.copy(emptyMatrix)
+            self.matrixBlink = np.zeros((epochs.shape[0], epochs.shape[2])).astype('bool')
             windowSteps = int(self.window * self.sampleRate / 1000.)
 
             # Go through all the epochs
-            for i, e in enumerate(epochs):
+            for i, e_long in enumerate(epochs):
+
+                e_short = epochs[i][:,self.preCut-self.preFrame:self.preCut+self.postFrame]
 
                 # Check for Threshold outliers
+                badThresholdChannelID = []
                 if self.thresholdCorr:
-                    badThresholdChannelID = []
-                    for j in range(e.shape[1] - windowSteps):
-                        badChannels = np.where(np.ptp(e[:, j:j + windowSteps], axis=1) > self.threshold)[0]
+                    for j in range(e_short.shape[1] - windowSteps):
+                        badChannels = np.where(np.ptp(e_short[:, j:j + windowSteps], axis=1) > self.threshold)[0]
                         badThresholdChannelID.extend(list(badChannels))
                     if badThresholdChannelID != []:
-                        self.matrixThreshold[i][np.unique(badThresholdChannelID)] = True
+                        badThresholdChannelID = np.unique(badThresholdChannelID)
+                        self.matrixThreshold[i][badThresholdChannelID] = True
 
                 # Check for Bridge outliers
                 if self.bridgeCorr:
-                    corrMatrix = np.where(np.corrcoef(e) > .99999)
+                    corrMatrix = np.where(np.corrcoef(e_short) > .99999)
                     badBridgeChannelID = np.unique([corrMatrix[0][m] for m in range(len(corrMatrix[0])) if corrMatrix[0][m] != corrMatrix[1][m]])
-                    if badBridgeChannelID != []:
+                    if badBridgeChannelID.size != 0:
                         self.matrixBridge[i][np.unique(badBridgeChannelID)] = True
 
+                # Check for Blink outliers
+                if self.blinkCorr:
+                    channels2Check = [j for j in range(e_long.shape[0]) if j not in badThresholdChannelID]
+                    stdOverTime = e_long[channels2Check].std(axis=0)
+                    blinkTimeID = np.where(stdOverTime > e_long[channels2Check].std(axis=1).mean()*3)[0]
+                    if blinkTimeID.size != 0:
+                        self.matrixBlink[i][blinkTimeID] = True
+
+                dlg.Update(i)
+            dlg.Destroy()
+
             # Specifying ID of good and bad epochs
-            badIDs = self.matrixThreshold.sum(axis=1) + self.matrixBridge.sum(axis=1)
+            self.badBlinkEpochs = self.matrixBlink[:, self.preCut - self.preFrame:self.preCut + self.postFrame].sum(axis=1).astype('bool')
+            badIDs = self.matrixThreshold.sum(axis=1) + self.matrixBridge.sum(axis=1) + self.badBlinkEpochs
             self.badID = badIDs.astype('bool')
             self.okID = np.invert(self.badID)
 
-        # Drop bad Epochs
-        self.epochs = epochs[self.okID]
-        self.markers = markers[self.okID]
+        # Connect all epochs and markers to self
+        self.epochs = epochs
+        self.markers = markers
+
+        # Drop bad Epochs for average
+        goodEpochs = epochs[self.okID]
+        goodMarkers = markers[self.okID]
 
         # Create average epochs
-        self.uniqueMarkers = np.unique(self.markers)
-        self.avgEpochs = [self.epochs[np.where(self.markers == u)].mean(axis=0)
+        self.uniqueMarkers = np.unique(goodMarkers)
+        self.avgEpochs = [goodEpochs[np.where(goodMarkers == u)].mean(axis=0)
                           for u in self.uniqueMarkers]
         self.avgGFP = [calculateGFP(a) for a in self.avgEpochs]
         self.avgGMD = [calculateGMD(a) for a in self.avgEpochs]

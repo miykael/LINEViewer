@@ -32,37 +32,36 @@ class Overview(wx.Panel):
                 markers = np.copy(self.Data.Orig.markers)
             matrixThreshold = np.copy(self.Data.Results.matrixThreshold)
             matrixBridge = np.copy(self.Data.Results.matrixBridge)
-            matrixBlink = np.copy(self.Data.Results.matrixBlink)
+            badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
 
             # Check for broken Epochs; if 25% of channels are over threshold
             brokenID = np.where(matrixThreshold.sum(axis=1)
                                 > matrixThreshold.shape[1] * .25)[0]
             matrixThreshold[brokenID] *= False
+            matrixBridge[brokenID] *= False
+            badBlinkEpochs[brokenID] *= False
 
-            matrixBad = matrixThreshold + matrixBridge + matrixBlink
+            matrixBad = matrixThreshold + matrixBridge
             badChannelsID = np.where(matrixBad.sum(axis=0))[0]
-            badChannelsLabel = np.append(
-                'Broken', labelsChannel[badChannelsID])
+            badChannelsLabel = ['Broken', 'Blink']
+            badChannelsLabel.extend(labelsChannel[badChannelsID])
 
             # Get distribution of channels
-            distChannelThreshold = np.append(
-                0, matrixThreshold[:, badChannelsID].sum(axis=0))
-            distChannelBridge = np.append(
-                0, matrixBridge[:, badChannelsID].sum(axis=0))
-            distChannelBlink = np.append(
-                0, matrixBlink[:, badChannelsID].sum(axis=0))
-            distChannelEye = np.append(
-                len(brokenID), np.zeros(len(badChannelsID)))
+            distChannelThreshold = [0, 0]
+            distChannelBridge = [0, 0]
+            distChannelThreshold.extend(matrixThreshold[:, badChannelsID].sum(axis=0))
+            distChannelBridge.extend(matrixBridge[:, badChannelsID].sum(axis=0))
+            distChannelBroken = [len(brokenID), 0] + [0] * len(badChannelsID)
+            distChannelBlink = [0, badBlinkEpochs.sum()] + [0] * len(badChannelsID)
 
             # Get distribution of markers
-            markerIDThreshold = list(
-                np.where(matrixThreshold.sum(axis=1).astype('bool'))[0])
+            markerIDBroken = list(brokenID)
+            markerIDThreshold = list(np.where(matrixThreshold.sum(axis=1).astype('bool'))[0])
             markerIDBridge = list(
                 np.where(matrixBridge.sum(axis=1).astype('bool'))[0])
             markerIDBridge = [
                 m for m in markerIDBridge if m not in markerIDThreshold]
-            markerIDBlink = list(
-                np.where(matrixBlink.sum(axis=1).astype('bool'))[0])
+            markerIDBlink = list(np.where(badBlinkEpochs)[0])
             markerIDBlink = [
                 m for m in markerIDBlink
                 if m not in markerIDThreshold + markerIDBridge]
@@ -72,6 +71,9 @@ class Overview(wx.Panel):
                 uniqueMarkers = np.array([u for u in uniqueMarkers
                                           if u not in self.Data.markers2hide])
 
+            distMarkerBroken = [
+                list(markers[markerIDBroken]).count(u)
+                for u in uniqueMarkers]
             distMarkerThreshold = [
                 list(markers[markerIDThreshold]).count(u)
                 for u in uniqueMarkers]
@@ -82,7 +84,7 @@ class Overview(wx.Panel):
             distMarkerOK = [
                 [m for i, m in enumerate(markers)
                  if i not in markerIDThreshold + markerIDBridge
-                 + markerIDBlink].count(u) for u in uniqueMarkers]
+                 + markerIDBlink + markerIDBroken].count(u) for u in uniqueMarkers]
 
             # Check if subplot layout has 2 or 1 figures
             if badChannelsID != []:
@@ -92,8 +94,8 @@ class Overview(wx.Panel):
                 self.figure.clear()
                 axes = self.figure.add_subplot(2, 1, 1)
 
-                nChannels = np.arange(badChannelsID.shape[0] + 1)
-                axes.bar(nChannels, distChannelEye, 0.75, color='c',
+                nChannels = np.arange(len(badChannelsLabel))
+                axes.bar(nChannels, distChannelBroken, 0.75, color='c',
                          label='Broken', alpha=0.5)
                 axes.bar(nChannels, distChannelThreshold, 0.75, color='r',
                          label='Threshold', alpha=0.5)
@@ -134,6 +136,12 @@ class Overview(wx.Panel):
                                               distMarkerThreshold,
                                               distMarkerBridge)), axis=0),
                      label='Blink', alpha=0.5)
+            axes.bar(nMarker, distMarkerBroken, 0.75, color='c',
+                     bottom=np.sum(np.vstack((distMarkerOK,
+                                              distMarkerThreshold,
+                                              distMarkerBridge,
+                                              distMarkerBlink)), axis=0),
+                     label='Blink', alpha=0.5)
 
             axes.title.set_text('Marker Overview')
             axes.grid(True, axis='y')
@@ -173,7 +181,8 @@ class GFPSummary(wx.Panel):
         else:
             self.figure.clear()
             xaxis = getXaxis(Results)
-            plt.plot(xaxis, np.transpose(Results.avgGFP))
+            avgGFP = np.array(Results.avgGFP)[:,Results.preCut-Results.preFrame:Results.preCut+Results.postFrame]
+            plt.plot(xaxis, np.transpose(avgGFP))
             plt.xlabel('time [ms]')
             plt.ylabel('GFP')
             plt.title('GFP Overview')
@@ -232,14 +241,16 @@ class GFPDetailed(wx.Panel):
             self.figure.clear()
             figureShape = findSquare(Results.uniqueMarkers.shape[0])
             xaxis = getXaxis(Results)
+            avgGFP = np.array(Results.avgGFP)[:,Results.preCut-Results.preFrame:Results.preCut+Results.postFrame]
+            avgGMD = np.array(Results.avgGMD)[:,Results.preCut-Results.preFrame:Results.preCut+Results.postFrame]
             for i, g in enumerate(Results.avgGFP):
                 axes = self.figure.add_subplot(figureShape[0],
                                                figureShape[1],
                                                i + 1)
                 if self.CheckboxGFP.IsChecked():
-                    axes.plot(xaxis, Results.avgGFP[i], 'b')
+                    axes.plot(xaxis, avgGFP[i], 'b')
                 if self.CheckboxGMD.IsChecked():
-                    axes.plot(xaxis, Results.avgGMD[i], 'r')
+                    axes.plot(xaxis, avgGMD[i], 'r')
                 nMarkers = np.where(
                     Results.markers == Results.uniqueMarkers[i])[0].shape[0]
                 axes.title.set_text(
@@ -302,13 +313,12 @@ class EpochDetail(wx.Panel):
             self.id2Show = [
                 i for i in self.id2Show if i in self.Data.Results.badID]
 
-        preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
-        postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
+        preEpoch = 1000./(self.Data.Results.sampleRate / self.Data.Results.preFrame)
+        postEpoch = 1000./(self.Data.Results.sampleRate / self.Data.Results.postFrame)
         samplingPoints = self.Data.Results.epochs.shape[2]
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
 
-        xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
-                     samplingPoints - preEpoch) for i in range(samplingPoints)]
+        xaxis = [int(1.0 * i * (preEpoch + postEpoch) / samplingPoints - preEpoch) for i in range(samplingPoints)]
 
         # Compute number of subplots needed
         tiles2Show = len(self.id2Show) - self.shiftView
@@ -336,19 +346,19 @@ class EpochDetail(wx.Panel):
                         if self.Data.Results.matrixThreshold[epochID][j]:
                             color = 'r'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color)
+                                      self.labelsChannel[j], color=color)
                             axes.patch.set_facecolor(color)
                             axes.patch.set_alpha(0.05)
                         elif self.Data.Results.matrixBridge[epochID][j]:
                             color = 'b'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color)
+                                      self.labelsChannel[j], color=color)
                             axes.patch.set_facecolor(color)
                             axes.patch.set_alpha(0.05)
                         elif self.Data.Results.matrixBlink[epochID][j]:
                             color = 'm'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color)
+                                      self.labelsChannel[j], color=color)
                             axes.patch.set_facecolor(color)
                             axes.patch.set_alpha(0.05)
                         else:
