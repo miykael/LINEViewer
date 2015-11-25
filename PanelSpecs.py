@@ -5,10 +5,6 @@ from os.path import dirname
 
 class Specification(wx.Panel):
 
-    """
-    SOME TEXT
-    """
-
     def __init__(self, ParentFrame, Data):
 
         # Create Specification Frame window
@@ -527,27 +523,3 @@ class Specification(wx.Panel):
         self.Data.markers2hide = []
         self.drawEpochs(event)
         event.Skip()
-
-
-"""
-TODO: Create a figure that shows 1 electrode per marker and overlays mean and
-      std for the epoch
-
-Have statistic overview:
- - which channels are bad
- - how many epochs per markers have to be dropped, etc.
- - impedence stuff like in Biosemi software
-
-ERP ANALYSIS (under development)
-data normalization (according to GFP, yes or no)
-
-OUTPUT (under development)
-write eph, marker and tva files (also marker for origin)
-write or load tvas
-create and save figures
-
-https://sites.google.com/site/cartoolcommunity/user-s-guide/analysis/artefacts-rejection-single-subjects-averages
-
-Visualize also frequency domain, summary?
-and multiple epochs like http://mne-tools.github.io/mne-python-intro/_images/epochs_image.png
-"""

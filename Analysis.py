@@ -157,8 +157,8 @@ class Results():
                 e -= baselineAvg
 
         """
+        TODO: check that this information is considered
         # Exclude Channels
-        # TODO: check that this information is considered
         if self.excludeChannel != []:
             channelID = [
                 i for i, e in enumerate(Data.Orig.labelsChannel)
