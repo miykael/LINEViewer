@@ -56,15 +56,15 @@ class Results():
 
             # Remove DC
             if self.removeDC:
-                dataset = np.array([channel - channel.mean()
-                                    for channel in dataset])
+                dataset -= np.vstack(dataset.mean(axis=1))
 
             # Average or specific reference
             if self.average:
                 dataset -= dataset.mean(axis=0)
             elif self.newReference != '':
                 electrodeID = np.where(d.labelsChannel == self.newReference)[0]
-                dataset -= dataset[electrodeID]
+                if self.newReference != 'Average':
+                    dataset -= dataset[electrodeID]
 
             # Run Butterworth Low-, High- or Bandpassfilter
             if self.doPass:
@@ -89,10 +89,12 @@ class Results():
                 Data.Orig.epochs = epochs
                 Data.Orig.markers = d.markerValue
                 Data.Orig.labelsChannel = d.labelsChannel
+                Data.Orig.markerTime = d.markerTime
             else:
                 Data.Orig.epochs = np.vstack((Data.Orig.epochs, epochs))
                 Data.Orig.markers = np.hstack((Data.Orig.markers,
                                                d.markerValue))
+                Data.Orig.markerTime = np.vstack((Data.Orig.markerTime, markerTime))
 
             del dataset
 
@@ -110,7 +112,7 @@ class Results():
         # Get Specifications
         self.baselineCorr = Data.Specs.CheckboxBaseline.GetValue()
         self.bridgeCorr = Data.Specs.CheckboxBridge.GetValue()
-        self.alphaCorr = Data.Specs.CheckboxAlpha.GetValue()
+        self.blinkCorr = Data.Specs.CheckboxBlink.GetValue()
         self.thresholdCorr = Data.Specs.CheckboxThreshold.GetValue()
         try:
             self.threshold = float(Data.Specs.ThreshValue.GetValue())
@@ -131,11 +133,14 @@ class Results():
         else:
             markers = self.collapsedMarkers
 
+        """
+        TODO: probably not needed anymore
         # Hide Markers
         if Data.markers2hide != []:
             for h in Data.markers2hide:
                 epochs = np.delete(epochs, np.where(markers == h), axis=0)
                 markers = np.delete(markers, np.where(markers == h))
+        """
 
         # Baseline Correction
         if self.baselineCorr:
@@ -152,77 +157,39 @@ class Results():
         else:
             channelID = range(Data.Orig.labelsChannel.shape[0])
 
-        # Correct epochs for threshold, bridges or alpha waves
-        self.badEpochThreshold = []
-        self.badEpochBridge = []
-        self.badEpochAlpha = []
+        # Correct Epochs for Threshold, Bridge and Blink outliers
+        if self.thresholdCorr or self.bridgeCorr or self.blinkCorr:
 
-        if self.thresholdCorr or self.bridgeCorr or self.alphaCorr:
+            # Common parameters
+            emptyMatrix = np.zeros((epochs.shape[0], epochs.shape[1])).astype('bool')
+            self.matrixThreshold = np.copy(emptyMatrix)
+            self.matrixBridge = np.copy(emptyMatrix)
+            self.matrixBlink = np.copy(emptyMatrix)
+            windowSteps = int(self.window * self.sampleRate / 1000.)
 
             # Go through all the epochs
             for i, e in enumerate(epochs):
 
-                badThresholds = np.zeros(epochs[0].shape[0], dtype=int)
-                badBridges = np.zeros(epochs[0].shape[0], dtype=int)
-                badAlpha = np.zeros(epochs[0].shape[0], dtype=int)
-
-                # correct for threshold
+                # Check for Threshold outliers
                 if self.thresholdCorr:
-                    windowSteps = int(self.window * self.sampleRate / 1000.)
-                    for j in range(e[channelID].shape[1] - windowSteps):
-                        channelThresholdOff = np.ptp(
-                            e[:, j:j + windowSteps], axis=1) > self.threshold
-                        if np.sum(channelThresholdOff) != 0:
-                            badThresholds += channelThresholdOff
+                    badThresholdChannelID = []
+                    for j in range(e.shape[1] - windowSteps):
+                        badChannels = np.where(np.ptp(e[:, j:j + windowSteps], axis=1) > self.threshold)[0]
+                        badThresholdChannelID.extend(list(badChannels))
+                    if badThresholdChannelID != []:
+                        self.matrixThreshold[i][np.unique(badThresholdChannelID)] = True
 
-                # correct for bridges
+                # Check for Bridge outliers
                 if self.bridgeCorr:
                     corrMatrix = np.where(np.corrcoef(e) > .99999)
-                    if e.shape[0] != corrMatrix[0].shape[0]:
-                        corrID = np.unique(
-                            [corrMatrix[0][m]
-                             for m in range(corrMatrix[0].shape[0])
-                             if corrMatrix[0][m] != corrMatrix[1][m]])
-                        badBridges[corrID] += 1
+                    badBridgeChannelID = np.unique([corrMatrix[0][m] for m in range(len(corrMatrix[0])) if corrMatrix[0][m] != corrMatrix[1][m]])
+                    if badBridgeChannelID != []:
+                        self.matrixBridge[i][np.unique(badBridgeChannelID)] = True
 
-                # correct for alpha
-                if self.alphaCorr:
-                    ps = np.abs(np.fft.rfft(e))**2  # **2 for power specturm
-                    freq = np.linspace(0, Data.Results.sampleRate / 2,
-                                       ps.shape[1])
-                    alphaFreq = [
-                        a for a in [b for b, f in enumerate(freq) if f > 7.5]
-                        if freq[a] < 12.5]
-                    alphaPower = ps[:, alphaFreq].sum(axis=1)
-                    alphaID = np.where(
-                        alphaPower > alphaPower.mean() +
-                        alphaPower.std() * 10)[0]
-                    if alphaID.shape[0] != 0:
-                        badAlpha[alphaID] += 1
-
-                # Add information of bad channels
-                self.badEpochThreshold.append(badThresholds != 0)
-                self.badEpochBridge.append(badBridges.astype('bool'))
-                self.badEpochAlpha.append(badAlpha.astype('bool'))
-
-            # Turn channel information into numpy arrays
-            self.badEpochThreshold = np.array(self.badEpochThreshold)
-            self.badEpochBridge = np.array(self.badEpochBridge)
-            self.badEpochAlpha = np.array(self.badEpochAlpha)
-
-            # Create list of epochs that should be kept
-            self.okID = []
-            self.badID = []
-            for i in range(epochs.shape[0]):
-                if not np.any(self.badEpochThreshold[i] == 1) and \
-                        not np.any(self.badEpochBridge[i] == 1) and \
-                        not np.any(self.badEpochAlpha[i] == 1):
-                    self.okID.append(i)
-                else:
-                    self.badID.append(i)
-        else:
-            self.okID = [i for i in range(epochs.shape[0])]
-            self.badID = []
+            # Specifying ID of good and bad epochs
+            badIDs = self.matrixThreshold.sum(axis=1) + self.matrixBridge.sum(axis=1)
+            self.badID = badIDs.astype('bool')
+            self.okID = np.invert(self.badID)
 
         # Drop bad Epochs
         self.epochs = epochs[self.okID]

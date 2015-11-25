@@ -30,29 +30,16 @@ class Overview(wx.Panel):
                 markers = self.Data.Results.collapsedMarkers
             else:
                 markers = np.copy(self.Data.Orig.markers)
-            uniqueMarkers = np.unique(markers)
-
-            emptyMatrix = np.zeros((len(markers),
-                                    len(labelsChannel))).astype('bool')
-            if self.Data.Results.badEpochThreshold == []:
-                matrixThreshold = emptyMatrix
-            else:
-                matrixThreshold = np.copy(self.Data.Results.badEpochThreshold)
-            if self.Data.Results.badEpochBridge == []:
-                matrixBridge = emptyMatrix
-            else:
-                matrixBridge = np.copy(self.Data.Results.badEpochBridge)
-            if self.Data.Results.badEpochAlpha == []:
-                matrixAlpha = emptyMatrix
-            else:
-                matrixAlpha = np.copy(self.Data.Results.badEpochAlpha)
+            matrixThreshold = np.copy(self.Data.Results.matrixThreshold)
+            matrixBridge = np.copy(self.Data.Results.matrixBridge)
+            matrixBlink = np.copy(self.Data.Results.matrixBlink)
 
             # Check for broken Epochs; if 25% of channels are over threshold
             brokenID = np.where(matrixThreshold.sum(axis=1)
                                 > matrixThreshold.shape[1] * .25)[0]
             matrixThreshold[brokenID] *= False
 
-            matrixBad = matrixThreshold + matrixBridge + matrixAlpha
+            matrixBad = matrixThreshold + matrixBridge + matrixBlink
             badChannelsID = np.where(matrixBad.sum(axis=0))[0]
             badChannelsLabel = np.append(
                 'Broken', labelsChannel[badChannelsID])
@@ -62,8 +49,8 @@ class Overview(wx.Panel):
                 0, matrixThreshold[:, badChannelsID].sum(axis=0))
             distChannelBridge = np.append(
                 0, matrixBridge[:, badChannelsID].sum(axis=0))
-            distChannelAlpha = np.append(
-                0, matrixAlpha[:, badChannelsID].sum(axis=0))
+            distChannelBlink = np.append(
+                0, matrixBlink[:, badChannelsID].sum(axis=0))
             distChannelEye = np.append(
                 len(brokenID), np.zeros(len(badChannelsID)))
 
@@ -74,12 +61,13 @@ class Overview(wx.Panel):
                 np.where(matrixBridge.sum(axis=1).astype('bool'))[0])
             markerIDBridge = [
                 m for m in markerIDBridge if m not in markerIDThreshold]
-            markerIDAlpha = list(
-                np.where(matrixAlpha.sum(axis=1).astype('bool'))[0])
-            markerIDAlpha = [
-                m for m in markerIDAlpha
+            markerIDBlink = list(
+                np.where(matrixBlink.sum(axis=1).astype('bool'))[0])
+            markerIDBlink = [
+                m for m in markerIDBlink
                 if m not in markerIDThreshold + markerIDBridge]
 
+            uniqueMarkers = np.unique(markers)
             if self.Data.markers2hide != []:
                 uniqueMarkers = np.array([u for u in uniqueMarkers
                                           if u not in self.Data.markers2hide])
@@ -89,12 +77,12 @@ class Overview(wx.Panel):
                 for u in uniqueMarkers]
             distMarkerBridge = [
                 list(markers[markerIDBridge]).count(u) for u in uniqueMarkers]
-            distMarkerAlpha = [
-                list(markers[markerIDAlpha]).count(u) for u in uniqueMarkers]
+            distMarkerBlink = [
+                list(markers[markerIDBlink]).count(u) for u in uniqueMarkers]
             distMarkerOK = [
                 [m for i, m in enumerate(markers)
                  if i not in markerIDThreshold + markerIDBridge
-                 + markerIDAlpha].count(u) for u in uniqueMarkers]
+                 + markerIDBlink].count(u) for u in uniqueMarkers]
 
             # Check if subplot layout has 2 or 1 figures
             if badChannelsID != []:
@@ -112,10 +100,10 @@ class Overview(wx.Panel):
                 axes.bar(nChannels, distChannelBridge, 0.75, color='b',
                          bottom=distChannelThreshold, label='Bridge',
                          alpha=0.5)
-                axes.bar(nChannels, distChannelAlpha, 0.75, color='m',
+                axes.bar(nChannels, distChannelBlink, 0.75, color='m',
                          bottom=np.sum(np.vstack((distChannelThreshold,
                                                   distChannelBridge)), axis=0),
-                         label='Alpha', alpha=0.5)
+                         label='Blink', alpha=0.5)
 
                 axes.title.set_text(
                     'Channel Overview - %s Epochs Total' % markers.shape[0])
@@ -141,11 +129,11 @@ class Overview(wx.Panel):
                      bottom=np.sum(np.vstack((distMarkerOK,
                                               distMarkerThreshold)), axis=0),
                      label='Bridge', alpha=0.5)
-            axes.bar(nMarker, distMarkerAlpha, 0.75, color='m',
+            axes.bar(nMarker, distMarkerBlink, 0.75, color='m',
                      bottom=np.sum(np.vstack((distMarkerOK,
                                               distMarkerThreshold,
                                               distMarkerBridge)), axis=0),
-                     label='Alpha', alpha=0.5)
+                     label='Blink', alpha=0.5)
 
             axes.title.set_text('Marker Overview')
             axes.grid(True, axis='y')
@@ -340,24 +328,24 @@ class EpochDetail(wx.Panel):
                 markerID = self.Data.Results.markers[epochID]
                 epoch = self.Data.Orig.epochs[epochID]
 
-                sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
+                sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
 
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
-                    if self.Data.Results.badEpochThreshold != []:
-                        if self.Data.Results.badEpochThreshold[epochID][j]:
+                    if self.Data.Results.matrixThreshold.sum() != 0:
+                        if self.Data.Results.matrixThreshold[epochID][j]:
                             color = 'r'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
                                       self.labelsChannel[j], color='r')
                             axes.patch.set_facecolor('r')
                             axes.patch.set_alpha(0.05)
-                        elif self.Data.Results.badEpochBridge[epochID][j]:
+                        elif self.Data.Results.matrixBridge[epochID][j]:
                             color = 'b'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
                                       self.labelsChannel[j], color='b')
                             axes.patch.set_facecolor('b')
                             axes.patch.set_alpha(0.05)
-                        elif self.Data.Results.badEpochAlpha[epochID][j]:
+                        elif self.Data.Results.matrixBlink[epochID][j]:
                             color = 'm'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
                                       self.labelsChannel[j], color='m')
@@ -463,9 +451,9 @@ class EpochSummary(wx.Panel):
                      samplingPoints - preEpoch) for i in range(samplingPoints)]
 
         axes = self.figure.add_subplot(1, 1, 1)
-        sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0]))
+        sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
 
-        # correct for threshold
+        # detect threshold
         badChannelThreshold = np.zeros(epoch.shape[0], dtype=int)
         if self.Data.Specs.CheckboxThreshold.GetValue():
             windowSteps = int(self.Data.Results.window *
@@ -477,7 +465,7 @@ class EpochSummary(wx.Panel):
                 if np.sum(channelThresholdOff) != 0:
                     badChannelThreshold += channelThresholdOff
 
-        # correct for bridge
+        # detect bridge
         badChannelBridge = np.zeros(epoch.shape[0], dtype=int)
         if self.Data.Specs.CheckboxBridge.GetValue():
             corrMatrix = np.where(np.corrcoef(epoch) > .99999)
@@ -488,25 +476,8 @@ class EpochSummary(wx.Panel):
                      if corrMatrix[0][m] != corrMatrix[1][m]])
                 badChannelBridge[corrID] += 1
 
-        # correct for alpha
-        badChannelAlpha = np.zeros(epoch.shape[0], dtype=int)
-        if self.Data.Specs.CheckboxAlpha.GetValue():
-            ps = np.abs(np.fft.rfft(epoch))**2  # **2 for power specturm
-            freq = np.linspace(
-                0, self.Data.Results.sampleRate / 2, ps.shape[1])
-            alphaFreq = [
-                a for a in [b for b, f in enumerate(freq) if f > 7.5]
-                if freq[a] < 12.5]
-            alphaPower = ps[:, alphaFreq].sum(axis=1)
-            alphaID = np.where(
-                alphaPower > alphaPower.mean() +
-                alphaPower.std() * 10)[0]
-            if alphaID.shape[0] != 0:
-                badChannelAlpha[alphaID] += 1
-
         badChannelIDThreshold = np.where(badChannelThreshold != 0)
         badChannelIDBridge = np.where(badChannelBridge != 0)
-        badChannelIDAlpha = np.where(badChannelAlpha != 0)
 
         minmax = [0, 0]
         for j, c in enumerate(epoch):
@@ -514,8 +485,6 @@ class EpochSummary(wx.Panel):
                 color = 'r'
             elif j in badChannelIDBridge:
                 color = 'b'
-            elif j in badChannelIDAlpha:
-                color = 'm'
             else:
                 color = 'gray'
             lines = axes.plot(xaxis, c / sizer - j, color)
@@ -640,4 +609,9 @@ perhaps something like common movement - if suddenly all electrodes spike in a s
 
 check that "Channel Overview" displays the right values if markers are hidden
 Bridges are not shown in Epoch - Detailed
+
+single view in epoch - detailed
+double click to select or deselect epochs
+
+ceate a sliding view window or a popup "Manual Rejection"? - [r] for reject or unreject and change size of window etc.?
 """

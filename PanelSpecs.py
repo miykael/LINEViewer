@@ -184,6 +184,12 @@ class Specification(wx.Panel):
         sizerBoxEpoch.Add(PanelEpochField, 0, wx.EXPAND)
         sizerBoxEpoch.AddSpacer(5)
 
+        # Manual Rejection
+        self.Data.Specs.CheckboxManual = wx.CheckBox(PanelSpecs, wx.ID_ANY,
+                                                     'Manual Rejection')
+        self.Data.Specs.CheckboxManual.SetValue(False)
+        sizerBoxEpoch.Add(self.Data.Specs.CheckboxManual, 0, wx.EXPAND)
+
         # Baseline Correction
         self.Data.Specs.CheckboxBaseline = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                        'Baseline Correction')
@@ -192,19 +198,19 @@ class Specification(wx.Panel):
 
         # Bridge Specification
         self.Data.Specs.CheckboxBridge = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                     'Bridge Correction')
+                                                     'Bridge Detection')
         self.Data.Specs.CheckboxBridge.SetValue(False)
         sizerBoxEpoch.Add(self.Data.Specs.CheckboxBridge, 0, wx.EXPAND)
 
-        # Alpha Specification
-        self.Data.Specs.CheckboxAlpha = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                    'Alpha Power Correction')
-        self.Data.Specs.CheckboxAlpha.SetValue(False)
-        sizerBoxEpoch.Add(self.Data.Specs.CheckboxAlpha, 0, wx.EXPAND)
+        # Blink Specification
+        self.Data.Specs.CheckboxBlink = wx.CheckBox(PanelSpecs, wx.ID_ANY,
+                                                    'Blink Detection')
+        self.Data.Specs.CheckboxBlink.SetValue(False)
+        sizerBoxEpoch.Add(self.Data.Specs.CheckboxBlink, 0, wx.EXPAND)
 
         # Threshold Specification
         self.Data.Specs.CheckboxThreshold = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                        'Threshold Correction')
+                                                        'Threshold Detection')
         self.Data.Specs.CheckboxThreshold.SetValue(True)
         sizerBoxEpoch.Add(self.Data.Specs.CheckboxThreshold, 0, wx.EXPAND)
         sizerBoxEpoch.AddSpacer(5)
@@ -324,12 +330,15 @@ class Specification(wx.Panel):
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxThreshold,
                         self.Data.Specs.CheckboxThreshold.Id,
                         self.useThreshold)
+        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxManual,
+                        self.Data.Specs.CheckboxManual.Id,
+                        self.manualRejection)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBaseline,
                         self.Data.Specs.CheckboxBaseline.Id, self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBridge,
                         self.Data.Specs.CheckboxBridge.Id, self.drawEpochs)
-        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxAlpha,
-                        self.Data.Specs.CheckboxAlpha.Id, self.drawEpochs)
+        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBlink,
+                        self.Data.Specs.CheckboxBlink.Id, self.drawEpochs)
 
         wx.EVT_BUTTON(self.ButtonMarker, self.ButtonMarker.Id,
                       self.hideMarkers)
@@ -337,6 +346,9 @@ class Specification(wx.Panel):
                       self.collapseMarkers)
         wx.EVT_BUTTON(self.ButtonMarkerReset, self.ButtonMarkerReset.Id,
                       self.resetMarkers)
+
+    def manualRejection(self, event):
+        event.Skip()
 
     def drawAll(self, event):
         if self.Data.Datasets != []:
@@ -407,9 +419,11 @@ class Specification(wx.Panel):
         if self.Data.Specs.CheckboxThreshold.GetValue():
             self.Data.Specs.ThreshValue.Enable()
             self.Data.Specs.ThreshWindow.Enable()
+            self.ButtonExclude.Enable()
         else:
             self.Data.Specs.ThreshValue.Disable()
             self.Data.Specs.ThreshWindow.Disable()
+            self.ButtonExclude.Disable()
         self.drawEpochs(event)
 
     def useNotch(self, event):
