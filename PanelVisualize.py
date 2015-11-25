@@ -336,20 +336,20 @@ class EpochDetail(wx.Panel):
                         if self.Data.Results.matrixThreshold[epochID][j]:
                             color = 'r'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color='r')
-                            axes.patch.set_facecolor('r')
+                                      self.labelsChannel[j], color)
+                            axes.patch.set_facecolor(color)
                             axes.patch.set_alpha(0.05)
                         elif self.Data.Results.matrixBridge[epochID][j]:
                             color = 'b'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color='b')
-                            axes.patch.set_facecolor('b')
+                                      self.labelsChannel[j], color)
+                            axes.patch.set_facecolor(color)
                             axes.patch.set_alpha(0.05)
                         elif self.Data.Results.matrixBlink[epochID][j]:
                             color = 'm'
                             axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color='m')
-                            axes.patch.set_facecolor('m')
+                                      self.labelsChannel[j], color)
+                            axes.patch.set_facecolor(color)
                             axes.patch.set_alpha(0.05)
                         else:
                             color = 'gray'
@@ -416,13 +416,14 @@ class EpochDetail(wx.Panel):
     def onPick(self, event):
         # only if left mouse button is pressed
         if event.mouseevent.button == 1:
-            event.artist.set_color('black')
+            color = 'black'
+            event.artist.set_color(color)
             linenumber = int(event.artist.get_label()[5:])
             xValue = float(self.Data.Specs.PostEpoch.GetValue()) + 1
             yValue = event.artist.get_data()[1][-1]
             event.artist.axes.text(xValue, yValue,
                                    self.labelsChannel[linenumber],
-                                   color='black')
+                                   color)
             self.canvas.draw()
 
 
