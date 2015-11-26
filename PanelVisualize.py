@@ -221,7 +221,7 @@ class GFPSummary(wx.Panel):
     def updateFigure(self, event):
         if self.Data.Datasets != []:
             self.Data.Overview.update(self)
-            self.Data.GFPSummary.update(self.Data.Results)
+            self.update(self.Data.Results)
             self.Data.EpochDetail.update([])
         event.Skip()
 
@@ -278,7 +278,7 @@ class GFPDetailed(wx.Panel):
 
     def updateFigure(self, event):
         if self.Data.Datasets != []:
-            self.Data.GFPDetailed.update(self.Data.Results)
+            self.update(self.Data.Results)
         event.Skip()
 
     def zoomInDetailedGFP(self, event):
@@ -338,13 +338,15 @@ class EpochDetail(wx.Panel):
 
         # Compute number of subplots needed
         tiles2Show = len(self.id2Show) - self.shiftView
-        if tiles2Show < 4:
+
+        # Get Visualization layout
+        layout = self.ComboLayout.GetValue()
+        vPlots = int(layout[-1])
+        hPlots = int(layout[0])
+        tiles = vPlots * hPlots
+        if tiles2Show < tiles:
             tiles = tiles2Show
             hPlots, vPlots = findSquare(tiles2Show)
-        else:
-            tiles = 4
-            vPlots = 2
-            hPlots = 2
 
         # Draw the epochs
         for k, i in enumerate(range(shiftView, tiles + shiftView)):
@@ -418,26 +420,23 @@ class EpochDetail(wx.Panel):
     def updateFigure(self, event):
         if self.Data.Datasets != []:
             if self.CheckboxMarkers.GetValue():
-                self.Data.EpochDetail.markerValue = []
-            self.Data.EpochDetail.update(
-                self.Data.EpochDetail.markerValue)
+                self.markerValue = []
+            self.update(self.markerValue)
         event.Skip()
 
     def shiftViewLeft(self, event):
         if self.Data.Datasets != []:
-            if self.Data.EpochDetail.shiftView != 0:
-                viewShift = self.Data.EpochDetail.shiftView - 4
-                self.Data.EpochDetail.update(
-                    self.Data.EpochDetail.markerValue, viewShift)
+            if self.shiftView != 0:
+                viewShift = self.shiftView - 4
+                self.update(self.markerValue, viewShift)
         event.Skip()
 
     def shiftViewRight(self, event):
         if self.Data.Datasets != []:
-            if self.Data.EpochDetail.shiftView + 4 \
-                    < len(self.Data.EpochDetail.id2Show):
-                viewShift = self.Data.EpochDetail.shiftView + 4
-                self.Data.EpochDetail.update(
-                    self.Data.EpochDetail.markerValue, viewShift)
+            if self.shiftView + 4 \
+                    < len(self.id2Show):
+                viewShift = self.shiftView + 4
+                self.update(self.markerValue, viewShift)
         event.Skip()
 
     def onPick(self, event):
@@ -452,6 +451,12 @@ class EpochDetail(wx.Panel):
                                    self.labelsChannel[linenumber],
                                    color)
             self.canvas.draw()
+        event.Skip()
+
+    def updateLayout(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue)
+        event.Skip()
 
 
 class EpochSummary(wx.Panel):
@@ -574,16 +579,25 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
             self.CheckboxGMD, self.CheckboxGMD.Id, self.updateFigure)
 
     if showDetailedEpochs:
-        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<")
+        self.TextLayout = wx.StaticText(self, wx.ID_ANY, label='Layout:')
+        self.ComboLayout = wx.ComboBox(self, style=wx.CB_READONLY,
+                                       choices=['1x1', '1x2', '2x2', '2x3'])
+        self.ComboLayout.SetSelection(2)
+        wx.EVT_COMBOBOX(self.ComboLayout, self.ComboLayout.Id,
+                        self.updateLayout)
+        self.hbox.Add(self.TextLayout, 0, border=3, flag=flags)
+        self.hbox.Add(self.ComboLayout, 0, border=3, flag=flags)
+
         self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
+        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<")
         self.goRightButton = wx.Button(self, wx.ID_ANY, ">>")
         wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
                       self.shiftViewLeft)
         wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
                       self.shiftViewRight)
+        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
         self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
-        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
 
         self.CheckboxEpochs = wx.CheckBox(self, wx.ID_ANY,
                                           'Outliers only')
