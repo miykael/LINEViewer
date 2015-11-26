@@ -116,6 +116,20 @@ class Overview(wx.Panel):
             axes.set_xticks(nChannels + .75 / 2)
             axes.set_xticklabels(badChannelsLabel)
 
+            # Write percentage of outliers in channel overview plot
+            ticks = axes.get_xticks()
+            distOutliers = np.vstack([distChannelThreshold,
+                                      distChannelBridge,
+                                      distChannelBroken,
+                                      distChannelBlink]).sum(axis=0)
+            distOutliers = 1. * distOutliers / markers.shape[0]
+
+            for i, d in enumerate(distOutliers):
+                axes.text(
+                    ticks[i], 0.8,
+                    '{0}%'.format(str(np.round(distOutliers[i] * 100., 1))),
+                     horizontalalignment='center')
+
             # Create bad marker histogram
             axes = self.figure.add_subplot(2, 1, 2)
 
@@ -348,7 +362,6 @@ class EpochDetail(wx.Panel):
 
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
-                    aegaegaeg
                     isBroken = self.Data.Results.matrixThreshold[
                         epochID].sum() > (
                             self.Data.Results.matrixThreshold.shape[1] * 0.25)
@@ -637,7 +650,6 @@ check that "Channel Overview" displays the right values if markers are hidden
 Bridges are not shown in Epoch - Detailed
 make sure that right number of epochs are shown in GFP_Detailed
 make sure that right epochs are shown in Epoch_Detailed
-single view in epoch - detailed
 double click to select or deselect epochs (decide which color it should be shown in overview?)
 perhaps have a sizer to change the sizer?
 
