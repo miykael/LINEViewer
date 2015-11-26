@@ -86,7 +86,7 @@ class Results():
             self.postCut = np.copy(self.postFrame)
             # time pre stimuli should be at least 200ms for visualization
             if self.preEpoch < 200.0:
-                self.preCut = int(self.sampleRate*.2)
+                self.preCut = int(self.sampleRate * .2)
             # time post stimuli should be at least 1000ms for visualization
             if self.postEpoch < 1000.0:
                 self.postCut = self.sampleRate
@@ -152,8 +152,10 @@ class Results():
         # Baseline Correction
         if self.baselineCorr:
             for e in epochs:
-                baselineAvg = [[c] for c in
-                               np.mean(e[:, self.preCut-self.preFrame:self.preCut], axis=1)]
+                baselineAvg = [
+                    [c] for c in np.mean(e[:, self.preCut -
+                                           self.preFrame:self.preCut],
+                                         axis=1)]
                 e -= baselineAvg
 
         """
@@ -177,39 +179,52 @@ class Results():
                 style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
 
             # Common parameters
-            emptyMatrix = np.zeros((epochs.shape[0], epochs.shape[1])).astype('bool')
+            emptyMatrix = np.zeros(
+                (epochs.shape[0], epochs.shape[1])).astype('bool')
             self.matrixThreshold = np.copy(emptyMatrix)
             self.matrixBridge = np.copy(emptyMatrix)
-            self.matrixBlink = np.zeros((epochs.shape[0], epochs.shape[2])).astype('bool')
+            self.matrixBlink = np.zeros(
+                (epochs.shape[0], epochs.shape[2])).astype('bool')
             windowSteps = int(self.window * self.sampleRate / 1000.)
 
             # Go through all the epochs
             for i, e_long in enumerate(epochs):
 
-                e_short = epochs[i][:,self.preCut-self.preFrame:self.preCut+self.postFrame]
+                e_short = epochs[i][:,
+                                    self.preCut - self.preFrame:self.preCut +
+                                    self.postFrame]
 
                 # Check for Threshold outliers
                 badThresholdChannelID = []
                 if self.thresholdCorr:
                     for j in range(e_short.shape[1] - windowSteps):
-                        badChannels = np.where(np.ptp(e_short[:, j:j + windowSteps], axis=1) > self.threshold)[0]
+                        badChannels = np.where(
+                            np.ptp(e_short[:, j:j + windowSteps], axis=1) >
+                            self.threshold)[0]
                         badThresholdChannelID.extend(list(badChannels))
                     if badThresholdChannelID != []:
-                        badThresholdChannelID = np.unique(badThresholdChannelID)
+                        badThresholdChannelID = np.unique(
+                            badThresholdChannelID)
                         self.matrixThreshold[i][badThresholdChannelID] = True
 
                 # Check for Bridge outliers
                 if self.bridgeCorr:
                     corrMatrix = np.where(np.corrcoef(e_short) > .99999)
-                    badBridgeChannelID = np.unique([corrMatrix[0][m] for m in range(len(corrMatrix[0])) if corrMatrix[0][m] != corrMatrix[1][m]])
+                    badBridgeChannelID = np.unique(
+                        [corrMatrix[0][m] for m in range(len(corrMatrix[0]))
+                         if corrMatrix[0][m] != corrMatrix[1][m]])
                     if badBridgeChannelID.size != 0:
-                        self.matrixBridge[i][np.unique(badBridgeChannelID)] = True
+                        self.matrixBridge[i][
+                            np.unique(badBridgeChannelID)] = True
 
                 # Check for Blink outliers
                 if self.blinkCorr:
-                    channels2Check = [j for j in range(e_long.shape[0]) if j not in badThresholdChannelID]
+                    channels2Check = [j for j in range(e_long.shape[0])
+                                      if j not in badThresholdChannelID]
                     stdOverTime = e_long[channels2Check].std(axis=0)
-                    blinkTimeID = np.where(stdOverTime > e_long[channels2Check].std(axis=1).mean()*3)[0]
+                    blinkTimeID = np.where(
+                        stdOverTime >
+                        e_long[channels2Check].std(axis=1).mean() * 3)[0]
                     if blinkTimeID.size != 0:
                         self.matrixBlink[i][blinkTimeID] = True
 
@@ -217,8 +232,11 @@ class Results():
             dlg.Destroy()
 
             # Specifying ID of good and bad epochs
-            self.badBlinkEpochs = self.matrixBlink[:, self.preCut - self.preFrame:self.preCut + self.postFrame].sum(axis=1).astype('bool')
-            badIDs = self.matrixThreshold.sum(axis=1) + self.matrixBridge.sum(axis=1) + self.badBlinkEpochs
+            self.badBlinkEpochs = self.matrixBlink[
+                :, self.preCut - self.preFrame:self.preCut +
+                self.postFrame].sum(axis=1).astype('bool')
+            badIDs = self.matrixThreshold.sum(
+                axis=1) + self.matrixBridge.sum(axis=1) + self.badBlinkEpochs
             self.badID = badIDs.astype('bool')
             self.okID = np.invert(self.badID)
 

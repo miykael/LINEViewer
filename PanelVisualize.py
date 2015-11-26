@@ -35,8 +35,8 @@ class Overview(wx.Panel):
             badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
 
             # Check for broken Epochs; if 25% of channels are over threshold
-            brokenID = np.where(matrixThreshold.sum(axis=1)
-                                > matrixThreshold.shape[1] * .25)[0]
+            brokenID = np.where(matrixThreshold.sum(axis=1) >
+                                matrixThreshold.shape[1] * .25)[0]
             matrixThreshold[brokenID] *= False
             matrixBridge[brokenID] *= False
             badBlinkEpochs[brokenID] *= False
@@ -49,14 +49,18 @@ class Overview(wx.Panel):
             # Get distribution of channels
             distChannelThreshold = [0, 0]
             distChannelBridge = [0, 0]
-            distChannelThreshold.extend(matrixThreshold[:, badChannelsID].sum(axis=0))
-            distChannelBridge.extend(matrixBridge[:, badChannelsID].sum(axis=0))
+            distChannelThreshold.extend(
+                matrixThreshold[:, badChannelsID].sum(axis=0))
+            distChannelBridge.extend(
+                matrixBridge[:, badChannelsID].sum(axis=0))
             distChannelBroken = [len(brokenID), 0] + [0] * len(badChannelsID)
-            distChannelBlink = [0, badBlinkEpochs.sum()] + [0] * len(badChannelsID)
+            distChannelBlink = [0, badBlinkEpochs.sum()] + \
+                [0] * len(badChannelsID)
 
             # Get distribution of markers
             markerIDBroken = list(brokenID)
-            markerIDThreshold = list(np.where(matrixThreshold.sum(axis=1).astype('bool'))[0])
+            markerIDThreshold = list(
+                np.where(matrixThreshold.sum(axis=1).astype('bool'))[0])
             markerIDBridge = list(
                 np.where(matrixBridge.sum(axis=1).astype('bool'))[0])
             markerIDBridge = [
@@ -83,8 +87,9 @@ class Overview(wx.Panel):
                 list(markers[markerIDBlink]).count(u) for u in uniqueMarkers]
             distMarkerOK = [
                 [m for i, m in enumerate(markers)
-                 if i not in markerIDThreshold + markerIDBridge
-                 + markerIDBlink + markerIDBroken].count(u) for u in uniqueMarkers]
+                 if i not in markerIDThreshold + markerIDBridge +
+                 markerIDBlink + markerIDBroken].count(u)
+                for u in uniqueMarkers]
 
             # Check if subplot layout has 2 or 1 figures
             if badChannelsID != []:
@@ -181,7 +186,10 @@ class GFPSummary(wx.Panel):
         else:
             self.figure.clear()
             xaxis = getXaxis(Results)
-            avgGFP = np.array(Results.avgGFP)[:,Results.preCut-Results.preFrame:Results.preCut+Results.postFrame]
+            avgGFP = np.array(
+                Results.avgGFP)[:, Results.preCut -
+                                Results.preFrame:Results.preCut +
+                                Results.postFrame]
             plt.plot(xaxis, np.transpose(avgGFP))
             plt.xlabel('time [ms]')
             plt.ylabel('GFP')
@@ -241,8 +249,12 @@ class GFPDetailed(wx.Panel):
             self.figure.clear()
             figureShape = findSquare(Results.uniqueMarkers.shape[0])
             xaxis = getXaxis(Results)
-            avgGFP = np.array(Results.avgGFP)[:,Results.preCut-Results.preFrame:Results.preCut+Results.postFrame]
-            avgGMD = np.array(Results.avgGMD)[:,Results.preCut-Results.preFrame:Results.preCut+Results.postFrame]
+            avgGFP = np.array(Results.avgGFP)[
+                :, Results.preCut - Results.preFrame:Results.preCut +
+                Results.postFrame]
+            avgGMD = np.array(Results.avgGMD)[
+                :, Results.preCut - Results.preFrame:Results.preCut +
+                Results.postFrame]
             for i, g in enumerate(Results.avgGFP):
                 axes = self.figure.add_subplot(figureShape[0],
                                                figureShape[1],
@@ -313,12 +325,16 @@ class EpochDetail(wx.Panel):
             self.id2Show = [
                 i for i in self.id2Show if i in self.Data.Results.badID]
 
-        preEpoch = 1000./(self.Data.Results.sampleRate / self.Data.Results.preFrame)
-        postEpoch = 1000./(self.Data.Results.sampleRate / self.Data.Results.postFrame)
+        preEpoch = 1000. / (self.Data.Results.sampleRate /
+                            self.Data.Results.preFrame)
+        postEpoch = 1000. / (self.Data.Results.sampleRate /
+                             self.Data.Results.postFrame)
         samplingPoints = self.Data.Results.epochs.shape[2]
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
 
-        xaxis = [int(1.0 * i * (preEpoch + postEpoch) / samplingPoints - preEpoch) for i in range(samplingPoints)]
+        xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
+                     samplingPoints - preEpoch)
+                 for i in range(samplingPoints)]
 
         # Compute number of subplots needed
         tiles2Show = len(self.id2Show) - self.shiftView
@@ -338,7 +354,8 @@ class EpochDetail(wx.Panel):
                 markerID = self.Data.Results.markers[epochID]
                 epoch = self.Data.Orig.epochs[epochID]
 
-                sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
+                sizer = np.sqrt(
+                    np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
 
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
