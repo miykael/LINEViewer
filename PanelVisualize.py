@@ -25,6 +25,7 @@ class Overview(wx.Panel):
             newFigure(self)
         else:
             # Get relevant information
+            self.figure.clear()
             labelsChannel = np.copy(self.Data.Orig.labelsChannel)
             if hasattr(self.Data.Results, 'collapsedMarkers'):
                 markers = self.Data.Results.collapsedMarkers
@@ -91,41 +92,32 @@ class Overview(wx.Panel):
                  markerIDBlink + markerIDBroken].count(u)
                 for u in uniqueMarkers]
 
-            # Check if subplot layout has 2 or 1 figures
-            if badChannelsID != []:
-                layout = [2, 1, 2]
+            # Create bad channel histogram
+            axes = self.figure.add_subplot(2, 1, 1)
 
-                # Create bad channel histogram
-                self.figure.clear()
-                axes = self.figure.add_subplot(2, 1, 1)
+            nChannels = np.arange(len(badChannelsLabel))
+            axes.bar(nChannels, distChannelBroken, 0.75, color='c',
+                     label='Broken', alpha=0.5)
+            axes.bar(nChannels, distChannelThreshold, 0.75, color='r',
+                     label='Threshold', alpha=0.5)
+            axes.bar(nChannels, distChannelBridge, 0.75, color='b',
+                     bottom=distChannelThreshold, label='Bridge',
+                     alpha=0.5)
+            axes.bar(nChannels, distChannelBlink, 0.75, color='m',
+                     bottom=np.sum(np.vstack((distChannelThreshold,
+                                              distChannelBridge)), axis=0),
+                     label='Blink', alpha=0.5)
 
-                nChannels = np.arange(len(badChannelsLabel))
-                axes.bar(nChannels, distChannelBroken, 0.75, color='c',
-                         label='Broken', alpha=0.5)
-                axes.bar(nChannels, distChannelThreshold, 0.75, color='r',
-                         label='Threshold', alpha=0.5)
-                axes.bar(nChannels, distChannelBridge, 0.75, color='b',
-                         bottom=distChannelThreshold, label='Bridge',
-                         alpha=0.5)
-                axes.bar(nChannels, distChannelBlink, 0.75, color='m',
-                         bottom=np.sum(np.vstack((distChannelThreshold,
-                                                  distChannelBridge)), axis=0),
-                         label='Blink', alpha=0.5)
-
-                axes.title.set_text(
-                    'Channel Overview - %s Epochs Total' % markers.shape[0])
-                axes.grid(True, axis='y')
-                axes.set_xlabel('Channel')
-                axes.set_ylabel('Epochs')
-                axes.set_xticks(nChannels + .75 / 2)
-                axes.set_xticklabels(badChannelsLabel)
-
-            else:
-                layout = [1, 1, 1]
-                self.figure.clear()
+            axes.title.set_text(
+                'Channel Overview - %s Epochs Total' % markers.shape[0])
+            axes.grid(True, axis='y')
+            axes.set_xlabel('Channel')
+            axes.set_ylabel('Epochs')
+            axes.set_xticks(nChannels + .75 / 2)
+            axes.set_xticklabels(badChannelsLabel)
 
             # Create bad marker histogram
-            axes = self.figure.add_subplot(layout[0], layout[1], layout[2])
+            axes = self.figure.add_subplot(2, 1, 2)
 
             nMarker = np.arange(uniqueMarkers.shape[0])
             axes.bar(nMarker, distMarkerOK, 0.75, color='g',
@@ -323,7 +315,8 @@ class EpochDetail(wx.Panel):
             self.id2Show = np.arange(self.Data.Results.markers.shape[0])
         if self.CheckboxEpochs.IsChecked():
             self.id2Show = [
-                i for i in self.id2Show if i in self.Data.Results.badID]
+                i for i in self.id2Show
+                if i in np.where(self.Data.Results.badID)[0]]
 
         preEpoch = 1000. / (self.Data.Results.sampleRate /
                             self.Data.Results.preFrame)
@@ -336,20 +329,14 @@ class EpochDetail(wx.Panel):
                      samplingPoints - preEpoch)
                  for i in range(samplingPoints)]
 
-        # Compute number of subplots needed
-        tiles2Show = len(self.id2Show) - self.shiftView
-
         # Get Visualization layout
         layout = self.ComboLayout.GetValue()
         vPlots = int(layout[-1])
         hPlots = int(layout[0])
-        tiles = vPlots * hPlots
-        if tiles2Show < tiles:
-            tiles = tiles2Show
-            hPlots, vPlots = findSquare(tiles2Show)
+        self.tiles = vPlots * hPlots
 
         # Draw the epochs
-        for k, i in enumerate(range(shiftView, tiles + shiftView)):
+        for k, i in enumerate(range(shiftView, self.tiles + shiftView)):
             axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
             if i < len(self.id2Show):
                 epochID = self.id2Show[i]
@@ -361,27 +348,30 @@ class EpochDetail(wx.Panel):
 
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
-                    if self.Data.Results.matrixThreshold.sum() != 0:
-                        if self.Data.Results.matrixThreshold[epochID][j]:
-                            color = 'r'
-                            axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color=color)
-                            axes.patch.set_facecolor(color)
-                            axes.patch.set_alpha(0.05)
-                        elif self.Data.Results.matrixBridge[epochID][j]:
-                            color = 'b'
-                            axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color=color)
-                            axes.patch.set_facecolor(color)
-                            axes.patch.set_alpha(0.05)
-                        elif self.Data.Results.matrixBlink[epochID][j]:
-                            color = 'm'
-                            axes.text(postEpoch + 1, c[-1] / sizer - j,
-                                      self.labelsChannel[j], color=color)
-                            axes.patch.set_facecolor(color)
-                            axes.patch.set_alpha(0.05)
-                        else:
-                            color = 'gray'
+                    aegaegaeg
+                    isBroken = self.Data.Results.matrixThreshold[
+                        epochID].sum() > (
+                            self.Data.Results.matrixThreshold.shape[1] * 0.25)
+                    if isBroken:
+                        color = 'c'
+                        axes.title.set_fontweight('bold')
+                        axes.title.set_color(color)
+                    elif self.Data.Results.matrixThreshold[epochID][j]:
+                        color = 'r'
+                        axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                  self.labelsChannel[j], color=color)
+                        axes.title.set_fontweight('bold')
+                        axes.title.set_color(color)
+                    elif self.Data.Results.matrixBridge[epochID][j]:
+                        color = 'b'
+                        axes.text(postEpoch + 1, c[-1] / sizer - j,
+                                  self.labelsChannel[j], color=color)
+                        axes.title.set_fontweight('bold')
+                        axes.title.set_color(color)
+                    elif self.Data.Results.matrixBlink[epochID].sum() != 0:
+                        color = 'm'
+                        axes.title.set_fontweight('bold')
+                        axes.title.set_color(color)
                     else:
                         color = 'gray'
                     lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
@@ -402,8 +392,8 @@ class EpochDetail(wx.Panel):
                                                               epochID))
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
-        currentPage = (self.shiftView / 4) + 1
-        totalPage = (len(self.id2Show) - 1) / 4 + 1
+        currentPage = (self.shiftView / self.tiles) + 1
+        totalPage = (len(self.id2Show) - 1) / self.tiles + 1
         if totalPage == 0:
             currentPage = 0
 
@@ -427,15 +417,15 @@ class EpochDetail(wx.Panel):
     def shiftViewLeft(self, event):
         if self.Data.Datasets != []:
             if self.shiftView != 0:
-                viewShift = self.shiftView - 4
+                viewShift = self.shiftView - self.tiles
                 self.update(self.markerValue, viewShift)
         event.Skip()
 
     def shiftViewRight(self, event):
         if self.Data.Datasets != []:
-            if self.shiftView + 4 \
+            if self.shiftView + self.tiles \
                     < len(self.id2Show):
-                viewShift = self.shiftView + 4
+                viewShift = self.shiftView + self.tiles
                 self.update(self.markerValue, viewShift)
         event.Skip()
 
@@ -649,7 +639,7 @@ make sure that right number of epochs are shown in GFP_Detailed
 make sure that right epochs are shown in Epoch_Detailed
 single view in epoch - detailed
 double click to select or deselect epochs (decide which color it should be shown in overview?)
-
+perhaps have a sizer to change the sizer?
 
 OUTLIER:
 ceate a sliding view window or a popup "Manual Rejection"? - [r] for reject or unreject and change size of window etc.?
