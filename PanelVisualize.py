@@ -37,7 +37,7 @@ class Overview(wx.Panel):
 
             # Check for broken Epochs; if 25% of channels are over threshold
             brokenID = np.where(matrixThreshold.sum(axis=1) >
-                                matrixThreshold.shape[1] * .25)[0]
+                                matrixThreshold.shape[1] * 0.2)[0]
             matrixThreshold[brokenID] *= False
             matrixBridge[brokenID] *= False
             badBlinkEpochs[brokenID] *= False
@@ -94,6 +94,7 @@ class Overview(wx.Panel):
 
             # Create bad channel histogram
             axes = self.figure.add_subplot(2, 1, 1)
+            axes.clear()
 
             nChannels = np.arange(len(badChannelsLabel))
             axes.bar(nChannels, distChannelBroken, 0.75, color='c',
@@ -118,20 +119,24 @@ class Overview(wx.Panel):
 
             # Write percentage of outliers in channel overview plot
             ticks = axes.get_xticks()
-            distOutliers = np.vstack([distChannelThreshold,
-                                      distChannelBridge,
-                                      distChannelBroken,
-                                      distChannelBlink]).sum(axis=0)
-            distOutliers = 1. * distOutliers / markers.shape[0]
+            distOutliersChannel = np.vstack([distChannelThreshold,
+                                             distChannelBridge,
+                                             distChannelBroken,
+                                             distChannelBlink]).sum(axis=0)
+            distOutliersChannel = 1. * distOutliersChannel / markers.shape[0]
 
-            for i, d in enumerate(distOutliers):
-                axes.text(
-                    ticks[i], 0.8,
-                    '{0}%'.format(str(np.round(distOutliers[i] * 100., 1))),
-                     horizontalalignment='center')
+            for i, d in enumerate(distOutliersChannel):
+                percentage = np.round(distOutliersChannel[i] * 100., 1)
+                if percentage != 0:
+                    axes.text(
+                        ticks[i], 0.2,
+                        '{0}%'.format(str(percentage)),
+                        horizontalalignment='center',
+                        verticalalignment='bottom', rotation=90)
 
             # Create bad marker histogram
             axes = self.figure.add_subplot(2, 1, 2)
+            axes.clear()
 
             nMarker = np.arange(uniqueMarkers.shape[0])
             axes.bar(nMarker, distMarkerOK, 0.75, color='g',
@@ -160,6 +165,25 @@ class Overview(wx.Panel):
             axes.set_ylabel('Epochs')
             axes.set_xticks(nMarker + .75 / 2)
             axes.set_xticklabels(uniqueMarkers.astype('str'))
+
+            # Write percentage of outliers in marker overview plot
+            ticks = axes.get_xticks()
+            distOutliersMarker = np.vstack([distMarkerThreshold,
+                                            distMarkerBridge,
+                                            distMarkerBroken,
+                                            distMarkerBlink]).sum(axis=0)
+            distOutliersMarker = np.divide(
+                distOutliersMarker.astype('float'),
+                distOutliersMarker + distMarkerOK)
+
+            for i, d in enumerate(distOutliersMarker):
+                percentage = np.round(distOutliersMarker[i] * 100., 1)
+                if percentage != 0:
+                    axes.text(
+                        ticks[i], 0.2,
+                        '{0}%'.format(str(percentage)),
+                        horizontalalignment='center',
+                        verticalalignment='bottom', rotation=90)
 
             # Adjust and draw histograms
             self.figure.subplots_adjust(left=0.05,
@@ -359,12 +383,14 @@ class EpochDetail(wx.Panel):
 
                 sizer = np.sqrt(
                     np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
+                modulator = float(self.ComboAmplitude.GetValue()[:-1])
+                sizer *= modulator / 100.
 
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
                     isBroken = self.Data.Results.matrixThreshold[
                         epochID].sum() > (
-                            self.Data.Results.matrixThreshold.shape[1] * 0.25)
+                            self.Data.Results.matrixThreshold.shape[1] * 0.2)
                     if isBroken:
                         color = 'c'
                         axes.title.set_fontweight('bold')
@@ -591,6 +617,18 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         self.hbox.Add(self.TextLayout, 0, border=3, flag=flags)
         self.hbox.Add(self.ComboLayout, 0, border=3, flag=flags)
 
+        self.TextSizer = wx.StaticText(self, wx.ID_ANY, label='Amplitude:')
+        self.ComboAmplitude = wx.ComboBox(
+            self, style=wx.CB_READONLY,
+            choices=['750%', '500%', '400%', '300%', '200%', '150%',
+                     '125%', '100%', '90%', '80%', '70%', '60%',
+                     '50%', '40%', '30%', '20%', '10%', '5%'])
+        self.ComboAmplitude.SetSelection(7)
+        wx.EVT_COMBOBOX(self.ComboAmplitude, self.ComboAmplitude.Id,
+                        self.updateLayout)
+        self.hbox.Add(self.TextSizer, 0, border=3, flag=flags)
+        self.hbox.Add(self.ComboAmplitude, 0, border=3, flag=flags)
+
         self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
         self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<")
         self.goRightButton = wx.Button(self, wx.ID_ANY, ">>")
@@ -644,14 +682,13 @@ def getXaxis(Results):
 TODO:
 
 VISUAL:
-add percentage to progress bar
-add also percentage of epochs lost with current outlier settings
 check that "Channel Overview" displays the right values if markers are hidden
 Bridges are not shown in Epoch - Detailed
 make sure that right number of epochs are shown in GFP_Detailed
 make sure that right epochs are shown in Epoch_Detailed
 double click to select or deselect epochs (decide which color it should be shown in overview?)
 perhaps have a sizer to change the sizer?
+
 
 OUTLIER:
 ceate a sliding view window or a popup "Manual Rejection"? - [r] for reject or unreject and change size of window etc.?
