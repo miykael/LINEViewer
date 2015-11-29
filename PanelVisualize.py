@@ -30,7 +30,7 @@ class Overview(wx.Panel):
             if hasattr(self.Data.Results, 'collapsedMarkers'):
                 markers = self.Data.Results.collapsedMarkers
             else:
-                markers = np.copy(self.Data.Orig.markers)
+                markers = np.copy(self.Data.Results.markers)
             matrixThreshold = np.copy(self.Data.Results.matrixThreshold)
             matrixBridge = np.copy(self.Data.Results.matrixBridge)
             badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
@@ -72,9 +72,6 @@ class Overview(wx.Panel):
                 if m not in markerIDThreshold + markerIDBridge]
 
             uniqueMarkers = np.unique(markers)
-            if self.Data.markers2hide != []:
-                uniqueMarkers = np.array([u for u in uniqueMarkers
-                                          if u not in self.Data.markers2hide])
 
             distMarkerBroken = [
                 list(markers[markerIDBroken]).count(u)
@@ -379,7 +376,7 @@ class EpochDetail(wx.Panel):
             if i < len(self.id2Show):
                 epochID = self.id2Show[i]
                 markerID = self.Data.Results.markers[epochID]
-                epoch = self.Data.Orig.epochs[epochID]
+                epoch = self.Data.Results.epochs[epochID]
 
                 sizer = np.sqrt(
                     np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
@@ -715,7 +712,6 @@ def getXaxis(Results):
 TODO:
 
 VISUAL
-check that "Channel Overview" displays the right values if markers are hidden
 double click to select or deselect epochs (decide which color it should be shown in overview?)
 look at the epoch average panel
 
