@@ -439,8 +439,8 @@ class Specification(wx.Panel):
             if dlg.ShowModal() == wx.ID_OK:
                 self.Data.Specs.channels2exclude = [
                     channels[x] for x in dlg.GetSelections()]
+                self.Data.Results.updateAll(self.Data)
             dlg.Destroy()
-            self.Data.Results.updateAll(self.Data)
         event.Skip()
 
     def hideMarkers(self, event):
