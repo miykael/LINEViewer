@@ -180,12 +180,6 @@ class Specification(wx.Panel):
         sizerBoxEpoch.Add(PanelEpochField, 0, wx.EXPAND)
         sizerBoxEpoch.AddSpacer(5)
 
-        # Manual Rejection
-        self.Data.Specs.CheckboxManual = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                     'Manual Rejection')
-        self.Data.Specs.CheckboxManual.SetValue(False)
-        sizerBoxEpoch.Add(self.Data.Specs.CheckboxManual, 0, wx.EXPAND)
-
         # Baseline Correction
         self.Data.Specs.CheckboxBaseline = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                        'Baseline Correction')
@@ -326,9 +320,6 @@ class Specification(wx.Panel):
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxThreshold,
                         self.Data.Specs.CheckboxThreshold.Id,
                         self.useThreshold)
-        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxManual,
-                        self.Data.Specs.CheckboxManual.Id,
-                        self.manualRejection)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBaseline,
                         self.Data.Specs.CheckboxBaseline.Id, self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBridge,
@@ -342,9 +333,6 @@ class Specification(wx.Panel):
                       self.collapseMarkers)
         wx.EVT_BUTTON(self.ButtonMarkerReset, self.ButtonMarkerReset.Id,
                       self.resetMarkers)
-
-    def manualRejection(self, event):
-        event.Skip()
 
     def drawAll(self, event):
         if self.Data.Datasets != []:
