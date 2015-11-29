@@ -129,7 +129,7 @@ class Overview(wx.Panel):
                 percentage = np.round(distOutliersChannel[i] * 100., 1)
                 if percentage != 0:
                     axes.text(
-                        ticks[i], 0.2,
+                        ticks[i], 0.8,
                         '{0}%'.format(str(percentage)),
                         horizontalalignment='center',
                         verticalalignment='bottom', rotation=90)
@@ -180,7 +180,7 @@ class Overview(wx.Panel):
                 percentage = np.round(distOutliersMarker[i] * 100., 1)
                 if percentage != 0:
                     axes.text(
-                        ticks[i], 0.2,
+                        ticks[i], 0.8,
                         '{0}%'.format(str(percentage)),
                         horizontalalignment='center',
                         verticalalignment='bottom', rotation=90)
@@ -356,15 +356,15 @@ class EpochDetail(wx.Panel):
                 i for i in self.id2Show
                 if i in np.where(self.Data.Results.badID)[0]]
 
-        preEpoch = 1000. / (self.Data.Results.sampleRate /
-                            self.Data.Results.preFrame)
-        postEpoch = 1000. / (self.Data.Results.sampleRate /
-                             self.Data.Results.postFrame)
-        samplingPoints = self.Data.Results.epochs.shape[2]
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
-
-        xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
-                     samplingPoints - preEpoch)
+        Results = self.Data.Results
+        samplingPoints = Results.epochs.shape[2]
+        preStimuli = 1000. / (Results.sampleRate /
+                              Results.preCut)
+        postStimuli = 1000. / (Results.sampleRate /
+                               Results.postCut)
+        xaxis = [int(1.0 * i * (preStimuli + postStimuli) /
+                     samplingPoints - preStimuli)
                  for i in range(samplingPoints)]
 
         # Get Visualization layout
@@ -386,29 +386,48 @@ class EpochDetail(wx.Panel):
                 modulator = float(self.ComboAmplitude.GetValue()[:-1])
                 sizer *= modulator / 100.
 
+                # Highlight the epoch
+                preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
+                postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
+                axes.axvspan(-preEpoch, postEpoch, facecolor='g', alpha=0.1)
+
+                # Check if the epoch is broken
+                isBroken = Results.matrixThreshold[
+                    epochID].sum() > (Results.matrixThreshold.shape[1] * 0.2)
+
+                # Draw blink periods in figure
+                if Results.matrixBlink[epochID].sum() != 0:
+                    blinkEpoch = np.append(Results.matrixBlink[epochID], False)
+                    blinkPhase = np.where(blinkEpoch[:-1] != blinkEpoch[1:])[0]
+                    color = 'm'
+                    for i in range(blinkPhase.shape[0] / 2):
+                        axes.axvspan(xaxis[blinkPhase[2 * i]],
+                                     xaxis[blinkPhase[2 * i + 1]],
+                                     facecolor=color, alpha=0.2)
+                    stimuliSegment = Results.matrixBlink[
+                        epochID, Results.preCut -
+                        Results.preFrame:Results.preCut + Results.postFrame]
+                    if stimuliSegment.sum() != 0:
+                        axes.title.set_fontweight('bold')
+                        axes.title.set_color(color)
+
+                # Draw single channels
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
-                    isBroken = self.Data.Results.matrixThreshold[
-                        epochID].sum() > (
-                            self.Data.Results.matrixThreshold.shape[1] * 0.2)
                     if isBroken:
                         color = 'c'
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
-                    elif self.Data.Results.matrixThreshold[epochID][j]:
+                    elif Results.matrixThreshold[epochID][j]:
                         color = 'r'
-                        axes.text(postEpoch + 1, c[-1] / sizer - j,
+                        axes.text(postStimuli + 1, c[-1] / sizer - j,
                                   self.labelsChannel[j], color=color)
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
-                    elif self.Data.Results.matrixBridge[epochID][j]:
+                    elif Results.matrixBridge[epochID][j]:
                         color = 'b'
-                        axes.text(postEpoch + 1, c[-1] / sizer - j,
+                        axes.text(postStimuli + 1, c[-1] / sizer - j,
                                   self.labelsChannel[j], color=color)
-                        axes.title.set_fontweight('bold')
-                        axes.title.set_color(color)
-                    elif self.Data.Results.matrixBlink[epochID].sum() != 0:
-                        color = 'm'
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
                     else:
@@ -428,7 +447,7 @@ class EpochDetail(wx.Panel):
                 axes.set_ylim(minmax)
                 axes.get_yaxis().set_visible(False)
                 axes.title.set_text('Marker %s - Epoch %s' % (markerID,
-                                                              epochID))
+                                                              epochID + 1))
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
         currentPage = (self.shiftView / self.tiles) + 1
@@ -471,20 +490,25 @@ class EpochDetail(wx.Panel):
     def onPick(self, event):
         # only if left mouse button is pressed
         if event.mouseevent.button == 1:
-            color = 'black'
-            event.artist.set_color(color)
+            event.artist.set_color('black')
             linenumber = int(event.artist.get_label()[5:])
-            xValue = float(self.Data.Specs.PostEpoch.GetValue()) + 1
+            xValue = 1000. * self.Data.Results.postCut / \
+                self.Data.Results.sampleRate + 1
             yValue = event.artist.get_data()[1][-1]
             event.artist.axes.text(xValue, yValue,
                                    self.labelsChannel[linenumber],
-                                   color)
+                                   color='black')
+            self.canvas.ReleaseMouse()
             self.canvas.draw()
-        event.Skip()
 
     def updateLayout(self, event):
         if hasattr(self, 'markerValue'):
             self.update(self.markerValue)
+        event.Skip()
+
+    def updateSize(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue, self.shiftView)
         event.Skip()
 
 
@@ -625,7 +649,7 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
                      '50%', '40%', '30%', '20%', '10%', '5%'])
         self.ComboAmplitude.SetSelection(7)
         wx.EVT_COMBOBOX(self.ComboAmplitude, self.ComboAmplitude.Id,
-                        self.updateLayout)
+                        self.updateSize)
         self.hbox.Add(self.TextSizer, 0, border=3, flag=flags)
         self.hbox.Add(self.ComboAmplitude, 0, border=3, flag=flags)
 
@@ -682,12 +706,13 @@ def getXaxis(Results):
 TODO:
 
 VISUAL:
+blinks should only be in 3rd quadrant of channels
+perhaps check that blink periods are at least xx elements long?
 check that "Channel Overview" displays the right values if markers are hidden
 Bridges are not shown in Epoch - Detailed
 make sure that right number of epochs are shown in GFP_Detailed
 make sure that right epochs are shown in Epoch_Detailed
 double click to select or deselect epochs (decide which color it should be shown in overview?)
-perhaps have a sizer to change the sizer?
 
 
 OUTLIER:
@@ -705,5 +730,4 @@ perhaps something like common movement - if suddenly all electrodes spike in a s
 OUTPUT
 write eph, marker and tva files (also marker for origin)
 write or load tvas
-
 """

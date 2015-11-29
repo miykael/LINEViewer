@@ -175,7 +175,8 @@ class Results():
             # Create Progressbar for outlier detection
             progressMax = epochs.shape[0]
             dlg = wx.ProgressDialog(
-                "Outlier detection progress", "Time remaining", progressMax,
+                "Outlier detection progress",
+                "Time remaining for Outlier Detection", progressMax,
                 style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
 
             # Common parameters
@@ -222,11 +223,16 @@ class Results():
                     channels2Check = [j for j in range(e_long.shape[0])
                                       if j not in badThresholdChannelID]
                     stdOverTime = e_long[channels2Check].std(axis=0)
-                    blinkTimeID = np.where(
-                        stdOverTime >
-                        e_long[channels2Check].std(axis=1).mean() * 3)[0]
-                    if blinkTimeID.size != 0:
-                        self.matrixBlink[i][blinkTimeID] = True
+                    blinkTimes = stdOverTime > stdOverTime.mean() * 3
+                    blinks = np.where(blinkTimes)[0]
+                    blinkGroups = np.split(
+                        blinks, np.where(np.diff(blinks) != 1)[0] + 1)
+                    blinkPhase = [b for b in blinkGroups if b.shape[0] > 10]
+                    blinkTimes *= False
+                    if blinkPhase != []:
+                        blinkTimes[np.hstack(blinkPhase)] = True
+                    if blinkTimes.sum() != 0:
+                        self.matrixBlink[i][blinkTimes] = True
 
                 dlg.Update(i)
             dlg.Destroy()
@@ -323,7 +329,8 @@ def interpolateChannels(self, Data, xyz):
     # Create Progressbar for interpolation
     progressMax = Data.Orig.epochs.shape[0]
     dlg = wx.ProgressDialog(
-        "Interpolation Progress", "Time remaining", progressMax,
+        "Interpolation Progress", "Time remaining for Interpolation",
+        progressMax,
         style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
 
     for count, epoch in enumerate(Data.Orig.epochs):
