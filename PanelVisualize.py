@@ -714,29 +714,15 @@ def getXaxis(Results):
 """
 TODO:
 
-VISUAL:
-blinks should only be in 3rd quadrant of channels
-perhaps check that blink periods are at least xx elements long?
+VISUAL
 check that "Channel Overview" displays the right values if markers are hidden
-Bridges are not shown in Epoch - Detailed
-make sure that right number of epochs are shown in GFP_Detailed
-make sure that right epochs are shown in Epoch_Detailed
 double click to select or deselect epochs (decide which color it should be shown in overview?)
-
-
-OUTLIER:
-ceate a sliding view window or a popup "Manual Rejection"? - [r] for reject or unreject and change size of window etc.?
-how is impedence calculated?
-https://sites.google.com/site/cartoolcommunity/user-s-guide/analysis/artefacts-rejection-single-subjects-averages
-Cardiac artifact - http://www.slideshare.net/SudhakarMarella/eeg-artifacts-15175461
-Pulse artefact
-pop of electrode
-Electrode movement artifact (oscillation)
-flat electordes (perhaps if STD is very low or almost zero?)
-muscle artifact (perhaps high STD over certain time period)
-perhaps something like common movement - if suddenly all electrodes spike in a same way
+look at the epoch average panel
 
 OUTPUT
 write eph, marker and tva files (also marker for origin)
 write or load tvas
+
+PERFORMANCE
+Check why LINEViewer doesn't stop when closed
 """
