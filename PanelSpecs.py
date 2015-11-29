@@ -447,7 +447,7 @@ class Specification(wx.Panel):
 
         if self.Data.Datasets != []:
             if not hasattr(self.Data.Results, 'collapsedMarkers'):
-                markers = np.copy(self.Data.Orig.markers)
+                markers = np.copy(self.Data.Results.markers)
             else:
                 markers = self.Data.Results.collapsedMarkers
             markers = np.unique(markers)
@@ -474,7 +474,7 @@ class Specification(wx.Panel):
 
         if self.Data.Datasets != []:
             if not hasattr(self.Data.Results, 'collapsedMarkers'):
-                markers = np.copy(self.Data.Orig.markers)
+                markers = np.copy(self.Data.Results.markers)
             else:
                 markers = self.Data.Results.collapsedMarkers
             markers = np.unique(markers)
@@ -485,24 +485,25 @@ class Specification(wx.Panel):
                 choices=markerTxt)
             if dlg.ShowModal() == wx.ID_OK:
                 selected = dlg.GetSelections()
+
+                dlgText = wx.TextEntryDialog(
+                    None, 'What should be the new value of the marker?\n' +
+                    'Only integer values are accepted!')
+                if dlgText.ShowModal() == wx.ID_OK:
+                    newMarkerName = dlgText.GetValue()
+                    dlgText.Destroy()
+
+                    markers2collapse = np.array(markerTxt,
+                                                dtype='uint8')[selected]
+                    if not hasattr(self.Data.Results, 'collapsedMarkers'):
+                        rawMarkers = np.copy(self.Data.Results.markers)
+                    else:
+                        rawMarkers = self.Data.Results.collapsedMarkers
+                    for i, e in enumerate(markers2collapse):
+                        rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
+                    self.Data.Results.collapsedMarkers = rawMarkers
+                    self.drawEpochs(event)
             dlg.Destroy()
-
-            dlg = wx.TextEntryDialog(
-                None, 'What should be the new value of the marker?\n' +
-                'Only integer values are accepted!')
-            if dlg.ShowModal() == wx.ID_OK:
-                newMarkerName = dlg.GetValue()
-                dlg.Destroy()
-
-                markers2collapse = np.array(markerTxt, dtype='uint8')[selected]
-                if not hasattr(self.Data.Results, 'collapsedMarkers'):
-                    rawMarkers = np.copy(self.Data.Orig.markers)
-                else:
-                    rawMarkers = self.Data.Results.collapsedMarkers
-                for i, e in enumerate(markers2collapse):
-                    rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
-                self.Data.Results.collapsedMarkers = rawMarkers
-                self.drawEpochs(event)
         event.Skip()
 
     def resetMarkers(self, event):
