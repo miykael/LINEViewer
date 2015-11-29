@@ -410,6 +410,8 @@ class EpochDetail(wx.Panel):
                     if stimuliSegment.sum() != 0:
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
+                        for ax in axes.spines:
+                            axes.spines[ax].set_color(color)
 
                 # Draw single channels
                 minmax = [0, 0]
@@ -418,18 +420,24 @@ class EpochDetail(wx.Panel):
                         color = 'c'
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
+                        for ax in axes.spines:
+                            axes.spines[ax].set_color(color)
                     elif Results.matrixThreshold[epochID][j]:
                         color = 'r'
                         axes.text(postStimuli + 1, c[-1] / sizer - j,
                                   self.labelsChannel[j], color=color)
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
+                        for ax in axes.spines:
+                            axes.spines[ax].set_color(color)
                     elif Results.matrixBridge[epochID][j]:
                         color = 'b'
                         axes.text(postStimuli + 1, c[-1] / sizer - j,
                                   self.labelsChannel[j], color=color)
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
+                        for ax in axes.spines:
+                            axes.spines[ax].set_color(color)
                     else:
                         color = 'gray'
                     lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
@@ -488,18 +496,19 @@ class EpochDetail(wx.Panel):
         event.Skip()
 
     def onPick(self, event):
-        # only if left mouse button is pressed
-        if event.mouseevent.button == 1:
-            event.artist.set_color('black')
-            linenumber = int(event.artist.get_label()[5:])
-            xValue = 1000. * self.Data.Results.postCut / \
-                self.Data.Results.sampleRate + 1
-            yValue = event.artist.get_data()[1][-1]
-            event.artist.axes.text(xValue, yValue,
-                                   self.labelsChannel[linenumber],
-                                   color='black')
-            self.canvas.ReleaseMouse()
-            self.canvas.draw()
+        # Highlight Channel if doubleclicked
+        if event.mouseevent.dblclick:
+            if event.mouseevent.button == 1:
+                event.artist.set_color('black')
+                linenumber = int(event.artist.get_label()[5:])
+                xValue = 1000. * self.Data.Results.postCut / \
+                    self.Data.Results.sampleRate + 1
+                yValue = event.artist.get_data()[1][-1]
+                event.artist.axes.text(xValue, yValue,
+                                       self.labelsChannel[linenumber],
+                                       color='black')
+                self.canvas.ReleaseMouse()
+                self.canvas.draw()
 
     def updateLayout(self, event):
         if hasattr(self, 'markerValue'):
