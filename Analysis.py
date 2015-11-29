@@ -158,17 +158,6 @@ class Results():
                                          axis=1)]
                 e -= baselineAvg
 
-        """
-        TODO: check that this information is considered
-        # Exclude Channels
-        if self.excludeChannel != []:
-            channelID = [
-                i for i, e in enumerate(Data.Orig.labelsChannel)
-                if e not in self.excludeChannel]
-        else:
-            channelID = range(Data.Orig.labelsChannel.shape[0])
-        """
-
         # Correct Epochs for Threshold, Bridge and Blink outliers
         if self.thresholdCorr or self.bridgeCorr or self.blinkCorr:
 
@@ -236,6 +225,12 @@ class Results():
 
                 dlg.Update(i)
             dlg.Destroy()
+
+            # Exclude Channels from thresholding
+            if self.excludeChannel != []:
+                excludeID = [i for i, e in enumerate(Data.Orig.labelsChannel)
+                             if e in self.excludeChannel]
+                self.matrixThreshold[:, excludeID] *= False
 
             # Specifying ID of good and bad epochs
             self.badBlinkEpochs = self.matrixBlink[
