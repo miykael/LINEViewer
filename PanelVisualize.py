@@ -173,13 +173,12 @@ class Overview(wx.Panel):
                 distOutliersMarker + distMarkerOK)
 
             for i, d in enumerate(distOutliersMarker):
-                percentage = np.round(distOutliersMarker[i] * 100., 1)
-                if percentage != 0:
-                    axes.text(
-                        ticks[i], 0.8,
-                        '{0}%'.format(str(percentage)),
-                        horizontalalignment='center',
-                        verticalalignment='bottom', rotation=90)
+                percentage = 100 - np.round(distOutliersMarker[i] * 100., 1)
+                axes.text(
+                    ticks[i], 0.8,
+                    '{0}%'.format(str(percentage)),
+                    horizontalalignment='center',
+                    verticalalignment='bottom', rotation=90)
 
             # Adjust and draw histograms
             self.figure.subplots_adjust(left=0.05,
@@ -717,7 +716,4 @@ look at the epoch average panel
 OUTPUT
 write eph, marker and tva files (also marker for origin)
 write or load tvas
-
-PERFORMANCE
-Check why LINEViewer doesn't stop when closed
 """
