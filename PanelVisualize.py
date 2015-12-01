@@ -356,9 +356,9 @@ class EpochDetail(wx.Panel):
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
         Results = self.Data.Results
         samplingPoints = Results.epochs.shape[2]
-        preStimuli = 1000. / (Results.sampleRate /
+        preStimuli = 1000. / (1. * Results.sampleRate /
                               Results.preCut)
-        postStimuli = 1000. / (Results.sampleRate /
+        postStimuli = 1000. / (1. * Results.sampleRate /
                                Results.postCut)
         xaxis = [int(1.0 * i * (preStimuli + postStimuli) /
                      samplingPoints - preStimuli)
@@ -504,8 +504,8 @@ class EpochDetail(wx.Panel):
                 event.artist.axes.text(xValue, yValue,
                                        self.labelsChannel[linenumber],
                                        color='black')
-                self.canvas.ReleaseMouse()
                 self.canvas.draw()
+        self.canvas.ReleaseMouse()
 
     def updateLayout(self, event):
         if hasattr(self, 'markerValue'):
