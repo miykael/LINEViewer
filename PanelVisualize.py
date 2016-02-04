@@ -1,6 +1,5 @@
 import wx
 import numpy as np
-import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_wxagg import \
     FigureCanvasWxAgg as FigureCanvas, \
@@ -716,4 +715,6 @@ look at the epoch average panel
 OUTPUT
 write eph, marker and tva files (also marker for origin)
 write or load tvas
+
+Check CARTOOL's Cartool.chm file (or with F1)
 """

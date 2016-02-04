@@ -1,7 +1,7 @@
 ﻿import os
 import wx
 import numpy as np
-from FileHandler import ReadBDF, SaveH5
+from FileHandler import ReadBDF, SaveH5, SaveEPH
 
 
 class Selecter(wx.Panel):
@@ -132,8 +132,9 @@ class Selecter(wx.Panel):
             self.ListInput.SetItems(self.Data.Filenames)
 
             self.updateInformation()
-            self.ButtonDataDrop.Enable()
             self.Data.Results.updateAll(self.Data)
+            self.ButtonDataDrop.Enable()
+            self.ButtonDataSaveEPH.Enable()
         dlg.Destroy()
         event.Skip()
 
@@ -172,6 +173,22 @@ class Selecter(wx.Panel):
     def saveEPH(self, event):
         """DESCRIPTION"""
 
+        dlgTextName = wx.TextEntryDialog(
+            None, 'Under what name do you want to save the output?',
+            defaultValue='Results01')
+        if dlgTextName.ShowModal() == wx.ID_OK:
+            resultsName = dlgTextName.GetValue()
+
+            dlgTextPath = wx.TextEntryDialog(
+                None, 'Where do you want to save the output at?',
+                defaultValue=os.path.join(self.Data.DirPath, resultsName))
+            if dlgTextPath.ShowModal() == wx.ID_OK:
+                resultsPath = dlgTextPath.GetValue()
+            dlgTextPath.Destroy()
+
+            SaveEPH(resultsName, resultsPath, self.Data.Results)
+
+        dlgTextName.Destroy()
         event.Skip()
 
     def dropData(self, event):

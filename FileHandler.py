@@ -1,6 +1,7 @@
 import tables
 import numpy as np
-from os.path import exists, basename
+from os import makedirs
+from os.path import exists, basename, join
 
 
 class ReadBDF:
@@ -127,3 +128,36 @@ class SaveH5:
                                             f.root.markerTime.read())
                     outputfile.create_array('/%s' % name, 'markerValue',
                                             f.root.markerValue.read())
+
+
+class SaveEPH:
+
+    def __init__(self, resultsName, resultsPath, results):
+
+        # Create output folder if it doesn't exist
+        if not exists(resultsPath):
+            makedirs(resultsPath)
+
+        # Go through all the markers
+        for i, m in enumerate(results.uniqueMarkers):
+
+            # Write GFP data into EPH file
+            nTimepoint = results.avgGFP[0].shape[0]
+            filename = '%s.Epoch_%.3d.GFP.eph' % (resultsName, m)
+            with open(join(resultsPath, filename), 'w') as f:
+                f.writelines('{:>15}\t{:>15}\t{:>25}\n'.format(
+                    1, nTimepoint, results.sampleRate))
+                for tValue in results.avgGFP[i]:
+                    f.writelines('{:>15}\n'.format(round(tValue, 7)))
+
+            # Write electrode data into EPH file
+            nSignal, nTimepoint = results.avgEpochs[0].shape
+            filename = '%s.Epoch_%.3d.eph' % (resultsName, m)
+            with open(join(resultsPath, filename), 'w') as f:
+                f.writelines('{:>15}\t{:>15}\t{:>25}\n'.format(
+                    nSignal, nTimepoint, results.sampleRate))
+                for tValues in results.avgEpochs[i].T:
+                    formatString = '{:>15}\t' * nSignal
+                    formatString = formatString[:-1] + '\n'
+                    f.writelines(
+                        formatString.format(*np.round(tValues, 7).tolist()))
