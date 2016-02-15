@@ -104,8 +104,15 @@ class Overview(wx.Panel):
                                               distChannelBridge)), axis=0),
                      label='Blink', alpha=0.5)
 
+            distOutliersChannel = np.vstack([distChannelThreshold,
+                                             distChannelBridge,
+                                             distChannelBroken,
+                                             distChannelBlink]).sum(axis=0)
+
             axes.title.set_text(
-                'Channel Overview - %s Epochs Total' % markers.shape[0])
+                'Channel Overview - %s Epochs Total (%s Outliers)'
+                % (markers.shape[0], sum(distOutliersChannel)))
+
             axes.grid(True, axis='y')
             axes.set_xlabel('Channel')
             axes.set_ylabel('Epochs')
@@ -113,13 +120,8 @@ class Overview(wx.Panel):
             axes.set_xticklabels(badChannelsLabel)
 
             # Write percentage of outliers in channel overview plot
-            ticks = axes.get_xticks()
-            distOutliersChannel = np.vstack([distChannelThreshold,
-                                             distChannelBridge,
-                                             distChannelBroken,
-                                             distChannelBlink]).sum(axis=0)
             distOutliersChannel = 1. * distOutliersChannel / markers.shape[0]
-
+            ticks = axes.get_xticks()
             for i, d in enumerate(distOutliersChannel):
                 percentage = np.round(distOutliersChannel[i] * 100., 1)
                 if percentage != 0:
@@ -154,7 +156,9 @@ class Overview(wx.Panel):
                                               distMarkerBlink)), axis=0),
                      label='Blink', alpha=0.5)
 
-            axes.title.set_text('Marker Overview')
+            axes.title.set_text(
+                'Marker Overview - {0}% Outliers'.format(
+                    round(sum(distOutliersChannel)*100, 1)))
             axes.grid(True, axis='y')
             axes.set_xlabel('Marker')
             axes.set_ylabel('Epochs')
