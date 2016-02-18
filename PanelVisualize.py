@@ -33,6 +33,9 @@ class Overview(wx.Panel):
             matrixBridge = np.copy(self.Data.Results.matrixBridge)
             badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
 
+            # Correct for selected outliers
+            matrixOutliers = self.Data.Results.matrixOutliers
+
             # Check for broken Epochs; if 25% of channels are over threshold
             brokenID = np.where(matrixThreshold.sum(axis=1) >
                                 matrixThreshold.shape[1] * 0.2)[0]
@@ -42,18 +45,21 @@ class Overview(wx.Panel):
 
             matrixBad = matrixThreshold + matrixBridge
             badChannelsID = np.where(matrixBad.sum(axis=0))[0]
-            badChannelsLabel = ['Broken', 'Blink']
+            badChannelsLabel = ['Outliers', 'Broken', 'Blink']
             badChannelsLabel.extend(labelsChannel[badChannelsID])
 
             # Get distribution of channels
-            distChannelThreshold = [0, 0]
-            distChannelBridge = [0, 0]
+            distChannelThreshold = [0, 0, 0]
+            distChannelBridge = [0, 0, 0]
             distChannelThreshold.extend(
                 matrixThreshold[:, badChannelsID].sum(axis=0))
             distChannelBridge.extend(
                 matrixBridge[:, badChannelsID].sum(axis=0))
-            distChannelBroken = [len(brokenID), 0] + [0] * len(badChannelsID)
-            distChannelBlink = [0, badBlinkEpochs.sum()] + \
+            distChannelBroken = [0, len(brokenID), 0] + \
+                [0] * len(badChannelsID)
+            distChannelBlink = [0, 0, badBlinkEpochs.sum()] + \
+                [0] * len(badChannelsID)
+            distChannelOutliers = [matrixOutliers.sum(), 0, 0] + \
                 [0] * len(badChannelsID)
 
             # Get distribution of markers
@@ -68,6 +74,7 @@ class Overview(wx.Panel):
             markerIDBlink = [
                 m for m in markerIDBlink
                 if m not in markerIDThreshold + markerIDBridge]
+            markerIDOutliers = list(np.where(matrixOutliers)[0])
 
             uniqueMarkers = np.unique(markers)
 
@@ -81,10 +88,13 @@ class Overview(wx.Panel):
                 list(markers[markerIDBridge]).count(u) for u in uniqueMarkers]
             distMarkerBlink = [
                 list(markers[markerIDBlink]).count(u) for u in uniqueMarkers]
+            distMarkerOutliers = [
+                list(markers[markerIDOutliers]).count(u)
+                for u in uniqueMarkers]
             distMarkerOK = [
                 [m for i, m in enumerate(markers)
                  if i not in markerIDThreshold + markerIDBridge +
-                 markerIDBlink + markerIDBroken].count(u)
+                 markerIDBlink + markerIDBroken + distMarkerOutliers].count(u)
                 for u in uniqueMarkers]
 
             # Create bad channel histogram
@@ -103,21 +113,23 @@ class Overview(wx.Panel):
                      bottom=np.sum(np.vstack((distChannelThreshold,
                                               distChannelBridge)), axis=0),
                      label='Blink', alpha=0.5)
+            axes.bar(nChannels, distChannelOutliers, 0.75, color='#ff8c00',
+                     label='Broken', alpha=0.5)
 
             distOutliersChannel = np.vstack([distChannelThreshold,
                                              distChannelBridge,
                                              distChannelBroken,
-                                             distChannelBlink]).sum(axis=0)
+                                             distChannelBlink,
+                                             distChannelOutliers]).sum(axis=0)
 
             axes.title.set_text(
                 'Channel Overview - %s Epochs Total (%s Outliers)'
                 % (markers.shape[0], sum(distOutliersChannel)))
 
             axes.grid(True, axis='y')
-            axes.set_xlabel('Channel')
             axes.set_ylabel('Epochs')
             axes.set_xticks(nChannels + .75 / 2)
-            axes.set_xticklabels(badChannelsLabel)
+            axes.set_xticklabels(badChannelsLabel, rotation=90)
 
             # Write percentage of outliers in channel overview plot
             distOutliersChannel = 1. * distOutliersChannel / markers.shape[0]
@@ -138,43 +150,52 @@ class Overview(wx.Panel):
             nMarker = np.arange(uniqueMarkers.shape[0])
             axes.bar(nMarker, distMarkerOK, 0.75, color='g',
                      label='OK', alpha=0.5)
+            axes.bar(nMarker, distMarkerOutliers, 0.75, color='#ff8c00',
+                     bottom=distMarkerOK, label='Outliers', alpha=0.5)
             axes.bar(nMarker, distMarkerThreshold, 0.75, color='r',
-                     bottom=distMarkerOK, label='Threshold', alpha=0.5)
+                     bottom=np.sum(np.vstack((distMarkerOK,
+                                              distMarkerOutliers)), axis=0),
+                     label='Threshold', alpha=0.5)
             axes.bar(nMarker, distMarkerBridge, 0.75, color='b',
                      bottom=np.sum(np.vstack((distMarkerOK,
+                                              distMarkerOutliers,
                                               distMarkerThreshold)), axis=0),
                      label='Bridge', alpha=0.5)
             axes.bar(nMarker, distMarkerBlink, 0.75, color='m',
                      bottom=np.sum(np.vstack((distMarkerOK,
+                                              distMarkerOutliers,
                                               distMarkerThreshold,
                                               distMarkerBridge)), axis=0),
                      label='Blink', alpha=0.5)
             axes.bar(nMarker, distMarkerBroken, 0.75, color='c',
                      bottom=np.sum(np.vstack((distMarkerOK,
+                                              distMarkerOutliers,
                                               distMarkerThreshold,
                                               distMarkerBridge,
                                               distMarkerBlink)), axis=0),
-                     label='Blink', alpha=0.5)
+                     label='Broken', alpha=0.5)
 
+            percentageBad = 1 - 1. * \
+                sum(distMarkerOK) / self.Data.Results.okID.shape[0]
             axes.title.set_text(
                 'Marker Overview - {0}% Outliers'.format(
-                    round(sum(distOutliersChannel)*100, 1)))
+                    round(percentageBad * 100, 1)))
             axes.grid(True, axis='y')
-            axes.set_xlabel('Marker')
             axes.set_ylabel('Epochs')
             axes.set_xticks(nMarker + .75 / 2)
             axes.set_xticklabels(uniqueMarkers.astype('str'))
 
             # Write percentage of outliers in marker overview plot
-            ticks = axes.get_xticks()
             distOutliersMarker = np.vstack([distMarkerThreshold,
                                             distMarkerBridge,
                                             distMarkerBroken,
-                                            distMarkerBlink]).sum(axis=0)
+                                            distMarkerBlink,
+                                            distMarkerOutliers]).sum(axis=0)
             distOutliersMarker = np.divide(
                 distOutliersMarker.astype('float'),
                 distOutliersMarker + distMarkerOK)
 
+            ticks = axes.get_xticks()
             for i, d in enumerate(distOutliersMarker):
                 percentage = 100 - np.round(distOutliersMarker[i] * 100., 1)
                 axes.text(
@@ -454,6 +475,7 @@ class EpochDetail(wx.Panel):
                 axes.get_yaxis().set_visible(False)
                 axes.title.set_text('Marker %s - Epoch %s' % (markerID,
                                                               epochID + 1))
+                axes.title.set_picker(5)
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
         currentPage = (self.shiftView / self.tiles) + 1
@@ -497,14 +519,37 @@ class EpochDetail(wx.Panel):
         # Highlight Channel if doubleclicked
         if event.mouseevent.dblclick:
             if event.mouseevent.button == 1:
-                event.artist.set_color('black')
-                linenumber = int(event.artist.get_label()[5:])
-                xValue = 1000. * self.Data.Results.postCut / \
-                    self.Data.Results.sampleRate + 1
-                yValue = event.artist.get_data()[1][-1]
-                event.artist.axes.text(xValue, yValue,
-                                       self.labelsChannel[linenumber],
-                                       color='black')
+                if event.artist.get_picker() == 1:
+
+                    event.artist.set_color('black')
+                    linenumber = int(event.artist.get_label()[5:])
+                    xValue = 1000. * self.Data.Results.postCut / \
+                        self.Data.Results.sampleRate + 1
+                    yValue = event.artist.get_data()[1][-1]
+                    event.artist.axes.text(xValue, yValue,
+                                           self.labelsChannel[linenumber],
+                                           color='black')
+                elif event.artist.get_picker() == 5:
+                    selectedID = event.artist.get_text()
+                    selectedID = int(
+                        selectedID[selectedID.find('Epoch') + 6:]) - 1
+
+                    if selectedID in np.where(self.Data.Results.badID)[0]:
+                        color = 'black'
+                        event.artist.set_fontweight('normal')
+                        #self.Data.Results.okID[selectedID] = True
+                    else:
+                        color = '#ff8c00'
+                        event.artist.set_fontweight('bold')
+                        self.Data.Results.matrixOutliers[selectedID] = True
+
+                    event.artist.set_color(color)
+                    for ax in event.artist.axes.spines:
+                        event.artist.axes.spines[ax].set_color(color)
+                    """
+                    self.Data.Results.badID[
+                        selectedID] = not self.Data.Results.badID[selectedID]
+                    """
                 self.canvas.draw()
         self.canvas.ReleaseMouse()
 
@@ -707,18 +752,3 @@ def getXaxis(Results):
     xaxis = [int(i * stepSize - Results.preEpoch)
              for i in range(Results.preFrame + Results.postFrame)]
     return xaxis
-
-
-"""
-TODO:
-
-VISUAL
-double click to select or deselect epochs (decide which color it should be shown in overview?)
-look at the epoch average panel
-
-OUTPUT
-write eph, marker and tva files (also marker for origin)
-write or load tvas
-
-Check CARTOOL's Cartool.chm file (or with F1)
-"""
