@@ -34,7 +34,7 @@ class Overview(wx.Panel):
             badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
 
             # Correct for selected outliers
-            matrixOutliers = self.Data.Results.matrixOutliers
+            matrixSelected = self.Data.Results.matrixSelected
 
             # Check for broken Epochs; if 25% of channels are over threshold
             brokenID = np.where(matrixThreshold.sum(axis=1) >
@@ -45,22 +45,45 @@ class Overview(wx.Panel):
 
             matrixBad = matrixThreshold + matrixBridge
             badChannelsID = np.where(matrixBad.sum(axis=0))[0]
-            badChannelsLabel = ['Outliers', 'Broken', 'Blink']
-            badChannelsLabel.extend(labelsChannel[badChannelsID])
 
             # Get distribution of channels
-            distChannelThreshold = [0, 0, 0]
-            distChannelBridge = [0, 0, 0]
+            distChannelSelected = []
+            distChannelBroken = []
+            distChannelBlink = []
+            distChannelThreshold = []
+            distChannelBridge = []
+            badChannelsLabel = []
+
+            if matrixSelected.sum() != 0:
+                distChannelSelected.extend([matrixSelected.sum()])
+                distChannelBroken.extend([0])
+                distChannelBlink.extend([0])
+                distChannelThreshold.extend([0])
+                distChannelBridge.extend([0])
+                badChannelsLabel.extend(['Outliers'])
+            if len(brokenID) != 0:
+                distChannelSelected.extend([0])
+                distChannelBroken.extend([len(brokenID)])
+                distChannelBlink.extend([0])
+                distChannelThreshold.extend([0])
+                distChannelBridge.extend([0])
+                badChannelsLabel.extend(['Broken'])
+            if badBlinkEpochs.sum() != 0:
+                distChannelSelected.extend([0])
+                distChannelBroken.extend([0])
+                distChannelBlink.extend([badBlinkEpochs.sum()])
+                distChannelThreshold.extend([0])
+                distChannelBridge.extend([0])
+                badChannelsLabel.extend(['Blink'])
+
             distChannelThreshold.extend(
                 matrixThreshold[:, badChannelsID].sum(axis=0))
             distChannelBridge.extend(
                 matrixBridge[:, badChannelsID].sum(axis=0))
-            distChannelBroken = [0, len(brokenID), 0] + \
-                [0] * len(badChannelsID)
-            distChannelBlink = [0, 0, badBlinkEpochs.sum()] + \
-                [0] * len(badChannelsID)
-            distChannelOutliers = [matrixOutliers.sum(), 0, 0] + \
-                [0] * len(badChannelsID)
+            distChannelBroken.extend([0] * len(badChannelsID))
+            distChannelBlink.extend([0] * len(badChannelsID))
+            distChannelSelected.extend([0] * len(badChannelsID))
+            badChannelsLabel.extend(labelsChannel[badChannelsID])
 
             # Get distribution of markers
             markerIDBroken = list(brokenID)
@@ -74,7 +97,7 @@ class Overview(wx.Panel):
             markerIDBlink = [
                 m for m in markerIDBlink
                 if m not in markerIDThreshold + markerIDBridge]
-            markerIDOutliers = list(np.where(matrixOutliers)[0])
+            markerIDSelected = list(np.where(matrixSelected)[0])
 
             uniqueMarkers = np.unique(markers)
 
@@ -88,13 +111,13 @@ class Overview(wx.Panel):
                 list(markers[markerIDBridge]).count(u) for u in uniqueMarkers]
             distMarkerBlink = [
                 list(markers[markerIDBlink]).count(u) for u in uniqueMarkers]
-            distMarkerOutliers = [
-                list(markers[markerIDOutliers]).count(u)
+            distMarkerSelected = [
+                list(markers[markerIDSelected]).count(u)
                 for u in uniqueMarkers]
             distMarkerOK = [
                 [m for i, m in enumerate(markers)
                  if i not in markerIDThreshold + markerIDBridge +
-                 markerIDBlink + markerIDBroken + distMarkerOutliers].count(u)
+                 markerIDBlink + markerIDBroken + distMarkerSelected].count(u)
                 for u in uniqueMarkers]
 
             # Create bad channel histogram
@@ -113,14 +136,14 @@ class Overview(wx.Panel):
                      bottom=np.sum(np.vstack((distChannelThreshold,
                                               distChannelBridge)), axis=0),
                      label='Blink', alpha=0.5)
-            axes.bar(nChannels, distChannelOutliers, 0.75, color='#ff8c00',
+            axes.bar(nChannels, distChannelSelected, 0.75, color='#ff8c00',
                      label='Broken', alpha=0.5)
 
             distOutliersChannel = np.vstack([distChannelThreshold,
                                              distChannelBridge,
                                              distChannelBroken,
                                              distChannelBlink,
-                                             distChannelOutliers]).sum(axis=0)
+                                             distChannelSelected]).sum(axis=0)
 
             axes.title.set_text(
                 'Channel Overview - %s Epochs Total (%s Outliers)'
@@ -150,26 +173,26 @@ class Overview(wx.Panel):
             nMarker = np.arange(uniqueMarkers.shape[0])
             axes.bar(nMarker, distMarkerOK, 0.75, color='g',
                      label='OK', alpha=0.5)
-            axes.bar(nMarker, distMarkerOutliers, 0.75, color='#ff8c00',
+            axes.bar(nMarker, distMarkerSelected, 0.75, color='#ff8c00',
                      bottom=distMarkerOK, label='Outliers', alpha=0.5)
             axes.bar(nMarker, distMarkerThreshold, 0.75, color='r',
                      bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerOutliers)), axis=0),
+                                              distMarkerSelected)), axis=0),
                      label='Threshold', alpha=0.5)
             axes.bar(nMarker, distMarkerBridge, 0.75, color='b',
                      bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerOutliers,
+                                              distMarkerSelected,
                                               distMarkerThreshold)), axis=0),
                      label='Bridge', alpha=0.5)
             axes.bar(nMarker, distMarkerBlink, 0.75, color='m',
                      bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerOutliers,
+                                              distMarkerSelected,
                                               distMarkerThreshold,
                                               distMarkerBridge)), axis=0),
                      label='Blink', alpha=0.5)
             axes.bar(nMarker, distMarkerBroken, 0.75, color='c',
                      bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerOutliers,
+                                              distMarkerSelected,
                                               distMarkerThreshold,
                                               distMarkerBridge,
                                               distMarkerBlink)), axis=0),
@@ -190,7 +213,7 @@ class Overview(wx.Panel):
                                             distMarkerBridge,
                                             distMarkerBroken,
                                             distMarkerBlink,
-                                            distMarkerOutliers]).sum(axis=0)
+                                            distMarkerSelected]).sum(axis=0)
             distOutliersMarker = np.divide(
                 distOutliersMarker.astype('float'),
                 distOutliersMarker + distMarkerOK)
@@ -541,7 +564,7 @@ class EpochDetail(wx.Panel):
                     else:
                         color = '#ff8c00'
                         event.artist.set_fontweight('bold')
-                        self.Data.Results.matrixOutliers[selectedID] = True
+                        self.Data.Results.matrixSelected[selectedID] = True
 
                     event.artist.set_color(color)
                     for ax in event.artist.axes.spines:
