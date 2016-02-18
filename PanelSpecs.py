@@ -451,6 +451,8 @@ class Specification(wx.Panel):
             else:
                 markers = self.Data.Results.collapsedMarkers
             markers = np.unique(markers)
+            markers = markers.tolist()+self.Data.markers2hide
+            markers.sort()
             markerTxt = [str(m) for m in markers]
             dlg = wx.MultiChoiceDialog(
                 self, caption="Select markers to hide",
