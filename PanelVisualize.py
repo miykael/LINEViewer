@@ -29,12 +29,18 @@ class Overview(wx.Panel):
                 markers = self.Data.Results.collapsedMarkers
             else:
                 markers = np.copy(self.Data.Results.markers)
-            matrixThreshold = np.copy(self.Data.Results.matrixThreshold)
+
+            # Correct for selected epochs
+            matrixSelected = np.copy(self.Data.Results.matrixSelected)
+
+            # Disregard outliers if they are selected as being ok
+            self.Data.Results.matrixBridge[np.where(matrixSelected == -1)[0]] = False
+            self.Data.Results.badBlinkEpochs[np.where(matrixSelected == -1)[0]] = False
+            self.Data.Results.matrixThreshold[np.where(matrixSelected == -1)[0]] = False
+
             matrixBridge = np.copy(self.Data.Results.matrixBridge)
             badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
-
-            # Correct for selected outliers
-            matrixSelected = self.Data.Results.matrixSelected
+            matrixThreshold = np.copy(self.Data.Results.matrixThreshold)
 
             # Check for broken Epochs; if 25% of channels are over threshold
             brokenID = np.where(matrixThreshold.sum(axis=1) >
@@ -53,6 +59,9 @@ class Overview(wx.Panel):
             distChannelThreshold = []
             distChannelBridge = []
             badChannelsLabel = []
+
+            # Count only the selected outliers
+            matrixSelected[np.where(matrixSelected == -1)[0]] = 0
 
             if matrixSelected.sum() != 0:
                 distChannelSelected.extend([matrixSelected.sum()])
@@ -117,8 +126,11 @@ class Overview(wx.Panel):
             distMarkerOK = [
                 [m for i, m in enumerate(markers)
                  if i not in markerIDThreshold + markerIDBridge +
-                 markerIDBlink + markerIDBroken + distMarkerSelected].count(u)
+                 markerIDBlink + markerIDBroken].count(u)
                 for u in uniqueMarkers]
+            distMarkerOK = [m - distMarkerSelected[i]
+                            for i, m in enumerate(distMarkerOK)]
+            self.distMarkerOK = distMarkerOK
 
             # Create bad channel histogram
             axes = self.figure.add_subplot(2, 1, 1)
@@ -147,7 +159,7 @@ class Overview(wx.Panel):
 
             axes.title.set_text(
                 'Channel Overview - %s Epochs Total (%s Outliers)'
-                % (markers.shape[0], sum(distOutliersChannel)))
+                % (markers.shape[0], int(sum(distOutliersChannel))))
 
             axes.grid(True, axis='y')
             axes.set_ylabel('Epochs')
@@ -327,6 +339,7 @@ class GFPDetailed(wx.Panel):
             avgGMD = np.array(Results.avgGMD)[
                 :, Results.preCut - Results.preFrame:Results.preCut +
                 Results.postFrame]
+
             for i, g in enumerate(Results.avgGFP):
                 axes = self.figure.add_subplot(figureShape[0],
                                                figureShape[1],
@@ -335,8 +348,10 @@ class GFPDetailed(wx.Panel):
                     axes.plot(xaxis, avgGFP[i], 'b')
                 if self.CheckboxGMD.IsChecked():
                     axes.plot(xaxis, avgGMD[i], 'r')
-                nMarkers = np.where(
-                    Results.markers == Results.uniqueMarkers[i])[0].shape[0]
+                nMarkers = self.Data.Overview.distMarkerOK[
+                    np.where(Results.uniqueMarkers == Results.uniqueMarkers[
+                        i])[0]]
+
                 axes.title.set_text(
                     'Marker: %s [N=%s]' % (Results.uniqueMarkers[i], nMarkers))
                 axes.grid(self.CheckboxGrid.IsChecked())
@@ -397,6 +412,9 @@ class EpochDetail(wx.Panel):
             self.id2Show = [
                 i for i in self.id2Show
                 if i in np.where(self.Data.Results.badID)[0]]
+            self.id2Show = [
+                i for i in self.id2Show
+                if i in np.where(self.Data.Results.matrixSelected > -1)[0]]
 
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
         Results = self.Data.Results
@@ -422,6 +440,7 @@ class EpochDetail(wx.Panel):
                 epochID = self.id2Show[i]
                 markerID = self.Data.Results.markers[epochID]
                 epoch = self.Data.Results.epochs[epochID]
+                idSelected = self.Data.Results.matrixSelected[epochID]
 
                 sizer = np.sqrt(
                     np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
@@ -482,6 +501,7 @@ class EpochDetail(wx.Panel):
                             axes.spines[ax].set_color(color)
                     else:
                         color = 'gray'
+
                     lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
                     ydata = lines[0].get_ydata()
                     lineMin = ydata.min()
@@ -500,6 +520,19 @@ class EpochDetail(wx.Panel):
                                                               epochID + 1))
                 axes.title.set_picker(5)
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
+
+                if idSelected == 1:
+                    color = '#ff8c00'
+                    axes.title.set_fontweight('bold')
+                    axes.title.set_color(color)
+                    for ax in axes.spines:
+                        axes.spines[ax].set_color(color)
+                elif idSelected == -1:
+                    color = 'k'
+                    axes.title.set_fontweight('normal')
+                    axes.title.set_color(color)
+                    for ax in axes.spines:
+                        axes.spines[ax].set_color(color)
 
         currentPage = (self.shiftView / self.tiles) + 1
         totalPage = (len(self.id2Show) - 1) / self.tiles + 1
@@ -527,6 +560,8 @@ class EpochDetail(wx.Panel):
         if self.Data.Datasets != []:
             if self.shiftView != 0:
                 viewShift = self.shiftView - self.tiles
+                if viewShift < 0:
+                    viewShift = 0
                 self.update(self.markerValue, viewShift)
         event.Skip()
 
@@ -557,22 +592,39 @@ class EpochDetail(wx.Panel):
                     selectedID = int(
                         selectedID[selectedID.find('Epoch') + 6:]) - 1
 
-                    if selectedID in np.where(self.Data.Results.badID)[0]:
+                    if selectedID in np.where(self.Data.Results.badID)[0] \
+                            and self.Data.Results.matrixSelected[
+                            selectedID] == 0:
                         color = 'black'
                         event.artist.set_fontweight('normal')
-                        #self.Data.Results.okID[selectedID] = True
-                    else:
+                        self.Data.Results.matrixSelected[selectedID] = -1
+                        self.shiftView -= 1
+                    elif selectedID not in np.where(
+                            self.Data.Results.badID)[0] \
+                            and self.Data.Results.matrixSelected[
+                            selectedID] == 0:
                         color = '#ff8c00'
                         event.artist.set_fontweight('bold')
-                        self.Data.Results.matrixSelected[selectedID] = True
+                        self.Data.Results.matrixSelected[selectedID] = 1
+                    elif selectedID in np.where(self.Data.Results.badID)[0] \
+                            and self.Data.Results.matrixSelected[
+                            selectedID] == -1:
+                        color = '#ff8c00'
+                        event.artist.set_fontweight('bold')
+                        self.Data.Results.matrixSelected[selectedID] = 0
+                        self.shiftView += 1
+                    elif self.Data.Results.matrixSelected[selectedID] == 1:
+                        color = 'black'
+                        event.artist.set_fontweight('normal')
+                        self.Data.Results.matrixSelected[selectedID] = 0
+                    else:
+                        color = 'black'
 
                     event.artist.set_color(color)
                     for ax in event.artist.axes.spines:
                         event.artist.axes.spines[ax].set_color(color)
-                    """
-                    self.Data.Results.badID[
-                        selectedID] = not self.Data.Results.badID[selectedID]
-                    """
+                    self.Data.Results.updateAnalysis = True
+
                 self.canvas.draw()
         self.canvas.ReleaseMouse()
 

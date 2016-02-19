@@ -243,6 +243,16 @@ class Results():
         self.epochs = epochs
         self.markers = markers
 
+        # Correct for selected outliers
+        self.updateAnalysis = False
+        if not hasattr(self, 'matrixSelected'):
+            self.matrixSelected = np.zeros(self.epochs.shape[0])
+        else:
+            self.okID[np.where(self.matrixSelected == 1)[0]] = False
+            self.badID[np.where(self.matrixSelected == 1)[0]] = True
+            self.okID[np.where(self.matrixSelected == -1)[0]] = True
+            self.badID[np.where(self.matrixSelected == -1)[0]] = False
+
         # Drop bad Epochs for average
         goodEpochs = epochs[self.okID]
         goodMarkers = markers[self.okID]

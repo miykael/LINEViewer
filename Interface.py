@@ -68,6 +68,7 @@ class MainFrame(wx.Frame):
         # Specification of events
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.notebookSelected)
         PanelDataInput.SetFocus()
 
         # MenuBar
@@ -111,3 +112,10 @@ class MainFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.DestroyChildren()
             self.Destroy()
+
+    def notebookSelected(self, event):
+        """Checks if Analysis needs to be rerun to update a Notebook channel"""
+
+        if self.Data.Datasets != []:
+            if self.Data.Results.updateAnalysis:
+                self.Data.Results.updateEpochs(self.Data)
