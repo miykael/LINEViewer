@@ -466,9 +466,10 @@ class Specification(wx.Panel):
                             if e in self.Data.markers2hide]
             dlg.SetSelections(selected)
             if dlg.ShowModal() == wx.ID_OK:
-                self.Data.markers2hide = [markers[x]
-                                          for x in dlg.GetSelections()]
-                self.drawEpochs(event)
+                if len(markers) != len(dlg.GetSelections()):
+                    self.Data.markers2hide = [markers[x]
+                                              for x in dlg.GetSelections()]
+                    self.drawEpochs(event)
             dlg.Destroy()
         event.Skip()
 
