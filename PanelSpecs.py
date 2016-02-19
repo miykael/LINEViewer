@@ -495,32 +495,36 @@ class Specification(wx.Panel):
         if dlg.ShowModal() == wx.ID_OK:
             selected = dlg.GetSelections()
 
-            dlgText = wx.TextEntryDialog(
-                None, 'What should be the new value of the marker?\n' +
-                'Only integer values are accepted!')
-            if dlgText.ShowModal() == wx.ID_OK:
-                newMarkerName = dlgText.GetValue()
-                dlgText.Destroy()
+            while True:
+                dlgText = wx.TextEntryDialog(
+                    None, 'What should be the new value of the marker?\n' +
+                    'Only integer values between 0 and 255 are accepted!')
+                if dlgText.ShowModal() == wx.ID_OK:
+                    newMarkerName = dlgText.GetValue()
+                    if not newMarkerName.isdigit():
+                        continue
+                    dlgText.Destroy()
 
-                markers2collapse = np.array(markerTxt,
-                                            dtype='uint8')[selected]
-                if not hasattr(self.Data.Results, 'collapsedMarkers'):
-                    rawMarkers = np.copy(self.Data.Results.markers)
-                else:
-                    rawMarkers = self.Data.Results.collapsedMarkers
-                for i, e in enumerate(markers2collapse):
-                    rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
-                self.Data.Results.collapsedMarkers = rawMarkers
+                    markers2collapse = np.array(markerTxt,
+                                                dtype='uint8')[selected]
+                    if not hasattr(self.Data.Results, 'collapsedMarkers'):
+                        rawMarkers = np.copy(self.Data.Results.markers)
+                    else:
+                        rawMarkers = self.Data.Results.collapsedMarkers
+                    for i, e in enumerate(markers2collapse):
+                        rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
+                    self.Data.Results.collapsedMarkers = rawMarkers
 
-                # Should more markers be collapsed
-                dlgMore = wx.MessageDialog(
-                    self, "Do you want to collapse more markers?",
-                    "Select markers to collapse",
-                    wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-                if dlgMore.ShowModal() == wx.ID_YES:
-                    markerTxt = [str(m) for m in np.unique(rawMarkers)]
-                    self.getCollapseList(markerTxt)
-                    dlgMore.Destroy()
+                    # Should more markers be collapsed
+                    dlgMore = wx.MessageDialog(
+                        self, "Do you want to collapse more markers?",
+                        "Select markers to collapse",
+                        wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+                    if dlgMore.ShowModal() == wx.ID_YES:
+                        markerTxt = [str(m) for m in np.unique(rawMarkers)]
+                        self.getCollapseList(markerTxt)
+                        dlgMore.Destroy()
+                break
         dlg.Destroy()
 
     def resetMarkers(self, event):
