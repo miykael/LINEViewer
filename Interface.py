@@ -22,6 +22,7 @@ class MainFrame(wx.Frame):
         self.Data.Filenames = []
         self.Data.Datasets = []
         self.Data.Results = Results()
+        self.Data.Results.updateAnalysis = False
 
         # Panel: MainFrame
         MainPanel = wx.Panel(self, wx.ID_ANY)
@@ -118,4 +119,5 @@ class MainFrame(wx.Frame):
 
         if self.Data.Datasets != []:
             if self.Data.Results.updateAnalysis:
+                self.Data.Results.updateAnalysis = False
                 self.Data.Results.updateEpochs(self.Data)

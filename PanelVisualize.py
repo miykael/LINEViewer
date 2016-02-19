@@ -34,9 +34,12 @@ class Overview(wx.Panel):
             matrixSelected = np.copy(self.Data.Results.matrixSelected)
 
             # Disregard outliers if they are selected as being ok
-            self.Data.Results.matrixBridge[np.where(matrixSelected == -1)[0]] = False
-            self.Data.Results.badBlinkEpochs[np.where(matrixSelected == -1)[0]] = False
-            self.Data.Results.matrixThreshold[np.where(matrixSelected == -1)[0]] = False
+            self.Data.Results.matrixBridge[
+                np.where(matrixSelected == -1)[0]] = False
+            self.Data.Results.badBlinkEpochs[
+                np.where(matrixSelected == -1)[0]] = False
+            self.Data.Results.matrixThreshold[
+                np.where(matrixSelected == -1)[0]] = False
 
             matrixBridge = np.copy(self.Data.Results.matrixBridge)
             badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
@@ -598,7 +601,16 @@ class EpochDetail(wx.Panel):
                         color = 'black'
                         event.artist.set_fontweight('normal')
                         self.Data.Results.matrixSelected[selectedID] = -1
-                        self.shiftView -= 1
+                        if self.CheckboxEpochs.IsChecked():
+                            self.shiftView -= 1
+                    elif selectedID in np.where(self.Data.Results.badID)[0] \
+                            and self.Data.Results.matrixSelected[
+                            selectedID] == -1:
+                        color = '#ff8c00'
+                        event.artist.set_fontweight('bold')
+                        self.Data.Results.matrixSelected[selectedID] = 0
+                        if self.CheckboxEpochs.IsChecked():
+                            self.shiftView += 1
                     elif selectedID not in np.where(
                             self.Data.Results.badID)[0] \
                             and self.Data.Results.matrixSelected[
@@ -606,19 +618,16 @@ class EpochDetail(wx.Panel):
                         color = '#ff8c00'
                         event.artist.set_fontweight('bold')
                         self.Data.Results.matrixSelected[selectedID] = 1
-                    elif selectedID in np.where(self.Data.Results.badID)[0] \
-                            and self.Data.Results.matrixSelected[
-                            selectedID] == -1:
-                        color = '#ff8c00'
-                        event.artist.set_fontweight('bold')
-                        self.Data.Results.matrixSelected[selectedID] = 0
-                        self.shiftView += 1
                     elif self.Data.Results.matrixSelected[selectedID] == 1:
                         color = 'black'
                         event.artist.set_fontweight('normal')
                         self.Data.Results.matrixSelected[selectedID] = 0
+                    elif self.Data.Results.matrixSelected[selectedID] == -1:
+                        color = '#ff8c00'
+                        event.artist.set_fontweight('bold')
+                        self.Data.Results.matrixSelected[selectedID] = 0
                     else:
-                        color = 'black'
+                        color = 'blackk'
 
                     event.artist.set_color(color)
                     for ax in event.artist.axes.spines:

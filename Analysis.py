@@ -244,7 +244,6 @@ class Results():
         self.markers = markers
 
         # Correct for selected outliers
-        self.updateAnalysis = False
         if not hasattr(self, 'matrixSelected'):
             self.matrixSelected = np.zeros(self.epochs.shape[0])
         else:
