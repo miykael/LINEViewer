@@ -138,6 +138,11 @@ class Results():
         if not hasattr(self, 'collapsedMarkers'):
             markers = np.copy(Data.Orig.markers)
         else:
+            markers = np.copy(Data.Orig.markers)
+            for i in self.collapsedTransform:
+                for j in self.collapsedTransform[i]:
+                    markers[np.where(markers == j)[0]] = int(i)
+            self.collapsedMarkers = markers
             markers = self.collapsedMarkers
 
         # Hide Markers
