@@ -67,6 +67,12 @@ class Selecter(wx.Panel):
         self.ButtonDataSaveH5.Disable()
         sizerBoxOutput.Add(self.ButtonDataSaveH5, 0, wx.EXPAND)
 
+        self.ButtonDataLoadH5 = wx.Button(
+            PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
+            label="&Load Dataset from H5")
+        self.ButtonDataLoadH5.Disable()
+        sizerBoxOutput.Add(self.ButtonDataLoadH5, 0, wx.EXPAND)
+
         self.ButtonDataSaveTVA = wx.Button(
             PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
             label="&Save TVA files")
@@ -104,6 +110,7 @@ class Selecter(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonDataLoad.Id, self.loadData)
         wx.EVT_BUTTON(self, self.ButtonDataDrop.Id, self.dropData)
         wx.EVT_BUTTON(self, self.ButtonDataSaveH5.Id, self.saveH5)
+        wx.EVT_BUTTON(self, self.ButtonDataLoadH5.Id, self.loadH5)
         wx.EVT_BUTTON(self, self.ButtonDataSaveTVA.Id, self.saveTVA)
         wx.EVT_BUTTON(self, self.ButtonDataSaveEPH.Id, self.saveEPH)
 
@@ -139,7 +146,7 @@ class Selecter(wx.Panel):
         event.Skip()
 
     def saveH5(self, event):
-        """DESCRIPTION"""
+        """TODO: Program Button"""
 
         if self.ListInput.GetItems() == []:
             dlg = wx.MessageDialog(
@@ -165,13 +172,16 @@ class Selecter(wx.Panel):
             dlg.Destroy()
         event.Skip()
 
-    def saveTVA(self, event):
-        """DESCRIPTION"""
+    def loadH5(self, event):
+        """TODO: Program Button"""
+        event.Skip()
 
+    def saveTVA(self, event):
+        """TODO: Program Button"""
         event.Skip()
 
     def saveEPH(self, event):
-        """DESCRIPTION"""
+        """Saves the dataset averages into EPH files"""
 
         dlgTextName = wx.TextEntryDialog(
             None, 'Under what name do you want to save the output?',
@@ -192,7 +202,8 @@ class Selecter(wx.Panel):
         event.Skip()
 
     def dropData(self, event):
-        """DESCRIPTION"""
+        """Drops a loaded dataset"""
+
         if self.ListInput.Selections != ():
             drop = [self.ListInput.GetItems()[i]
                     for i in self.ListInput.Selections]
@@ -202,6 +213,20 @@ class Selecter(wx.Panel):
             self.Data.Filenames = keep
             self.ListInput.SetItems(keep)
 
+            # Drop the dropped dataset from selectedMatrix
+            selected2Keep = np.ones(
+                self.Data.Results.matrixSelected.shape[0]).astype('bool')
+            start = 0
+            for i, e in enumerate(self.Data.Datasets):
+                length = len(e.markerValue)
+                if i not in id2keep:
+                    selected2Keep[start:length+start] = False
+                start += length
+
+            newMatrixSelected = self.Data.Results.matrixSelected[selected2Keep]
+            self.Data.Results.matrixSelected = newMatrixSelected
+
+            # Drop Dataset
             self.Data.Datasets = [
                 d for i, d in enumerate(self.Data.Datasets)
                 if i in id2keep]

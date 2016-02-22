@@ -35,11 +35,11 @@ class Overview(wx.Panel):
 
             # Disregard outliers if they are selected as being ok
             self.Data.Results.matrixBridge[
-                np.where(matrixSelected == -1)[0]] = False
+                np.where(matrixSelected == 'ok_bridge')[0]] = False
             self.Data.Results.badBlinkEpochs[
-                np.where(matrixSelected == -1)[0]] = False
+                np.where(matrixSelected == 'ok_blink')[0]] = False
             self.Data.Results.matrixThreshold[
-                np.where(matrixSelected == -1)[0]] = False
+                np.where(matrixSelected == 'ok_thresh')[0]] = False
 
             matrixBridge = np.copy(self.Data.Results.matrixBridge)
             badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
@@ -63,11 +63,11 @@ class Overview(wx.Panel):
             distChannelBridge = []
             badChannelsLabel = []
 
-            # Count only the selected outliers
-            matrixSelected[np.where(matrixSelected == -1)[0]] = 0
+            # Count how many acceptable epochs are selected as outliers
+            nSelectedOutliers = np.in1d(matrixSelected, 'selected').sum()
 
-            if matrixSelected.sum() != 0:
-                distChannelSelected.extend([matrixSelected.sum()])
+            if nSelectedOutliers != 0:
+                distChannelSelected.extend([nSelectedOutliers])
                 distChannelBroken.extend([0])
                 distChannelBlink.extend([0])
                 distChannelThreshold.extend([0])
@@ -109,7 +109,7 @@ class Overview(wx.Panel):
             markerIDBlink = [
                 m for m in markerIDBlink
                 if m not in markerIDThreshold + markerIDBridge]
-            markerIDSelected = list(np.where(matrixSelected)[0])
+            markerIDSelected = list(np.where(matrixSelected == 'selected')[0])
 
             uniqueMarkers = np.unique(markers)
 
@@ -415,9 +415,18 @@ class EpochDetail(wx.Panel):
             self.id2Show = [
                 i for i in self.id2Show
                 if i in np.where(self.Data.Results.badID)[0]]
-            self.id2Show = [
-                i for i in self.id2Show
-                if i in np.where(self.Data.Results.matrixSelected > -1)[0]]
+
+            # Add selected outliers
+            selectedIDs = np.where(
+                self.Data.Results.matrixSelected == 'selected')[0]
+            self.id2Show.extend(list(selectedIDs))
+            self.id2Show.sort()
+
+            # Ignore outliers that are selected to be ok
+            notAnOutlier = [
+                i for i, e in enumerate(self.Data.Results.matrixSelected)
+                if 'ok_' in e]
+            self.id2Show = [i for i in self.id2Show if i not in notAnOutlier]
 
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
         Results = self.Data.Results
@@ -524,13 +533,13 @@ class EpochDetail(wx.Panel):
                 axes.title.set_picker(5)
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
-                if idSelected == 1:
+                if idSelected == 'selected':
                     color = '#ff8c00'
                     axes.title.set_fontweight('bold')
                     axes.title.set_color(color)
                     for ax in axes.spines:
                         axes.spines[ax].set_color(color)
-                elif idSelected == -1:
+                elif 'ok_' in idSelected:
                     color = 'k'
                     axes.title.set_fontweight('normal')
                     axes.title.set_color(color)
@@ -577,64 +586,75 @@ class EpochDetail(wx.Panel):
         event.Skip()
 
     def onPick(self, event):
-        # Highlight Channel if doubleclicked
-        if event.mouseevent.dblclick:
-            if event.mouseevent.button == 1:
-                if event.artist.get_picker() == 1:
+        # Only do something if left double click
+        if event.mouseevent.dblclick and event.mouseevent.button == 1:
 
-                    event.artist.set_color('black')
-                    linenumber = int(event.artist.get_label()[5:])
-                    xValue = 1000. * self.Data.Results.postCut / \
-                        self.Data.Results.sampleRate + 1
-                    yValue = event.artist.get_data()[1][-1]
-                    event.artist.axes.text(xValue, yValue,
-                                           self.labelsChannel[linenumber],
-                                           color='black')
-                elif event.artist.get_picker() == 5:
-                    selectedID = event.artist.get_text()
-                    selectedID = int(
-                        selectedID[selectedID.find('Epoch') + 6:]) - 1
+            # Print Line name and color it black if requested
+            if event.artist.get_picker() == 1:
+                event.artist.set_color('black')
+                linenumber = int(event.artist.get_label()[5:])
+                xValue = 1000. * self.Data.Results.postCut / \
+                    self.Data.Results.sampleRate + 1
+                yValue = event.artist.get_data()[1][-1]
+                event.artist.axes.text(xValue, yValue,
+                                       self.labelsChannel[linenumber],
+                                       color='black')
 
-                    if selectedID in np.where(self.Data.Results.badID)[0] \
-                            and self.Data.Results.matrixSelected[
-                            selectedID] == 0:
-                        color = 'black'
-                        event.artist.set_fontweight('normal')
-                        self.Data.Results.matrixSelected[selectedID] = -1
-                        if self.CheckboxEpochs.IsChecked():
-                            self.shiftView -= 1
-                    elif selectedID in np.where(self.Data.Results.badID)[0] \
-                            and self.Data.Results.matrixSelected[
-                            selectedID] == -1:
+            # Select or Deselect an Epoch as an Outlier
+            elif event.artist.get_picker() == 5:
+                selectedID = event.artist.get_text()
+                selectedID = int(selectedID[selectedID.find('Epoch') + 6:]) - 1
+                selectedType = self.Data.Results.matrixSelected[selectedID]
+
+                # If Epoch is already selected as an outlier
+                if selectedType in ['selected', 'threshold', 'blink',
+                                    'bridge']:
+                    color = 'black'
+                    event.artist.set_fontweight('normal')
+                    if self.CheckboxEpochs.IsChecked():
+                        self.shiftView -= 1
+
+                    if selectedType == 'selected':
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'ok_normal'
+                    elif selectedType == 'threshold':
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'ok_thresh'
+                    elif selectedType == 'blink':
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'ok_blink'
+                    elif selectedType == 'bridge':
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'ok_bridge'
+
+                else:
+                    event.artist.set_fontweight('bold')
+                    if self.CheckboxEpochs.IsChecked():
+                        self.shiftView += 1
+
+                    if selectedType == 'ok_normal':
                         color = '#ff8c00'
-                        event.artist.set_fontweight('bold')
-                        self.Data.Results.matrixSelected[selectedID] = 0
-                        if self.CheckboxEpochs.IsChecked():
-                            self.shiftView += 1
-                    elif selectedID not in np.where(
-                            self.Data.Results.badID)[0] \
-                            and self.Data.Results.matrixSelected[
-                            selectedID] == 0:
-                        color = '#ff8c00'
-                        event.artist.set_fontweight('bold')
-                        self.Data.Results.matrixSelected[selectedID] = 1
-                    elif self.Data.Results.matrixSelected[selectedID] == 1:
-                        color = 'black'
-                        event.artist.set_fontweight('normal')
-                        self.Data.Results.matrixSelected[selectedID] = 0
-                    elif self.Data.Results.matrixSelected[selectedID] == -1:
-                        color = '#ff8c00'
-                        event.artist.set_fontweight('bold')
-                        self.Data.Results.matrixSelected[selectedID] = 0
-                    else:
-                        color = 'blackk'
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'selected'
+                    elif selectedType == 'ok_thresh':
+                        color = 'r'
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'threshold'
+                    elif selectedType == 'ok_blink':
+                        color = 'm'
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'blink'
+                    elif selectedType == 'ok_bridge':
+                        color = 'b'
+                        self.Data.Results.matrixSelected[
+                            selectedID] = 'bridge'
 
-                    event.artist.set_color(color)
-                    for ax in event.artist.axes.spines:
-                        event.artist.axes.spines[ax].set_color(color)
-                    self.Data.Results.updateAnalysis = True
+                event.artist.set_color(color)
+                for ax in event.artist.axes.spines:
+                    event.artist.axes.spines[ax].set_color(color)
+                self.Data.Results.updateAnalysis = True
 
-                self.canvas.draw()
+            self.canvas.draw()
         self.canvas.ReleaseMouse()
 
     def updateLayout(self, event):

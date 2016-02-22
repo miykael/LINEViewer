@@ -250,12 +250,34 @@ class Results():
 
         # Correct for selected outliers
         if not hasattr(self, 'matrixSelected'):
-            self.matrixSelected = np.zeros(self.epochs.shape[0])
+            self.matrixSelected = np.repeat('ok_normal', self.epochs.shape[0])
+            self.matrixSelected[np.where(
+                    self.matrixThreshold.sum(axis=1))[0]] = 'threshold'
+            self.matrixSelected[np.where(
+                    self.matrixBlink.sum(axis=1))[0]] = 'blink'
+            self.matrixSelected[np.where(
+                    self.matrixBridge.sum(axis=1))[0]] = 'bridge'
+
         else:
-            self.okID[np.where(self.matrixSelected == 1)[0]] = False
-            self.badID[np.where(self.matrixSelected == 1)[0]] = True
-            self.okID[np.where(self.matrixSelected == -1)[0]] = True
-            self.badID[np.where(self.matrixSelected == -1)[0]] = False
+
+            # Check if new datasets were loaded
+            if self.matrixSelected.shape[0] < self.markers.shape[0]:
+                startID = self.matrixSelected.shape[0]
+                newLength = self.markers.shape[0] - startID
+                newSelectedMatrix = np.repeat('ok_normal', newLength)
+                newSelectedMatrix[np.where(self.matrixThreshold[
+                    startID:].sum(axis=1))[0]] = 'threshold'
+                newSelectedMatrix[np.where(self.matrixBlink[
+                    startID:].sum(axis=1))[0]] = 'blink'
+                newSelectedMatrix[np.where(self.matrixBridge[
+                    startID:].sum(axis=1))[0]] = 'bridge'
+                self.matrixSelected = np.hstack([self.matrixSelected,
+                                                 newSelectedMatrix])
+
+            # Update List of ok and bad IDs
+            self.okID = np.array([True if 'ok_' in e else False
+                                  for e in self.matrixSelected])
+            self.badID = np.invert(self.okID)
 
         # Drop bad Epochs for average
         goodEpochs = epochs[self.okID]
