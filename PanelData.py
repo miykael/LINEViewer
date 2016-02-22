@@ -130,18 +130,24 @@ class Selecter(wx.Panel):
 
             newlist = [os.path.basename(f)[:-4] for f in filelist]
             oldlist = self.Data.Filenames
-            newfiles = [ReadBDF(f) for f in filelist
-                        if os.path.basename(f)[:-4] not in oldlist]
 
-            self.Data.Filenames += [e for e in newlist if e not in oldlist]
-            self.Data.Datasets += newfiles
+            # Only load files if at least one of them is a new dataset
+            newElements = np.array([True if e not in oldlist else False
+                                    for e in newlist])
+            if newElements.sum() != 0:
 
-            self.ListInput.SetItems(self.Data.Filenames)
+                newfiles = [ReadBDF(f) for f in filelist
+                            if os.path.basename(f)[:-4] not in oldlist]
 
-            self.updateInformation()
-            self.Data.Results.updateAll(self.Data)
-            self.ButtonDataDrop.Enable()
-            self.ButtonDataSaveEPH.Enable()
+                self.Data.Filenames += [e for e in newlist if e not in oldlist]
+                self.Data.Datasets += newfiles
+
+                self.ListInput.SetItems(self.Data.Filenames)
+
+                self.updateInformation()
+                self.Data.Results.updateAll(self.Data)
+                self.ButtonDataDrop.Enable()
+                self.ButtonDataSaveEPH.Enable()
         dlg.Destroy()
         event.Skip()
 
