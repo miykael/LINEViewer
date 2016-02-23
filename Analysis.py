@@ -111,6 +111,11 @@ class Results():
 
     def interpolationCheck(self, Data, forceInterpolation):
 
+        # Reset matrixSelected if updateAll or interpolationCheck is called
+        if hasattr(self, 'matrixSelected'):
+            del self.matrixSelected
+
+        # Do interpolation if needed
         if Data.Specs.channels2interpolate != [] or forceInterpolation:
             Data.InterpolEpochs = np.copy(Data.Orig.epochs)
             Data = interpolateChannels(self, Data, Data.Specs.xyzFile)
