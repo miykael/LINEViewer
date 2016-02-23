@@ -132,7 +132,8 @@ class SaveH5:
 
 class SaveEPH:
 
-    def __init__(self, resultsName, resultsPath, results, markers2hide):
+    def __init__(self, resultsName, resultsPath, results, markers2hide,
+                 preFrame):
 
         # Create output folder if it doesn't exist
         if not exists(resultsPath):
@@ -154,6 +155,13 @@ class SaveEPH:
                 for tValue in results.avgGFP[i]:
                     f.writelines('{:>15}\n'.format(round(tValue, 7)))
 
+            # Write GFP marker file
+            filename += '.mrk'
+            with open(join(resultsPath, filename), 'w') as f:
+                f.writelines(
+                    'TL02\n{:>12}\t{:>12}\t"Origin"\n'.format(preFrame,
+                                                              preFrame))
+
             # Write electrode data into EPH file
             nSignal, nTimepoint = results.avgEpochs[0].shape
             filename = '%s.Epoch_%.3d.eph' % (resultsName, m)
@@ -165,6 +173,13 @@ class SaveEPH:
                     formatString = formatString[:-1] + '\n'
                     f.writelines(
                         formatString.format(*np.round(tValues, 7).tolist()))
+
+            # Write EPH marker file
+            filename += '.mrk'
+            with open(join(resultsPath, filename), 'w') as f:
+                f.writelines(
+                    'TL02\n{:>12}\t{:>12}\t"Origin"\n'.format(preFrame,
+                                                              preFrame))
 
 
 class SaveFigures:

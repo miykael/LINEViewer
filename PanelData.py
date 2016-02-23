@@ -217,7 +217,7 @@ class Selecter(wx.Panel):
 
             # Save outputs
             SaveEPH(resultsName, resultsPath, self.Data.Results,
-                    self.Data.markers2hide)
+                    self.Data.markers2hide, self.Data.Results.preFrame)
             SaveFigures(resultsName, resultsPath, self.Data)
 
         dlgTextName.Destroy()
