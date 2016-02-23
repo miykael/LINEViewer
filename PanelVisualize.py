@@ -33,14 +33,6 @@ class Overview(wx.Panel):
             # Correct for selected epochs
             matrixSelected = np.copy(self.Data.Results.matrixSelected)
 
-            # Disregard any hidden markers
-            markers2hide = [True if m in self.Data.markers2hide else False
-                            for m in markers]
-            matrixSelected[np.where(markers2hide)] = 'ok_normal'
-            self.Data.Results.matrixBridge[np.where(markers2hide)] = False
-            self.Data.Results.badBlinkEpochs[np.where(markers2hide)] = False
-            self.Data.Results.matrixThreshold[np.where(markers2hide)] = False
-
             # Disregard outliers if they are selected as being ok
             self.Data.Results.matrixBridge[
                 np.where(matrixSelected == 'ok_bridge')[0]] = False
@@ -60,9 +52,6 @@ class Overview(wx.Panel):
             matrixBridge[brokenID] *= False
             badBlinkEpochs[brokenID] *= False
 
-            matrixBad = matrixThreshold + matrixBridge
-            badChannelsID = np.where(matrixBad.sum(axis=0))[0]
-
             # Get distribution of channels
             distChannelSelected = []
             distChannelBroken = []
@@ -70,6 +59,22 @@ class Overview(wx.Panel):
             distChannelThreshold = []
             distChannelBridge = []
             badChannelsLabel = []
+
+            # Disregard any epochs of hidden markers
+            markers2hide = [True if m in self.Data.markers2hide else False
+                            for m in markers]
+            brokenID = [b for b in brokenID
+                        if b not in np.where(markers2hide)[0]]
+            matrixSelected[np.where(markers2hide)] = 'ok_normal'
+            unhiddenEpochID = np.where(np.invert(markers2hide))[0].tolist()
+
+            matrixBad = matrixThreshold + matrixBridge
+            badChannelsID = np.where(matrixBad[unhiddenEpochID].sum(axis=0))[0]
+
+            tmpThreshold = matrixThreshold[:, badChannelsID]
+            tmpThreshold = tmpThreshold[unhiddenEpochID]
+            tmpBridge = matrixBridge[:, badChannelsID]
+            tmpBridge = tmpBridge[unhiddenEpochID]
 
             # Count how many acceptable epochs are selected as outliers
             nSelectedOutliers = np.in1d(matrixSelected, 'selected').sum()
@@ -96,10 +101,8 @@ class Overview(wx.Panel):
                 distChannelBridge.extend([0])
                 badChannelsLabel.extend(['Blink'])
 
-            distChannelThreshold.extend(
-                matrixThreshold[:, badChannelsID].sum(axis=0))
-            distChannelBridge.extend(
-                matrixBridge[:, badChannelsID].sum(axis=0))
+            distChannelThreshold.extend(tmpThreshold.sum(axis=0))
+            distChannelBridge.extend(tmpBridge.sum(axis=0))
             distChannelBroken.extend([0] * len(badChannelsID))
             distChannelBlink.extend([0] * len(badChannelsID))
             distChannelSelected.extend([0] * len(badChannelsID))
