@@ -105,11 +105,14 @@ class Results():
                                                d.markerValue))
             del dataset
 
-        self.interpolationCheck(Data)
+            Data.InterpolEpochs = np.copy(Data.Orig.epochs)
 
-    def interpolationCheck(self, Data):
+        self.interpolationCheck(Data, False)
 
-        if Data.Specs.channels2interpolate != []:
+    def interpolationCheck(self, Data, forceInterpolation):
+
+        if Data.Specs.channels2interpolate != [] or forceInterpolation:
+            Data.InterpolEpochs = np.copy(Data.Orig.epochs)
             Data = interpolateChannels(self, Data, Data.Specs.xyzFile)
 
         self.updateEpochs(Data)
@@ -134,7 +137,7 @@ class Results():
         self.excludeChannel = Data.Specs.channels2exclude
 
         # Copy epoch and marker values
-        epochs = np.copy(Data.Orig.epochs)
+        epochs = np.copy(Data.InterpolEpochs)
         if not hasattr(self, 'collapsedMarkers'):
             markers = np.copy(Data.Orig.markers)
         else:
@@ -349,13 +352,13 @@ def interpolateChannels(self, Data, xyz):
     matriceInv = np.linalg.inv(matrice)
 
     # Create Progressbar for interpolation
-    progressMax = Data.Orig.epochs.shape[0]
+    progressMax = Data.InterpolEpochs.shape[0]
     dlg = wx.ProgressDialog(
         "Interpolation Progress", "Time remaining for Interpolation",
         progressMax,
         style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
 
-    for count, epoch in enumerate(Data.Orig.epochs):
+    for count, epoch in enumerate(Data.InterpolEpochs):
 
         signal = np.copy(epoch.T)
 
@@ -377,7 +380,7 @@ def interpolateChannels(self, Data, xyz):
             K[np.isnan(K)] = 0
             IntData = np.dot(Coef, np.concatenate((K, Q), axis=0))
             signal[:, b] = IntData
-        Data.Orig.epochs[count] = signal.T
+        Data.InterpolEpochs[count] = signal.T
 
         dlg.Update(count)
 

@@ -388,21 +388,21 @@ class Specification(wx.Panel):
                 else:
                     self.xyzPath = dirname(self.Data.Specs.xyzFile)
 
-                if self.Data.Specs.channels2interpolate != []:
-                    dlgXYZ = wx.FileDialog(None, "Load xyz file",
-                                           defaultDir=self.xyzPath,
-                                           wildcard='*.xyz')
-                    if dlgXYZ.ShowModal() == wx.ID_OK:
-                        self.Data.Specs.xyzFile = dlgXYZ.GetPath()
-                        self.Data.Results.interpolationCheck(self.Data)
-                    dlgXYZ.Destroy()
-                    labeltxt = 'Interpolated Channels:\n' + \
-                        ''.join([e + ', ' if i % 7 != 6
-                                 else e + ',\n'
-                                 for i, e in enumerate(
-                                     self.Data.Specs.channels2interpolate)])
-                else:
+                dlgXYZ = wx.FileDialog(None, "Load xyz file",
+                                       defaultDir=self.xyzPath,
+                                       wildcard='*.xyz')
+                if dlgXYZ.ShowModal() == wx.ID_OK:
+                    self.Data.Specs.xyzFile = dlgXYZ.GetPath()
+                    self.Data.Results.interpolationCheck(self.Data, True)
+                dlgXYZ.Destroy()
+                labeltxt = 'Interpolated Channels:\n' + \
+                    ''.join([e + ', ' if i % 7 != 6
+                             else e + ',\n'
+                             for i, e in enumerate(
+                                 self.Data.Specs.channels2interpolate)])
+                if self.Data.Specs.channels2interpolate == []:
                     labeltxt = 'No interpolated channels\n\n'
+
                 self.TextInterpolated.SetLabel(labeltxt)
             dlgSelect.Destroy()
         event.Skip()
