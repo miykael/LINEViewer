@@ -485,10 +485,13 @@ class Specification(wx.Panel):
             markerTxt = [str(m) for m in markers]
 
             self.getCollapseList(markerTxt)
-            self.drawEpochs(event)
+            if self.updateMarkers:
+                self.drawEpochs(event)
         event.Skip()
 
     def getCollapseList(self, markerTxt):
+
+        self.updateMarkers = False
 
         dlg = wx.MultiChoiceDialog(
             self, caption="Select markers to collapse",
@@ -528,6 +531,7 @@ class Specification(wx.Panel):
                         markerTxt = [str(m) for m in np.unique(rawMarkers)]
                         self.getCollapseList(markerTxt)
                         dlgMore.Destroy()
+                    self.updateMarkers = True
                 break
         dlg.Destroy()
 
