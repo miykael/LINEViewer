@@ -232,9 +232,11 @@ class Overview(wx.Panel):
 
             percentageBad = 1 - 1. * \
                 sum(distMarkerOK) / self.Data.Results.okID.shape[0]
+            nOutliers = int(
+                self.Data.Results.okID.shape[0] - sum(distMarkerOK))
             axes.title.set_text(
-                'Marker Overview - {0}% Outliers'.format(
-                    round(percentageBad * 100, 1)))
+                'Marker Overview - {0} Outliers [{1}%]'.format(
+                    nOutliers, round(percentageBad * 100, 1)))
             axes.grid(True, axis='y')
             axes.set_ylabel('Epochs')
             axes.set_xticks(nMarker + .75 / 2)
