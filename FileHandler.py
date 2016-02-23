@@ -187,11 +187,11 @@ class SaveFigures:
     def __init__(self, resultsName, resultsPath, figures):
 
         figures.Overview.figure.savefig(
-            join(resultsPath, 'plot_Overview.svg'))
+            join(resultsPath, 'plot_Overview.svg'), bbox_inches='tight')
         figures.GFPSummary.figure.savefig(
-            join(resultsPath, 'plot_GFP_Summary.svg'))
+            join(resultsPath, 'plot_GFP_Summary.svg'), bbox_inches='tight')
         figures.GFPDetailed.figure.savefig(
-            join(resultsPath, 'plot_GFP_Detailed.svg'))
+            join(resultsPath, 'plot_GFP_Detailed.svg'), bbox_inches='tight')
 
 
 class SaveTVA:

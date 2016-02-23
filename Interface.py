@@ -14,7 +14,6 @@ class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY, title="LINEViewer 0.1",
                           pos=(0, 0), size=(1200, 1000))
-        # self.Maximize(True)
 
         # Default variables
         self.Data = type('Data', (object,), {})()
