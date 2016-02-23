@@ -1,7 +1,7 @@
 ﻿import os
 import wx
 import numpy as np
-from FileHandler import ReadBDF, SaveH5, SaveEPH
+from FileHandler import ReadBDF, SaveH5, SaveEPH, SaveFigures
 
 
 class Selecter(wx.Panel):
@@ -172,6 +172,11 @@ class Selecter(wx.Panel):
                                 defaultFile='summary.h5')
             if dlg.ShowModal() == wx.ID_OK:
                 filepath = dlg.GetPath()
+
+                # Update before saving
+                if self.Data.Results.updateAnalysis:
+                    self.Data.Results.updateEpochs(self.Data)
+
                 SaveH5(filepath, self.Data.H5files)
                 self.Data.H5files = [filepath]
                 self.ListInput.SetItems([os.path.basename(filepath)[:-3]])
@@ -202,8 +207,14 @@ class Selecter(wx.Panel):
                 resultsPath = dlgTextPath.GetValue()
             dlgTextPath.Destroy()
 
+            # Update before saving
+            if self.Data.Results.updateAnalysis:
+                self.Data.Results.updateEpochs(self.Data)
+
+            # Save outputs
             SaveEPH(resultsName, resultsPath, self.Data.Results,
                     self.Data.markers2hide)
+            SaveFigures(resultsName, resultsPath, self.Data)
 
         dlgTextName.Destroy()
         event.Skip()

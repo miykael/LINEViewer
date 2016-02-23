@@ -165,3 +165,15 @@ class SaveEPH:
                     formatString = formatString[:-1] + '\n'
                     f.writelines(
                         formatString.format(*np.round(tValues, 7).tolist()))
+
+
+class SaveFigures:
+
+    def __init__(self, resultsName, resultsPath, figures):
+
+        figures.Overview.figure.savefig(
+            join(resultsPath, 'plot_Overview.svg'))
+        figures.GFPSummary.figure.savefig(
+            join(resultsPath, 'plot_GFP_Summary.svg'))
+        figures.GFPDetailed.figure.savefig(
+            join(resultsPath, 'plot_GFP_Detailed.svg'))
