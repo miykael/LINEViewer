@@ -177,3 +177,28 @@ class SaveFigures:
             join(resultsPath, 'plot_GFP_Summary.svg'))
         figures.GFPDetailed.figure.savefig(
             join(resultsPath, 'plot_GFP_Detailed.svg'))
+
+
+class SaveTVA:
+
+    def __init__(self, data):
+
+        dataSize = [e.markerValue.shape[0]
+                    for i, e in enumerate(data.Datasets)]
+        tvaMarker = [1 if 'ok_' in m else 0
+                     for m in data.Results.matrixSelected]
+
+        # Go through the files and save TVA for each
+        counter = 0
+        for i, n in enumerate(data.Filenames):
+            filename = join(data.DirPath, n + '.lv.tva')
+
+            with open(filename, 'w') as f:
+
+                f.writelines('TV01\n')
+
+                for j in range(dataSize[i]):
+                    f.writelines('%d\t0\t%s\n' % (
+                        tvaMarker[counter], data.Results.markers[counter]))
+
+                    counter += 1

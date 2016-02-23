@@ -1,7 +1,7 @@
 ﻿import os
 import wx
 import numpy as np
-from FileHandler import ReadBDF, SaveH5, SaveEPH, SaveFigures
+from FileHandler import ReadBDF, SaveH5, SaveEPH, SaveFigures, SaveTVA
 
 
 class Selecter(wx.Panel):
@@ -148,6 +148,7 @@ class Selecter(wx.Panel):
                 self.Data.Results.updateAll(self.Data)
                 self.ButtonDataDrop.Enable()
                 self.ButtonDataSaveEPH.Enable()
+                self.ButtonDataSaveTVA.Enable()
         dlg.Destroy()
         event.Skip()
 
@@ -188,7 +189,10 @@ class Selecter(wx.Panel):
         event.Skip()
 
     def saveTVA(self, event):
-        """TODO: Program Button"""
+        """Saves TVA's of current analysis"""
+
+        SaveTVA(self.Data)
+
         event.Skip()
 
     def saveEPH(self, event):
