@@ -181,6 +181,10 @@ class Overview(wx.Panel):
                         horizontalalignment='center',
                         verticalalignment='bottom', rotation=90)
 
+            # Y-axis should only use integers
+            yticks = axes.get_yticks().astype('int')
+            axes.set_yticks(np.unique(yticks))
+
             # Create bad marker histogram
             axes = self.figure.add_subplot(2, 1, 2)
             axes.clear()
