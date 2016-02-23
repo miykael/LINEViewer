@@ -132,7 +132,7 @@ class SaveH5:
 
 class SaveEPH:
 
-    def __init__(self, resultsName, resultsPath, results):
+    def __init__(self, resultsName, resultsPath, results, markers2hide):
 
         # Create output folder if it doesn't exist
         if not exists(resultsPath):
@@ -140,6 +140,10 @@ class SaveEPH:
 
         # Go through all the markers
         for i, m in enumerate(results.uniqueMarkers):
+
+            # Do nothing if marker was hidden
+            if m in markers2hide:
+                continue
 
             # Write GFP data into EPH file
             nTimepoint = results.avgGFP[0].shape[0]

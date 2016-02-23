@@ -145,13 +145,6 @@ class Results():
             self.collapsedMarkers = markers
             markers = self.collapsedMarkers
 
-        # Hide Markers
-        if Data.markers2hide != []:
-            markers2hide = [
-                False if m in Data.markers2hide else True for m in markers]
-            epochs = epochs[np.where(markers2hide)]
-            markers = markers[np.where(markers2hide)]
-
         # Baseline Correction
         if self.baselineCorr:
             for e in epochs:

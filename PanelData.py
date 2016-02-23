@@ -7,7 +7,7 @@ from FileHandler import ReadBDF, SaveH5, SaveEPH
 class Selecter(wx.Panel):
 
     """
-    SOME TEXT
+    TODO: SOME TEXT
     """
 
     def __init__(self, ParentFrame, Data):
@@ -202,7 +202,8 @@ class Selecter(wx.Panel):
                 resultsPath = dlgTextPath.GetValue()
             dlgTextPath.Destroy()
 
-            SaveEPH(resultsName, resultsPath, self.Data.Results)
+            SaveEPH(resultsName, resultsPath, self.Data.Results,
+                    self.Data.markers2hide)
 
         dlgTextName.Destroy()
         event.Skip()

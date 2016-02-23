@@ -33,6 +33,14 @@ class Overview(wx.Panel):
             # Correct for selected epochs
             matrixSelected = np.copy(self.Data.Results.matrixSelected)
 
+            # Disregard any hidden markers
+            markers2hide = [True if m in self.Data.markers2hide else False
+                            for m in markers]
+            matrixSelected[np.where(markers2hide)] = 'ok_normal'
+            self.Data.Results.matrixBridge[np.where(markers2hide)] = False
+            self.Data.Results.badBlinkEpochs[np.where(markers2hide)] = False
+            self.Data.Results.matrixThreshold[np.where(markers2hide)] = False
+
             # Disregard outliers if they are selected as being ok
             self.Data.Results.matrixBridge[
                 np.where(matrixSelected == 'ok_bridge')[0]] = False
@@ -111,7 +119,9 @@ class Overview(wx.Panel):
                 if m not in markerIDThreshold + markerIDBridge]
             markerIDSelected = list(np.where(matrixSelected == 'selected')[0])
 
-            uniqueMarkers = np.unique(markers)
+            uniqueMarkers = np.array(
+                [m for m in np.unique(markers)
+                 if m not in self.Data.markers2hide])
 
             distMarkerBroken = [
                 list(markers[markerIDBroken]).count(u)
@@ -281,11 +291,17 @@ class GFPSummary(wx.Panel):
                 Results.avgGFP)[:, Results.preCut -
                                 Results.preFrame:Results.preCut +
                                 Results.postFrame]
-            plt.plot(xaxis, np.transpose(avgGFP))
+
+            # Which markers to show
+            markers2show = np.array(
+                [True if m not in self.Data.markers2hide else False
+                 for m in Results.uniqueMarkers])
+
+            plt.plot(xaxis, np.transpose(avgGFP[markers2show]))
             plt.xlabel('time [ms]')
             plt.ylabel('GFP')
             plt.title('GFP Overview')
-            plt.legend(Results.uniqueMarkers)
+            plt.legend(Results.uniqueMarkers[markers2show])
             self.figure.subplots_adjust(left=0.03,
                                         bottom=0.04,
                                         right=0.98,
@@ -338,7 +354,6 @@ class GFPDetailed(wx.Panel):
             newFigure(self, showGrid=True, showGFP=True, showGMD=True)
         else:
             self.figure.clear()
-            figureShape = findSquare(Results.uniqueMarkers.shape[0])
             xaxis = getXaxis(Results)
             avgGFP = np.array(Results.avgGFP)[
                 :, Results.preCut - Results.preFrame:Results.preCut +
@@ -347,7 +362,19 @@ class GFPDetailed(wx.Panel):
                 :, Results.preCut - Results.preFrame:Results.preCut +
                 Results.postFrame]
 
-            for i, g in enumerate(Results.avgGFP):
+            # Which markers to show
+            markers2show = np.array(
+                [True if m not in self.Data.markers2hide else False
+                 for m in Results.uniqueMarkers])
+            avgGFP = avgGFP[markers2show]
+            avgGMD = avgGMD[markers2show]
+            results2show = [r for i, r in enumerate(Results.avgGFP)
+                            if markers2show[i]]
+            shownMarkers = Results.uniqueMarkers[markers2show]
+
+            figureShape = findSquare(len(shownMarkers))
+
+            for i, g in enumerate(results2show):
                 axes = self.figure.add_subplot(figureShape[0],
                                                figureShape[1],
                                                i + 1)
@@ -355,12 +382,10 @@ class GFPDetailed(wx.Panel):
                     axes.plot(xaxis, avgGFP[i], 'b')
                 if self.CheckboxGMD.IsChecked():
                     axes.plot(xaxis, avgGMD[i], 'r')
-                nMarkers = self.Data.Overview.distMarkerOK[
-                    np.where(Results.uniqueMarkers == Results.uniqueMarkers[
-                        i])[0]]
+                nMarkers = self.Data.Overview.distMarkerOK[i]
 
                 axes.title.set_text(
-                    'Marker: %s [N=%s]' % (Results.uniqueMarkers[i], nMarkers))
+                    'Marker: %s [N=%s]' % (shownMarkers[i], nMarkers))
                 axes.grid(self.CheckboxGrid.IsChecked())
             self.figure.subplots_adjust(left=0.03,
                                         bottom=0.03,
@@ -412,10 +437,17 @@ class EpochDetail(wx.Panel):
         self.markerValue = markerValue
         self.id2Show = np.where(
             self.Data.Results.markers == self.markerValue)[0]
+
         if self.markerValue == []:
             self.CheckboxMarkers.SetValue(True)
             self.id2Show = np.arange(self.Data.Results.markers.shape[0])
-        if self.CheckboxEpochs.IsChecked():
+
+        # Only show unhidden markers
+        self.id2Show = np.array(
+            [i for i, m in enumerate(self.Data.Results.markers)
+             if m not in self.Data.markers2hide and i in self.id2Show])
+
+        if self.CheckboxOutliers.IsChecked():
             self.id2Show = [
                 i for i in self.id2Show
                 if i in np.where(self.Data.Results.badID)[0]]
@@ -425,6 +457,9 @@ class EpochDetail(wx.Panel):
                 self.Data.Results.matrixSelected == 'selected')[0]
             self.id2Show.extend(list(selectedIDs))
             self.id2Show.sort()
+
+            # Correct for duplicates
+            self.id2Show = np.unique(self.id2Show)
 
             # Ignore outliers that are selected to be ok
             notAnOutlier = [
@@ -615,7 +650,7 @@ class EpochDetail(wx.Panel):
                                     'bridge']:
                     color = 'black'
                     event.artist.set_fontweight('normal')
-                    if self.CheckboxEpochs.IsChecked():
+                    if self.CheckboxOutliers.IsChecked():
                         self.shiftView -= 1
 
                     if selectedType == 'selected':
@@ -633,7 +668,7 @@ class EpochDetail(wx.Panel):
 
                 else:
                     event.artist.set_fontweight('bold')
-                    if self.CheckboxEpochs.IsChecked():
+                    if self.CheckboxOutliers.IsChecked():
                         self.shiftView += 1
 
                     if selectedType == 'ok_normal':
@@ -824,12 +859,12 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
         self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
 
-        self.CheckboxEpochs = wx.CheckBox(self, wx.ID_ANY,
-                                          'Outliers only')
-        self.CheckboxEpochs.SetValue(True)
-        self.hbox.Add(self.CheckboxEpochs, 0, border=3, flag=flags)
+        self.CheckboxOutliers = wx.CheckBox(self, wx.ID_ANY,
+                                            'Outliers only')
+        self.CheckboxOutliers.SetValue(True)
+        self.hbox.Add(self.CheckboxOutliers, 0, border=3, flag=flags)
         wx.EVT_CHECKBOX(
-            self.CheckboxEpochs, self.CheckboxEpochs.Id, self.updateFigure)
+            self.CheckboxOutliers, self.CheckboxOutliers.Id, self.updateFigure)
 
         self.CheckboxMarkers = wx.CheckBox(self, wx.ID_ANY,
                                            'All Markers')

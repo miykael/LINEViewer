@@ -344,6 +344,14 @@ class Specification(wx.Panel):
             self.Data.Results.updateEpochs(self.Data)
         event.Skip()
 
+    def redrawFigures(self, event):
+        if self.Data.Datasets != []:
+            self.Data.Overview.update(self.Data.Results)
+            self.Data.GFPSummary.update(self.Data.Results)
+            self.Data.GFPDetailed.update(self.Data.Results)
+            self.Data.EpochDetail.update(self.Data.EpochDetail.markerValue)
+        event.Skip()
+
     def useAverage(self, event):
         if self.Data.Specs.CheckboxAverage.GetValue():
             self.Data.Specs.DropDownNewRef.SetSelection(0)
@@ -452,6 +460,7 @@ class Specification(wx.Panel):
                 markers = self.Data.Results.collapsedMarkers
             markers = np.unique(markers)
             markers = markers.tolist()+self.Data.markers2hide
+            markers = np.unique(markers).tolist()
             markers.sort()
             markerTxt = [str(m) for m in markers]
             dlg = wx.MultiChoiceDialog(
@@ -469,7 +478,8 @@ class Specification(wx.Panel):
                 if len(markers) != len(dlg.GetSelections()):
                     self.Data.markers2hide = [markers[x]
                                               for x in dlg.GetSelections()]
-                    self.drawEpochs(event)
+                    self.redrawFigures(event)
+
             dlg.Destroy()
         event.Skip()
 
@@ -539,5 +549,8 @@ class Specification(wx.Panel):
         if hasattr(self.Data.Results, 'collapsedMarkers'):
             del self.Data.Results.collapsedMarkers
         self.Data.markers2hide = []
+        self.Data.Results.matrixSelected[
+            np.where(
+                self.Data.Results.matrixSelected == 'selected')] = 'ok_normal'
         self.drawEpochs(event)
         event.Skip()
