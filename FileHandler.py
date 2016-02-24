@@ -95,41 +95,6 @@ class ReadXYZ:
             self.labels = np.array(self.labels)
 
 
-class SaveH5:
-
-    def __init__(self, filename, bdffiles):
-
-        with tables.open_file(filename, 'w') as outputfile:
-
-            for b in bdffiles:
-
-                name = basename(b)[:-3]
-
-                with tables.open_file(b, 'r') as f:
-
-                    outputfile.create_group('/', name)
-                    outputfile.create_array('/%s' % name, 'startDate',
-                                            f.root.startDate.read())
-                    outputfile.create_array('/%s' % name, 'startTime',
-                                            f.root.startTime.read())
-                    outputfile.create_array('/%s' % name, 'dataRecorded',
-                                            f.root.dataRecorded.read())
-                    outputfile.create_array('/%s' % name, 'durationRecorded',
-                                            f.root.durationRecorded.read())
-                    outputfile.create_array('/%s' % name, 'labelsChannel',
-                                            f.root.labelsChannel.read())
-                    outputfile.create_array('/%s' % name, 'sampleRate',
-                                            f.root.sampleRate.read())
-                    outputfile.create_array('/%s' % name, 'sampleEqual',
-                                            f.root.sampleEqual.read())
-                    outputfile.create_array('/%s' % name, 'rawdata',
-                                            f.root.rawdata.read())
-                    outputfile.create_array('/%s' % name, 'markerTime',
-                                            f.root.markerTime.read())
-                    outputfile.create_array('/%s' % name, 'markerValue',
-                                            f.root.markerValue.read())
-
-
 class SaveEPH:
 
     def __init__(self, resultsName, resultsPath, results, markers2hide,

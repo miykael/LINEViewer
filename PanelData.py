@@ -1,7 +1,7 @@
 ﻿import os
 import wx
 import numpy as np
-from FileHandler import ReadBDF, SaveH5, SaveEPH, SaveFigures, SaveTVA
+from FileHandler import ReadBDF, SaveEPH, SaveFigures, SaveTVA
 
 
 class Selecter(wx.Panel):
@@ -61,18 +61,6 @@ class Selecter(wx.Panel):
         BoxOutput.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxOutput = wx.StaticBoxSizer(BoxOutput, wx.VERTICAL)
 
-        self.ButtonDataSaveH5 = wx.Button(
-            PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="&Save Dataset as H5")
-        self.ButtonDataSaveH5.Disable()
-        sizerBoxOutput.Add(self.ButtonDataSaveH5, 0, wx.EXPAND)
-
-        self.ButtonDataLoadH5 = wx.Button(
-            PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="&Load Dataset from H5")
-        self.ButtonDataLoadH5.Disable()
-        sizerBoxOutput.Add(self.ButtonDataLoadH5, 0, wx.EXPAND)
-
         self.ButtonDataSaveTVA = wx.Button(
             PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
             label="&Save TVA files")
@@ -109,8 +97,6 @@ class Selecter(wx.Panel):
         # Event specifications
         wx.EVT_BUTTON(self, self.ButtonDataLoad.Id, self.loadData)
         wx.EVT_BUTTON(self, self.ButtonDataDrop.Id, self.dropData)
-        wx.EVT_BUTTON(self, self.ButtonDataSaveH5.Id, self.saveH5)
-        wx.EVT_BUTTON(self, self.ButtonDataLoadH5.Id, self.loadH5)
         wx.EVT_BUTTON(self, self.ButtonDataSaveTVA.Id, self.saveTVA)
         wx.EVT_BUTTON(self, self.ButtonDataSaveEPH.Id, self.saveEPH)
 
@@ -118,8 +104,8 @@ class Selecter(wx.Panel):
         """Load BDF files"""
 
         DirPath = self.Data.DirPath
-        wildcard = "BDF files (*.bdf)|*.bdf|H5 files (*.h5)|*.h5"
-        dlg = wx.FileDialog(None, "Load BDF or h5 Dataset",
+        wildcard = "BDF files (*.bdf)|*.bdf"
+        dlg = wx.FileDialog(None, "Load BDF file(s)",
                             defaultDir=DirPath,
                             wildcard=wildcard, style=wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
@@ -150,42 +136,6 @@ class Selecter(wx.Panel):
                 self.ButtonDataSaveEPH.Enable()
                 self.ButtonDataSaveTVA.Enable()
         dlg.Destroy()
-        event.Skip()
-
-    def saveH5(self, event):
-        """TODO: Program Button"""
-
-        if self.ListInput.GetItems() == []:
-            dlg = wx.MessageDialog(
-                self, style=wx.OK,
-                caption='No Dataset to Save',
-                message='You have to load some BDF files before ' +
-                        'you can save a dataset as an H5 file.')
-            dlg.ShowModal()
-            dlg.Destroy()
-
-        else:
-            DirPath = self.Data.DirPath
-            dlg = wx.FileDialog(None, "Save Dataset as H5 File",
-                                wildcard="*.h5",
-                                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
-                                defaultDir=DirPath,
-                                defaultFile='summary.h5')
-            if dlg.ShowModal() == wx.ID_OK:
-                filepath = dlg.GetPath()
-
-                # Update before saving
-                if self.Data.Results.updateAnalysis:
-                    self.Data.Results.updateEpochs(self.Data)
-
-                SaveH5(filepath, self.Data.H5files)
-                self.Data.H5files = [filepath]
-                self.ListInput.SetItems([os.path.basename(filepath)[:-3]])
-            dlg.Destroy()
-        event.Skip()
-
-    def loadH5(self, event):
-        """TODO: Program Button"""
         event.Skip()
 
     def saveTVA(self, event):
