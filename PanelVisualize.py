@@ -437,9 +437,13 @@ class GFPDetailed(wx.Panel):
             if event.button is 1:
                 subplotID = event.inaxes.get_subplotspec().num1
                 markerID = self.Data.Results.uniqueMarkers[subplotID]
-
                 self.Data.EpochSummary.update(markerID)
-                self.Data.EpochDetail.CheckboxMarkers.SetValue(False)
+
+                comboMarker = self.Data.EpochDetail.ComboMarkers
+                selectionID = int(np.where(np.array(
+                    comboMarker.GetItems()) == str(markerID))[0])
+                comboMarker.SetSelection(selectionID)
+
                 self.Data.EpochDetail.update(markerID)
                 self.ParentFrame.SetSelection(3)
                 self.canvas.ReleaseMouse()
@@ -565,11 +569,19 @@ class EpochDetail(wx.Panel):
         self.figure.clear()
         self.shiftView = shiftView
         self.markerValue = markerValue
+
+        markerList = [
+            m for m in self.Data.Results.markers
+            if m not in self.Data.markers2hide]
+        markerList = ['All   '] + np.unique(
+            markerList).astype('str').tolist()
+        self.ComboMarkers.SetItems(markerList)
+
         self.id2Show = np.where(
             self.Data.Results.markers == self.markerValue)[0]
 
         if self.markerValue == []:
-            self.CheckboxMarkers.SetValue(True)
+            self.ComboMarkers.SetSelection(0)
             self.id2Show = np.arange(self.Data.Results.markers.shape[0])
 
         # Only show unhidden markers
@@ -578,14 +590,16 @@ class EpochDetail(wx.Panel):
              if m not in self.Data.markers2hide and i in self.id2Show])
 
         if self.ComboOutliers.GetSelection() == 0:
-            self.id2Show = [
+            restrictedList = [
                 i for i, m in enumerate(self.Data.Results.matrixSelected)
                 if 'ok_' not in m]
+            self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         elif self.ComboOutliers.GetSelection() == 1:
-            self.id2Show = [
+            restrictedList = [
                 i for i, m in enumerate(self.Data.Results.matrixSelected)
                 if 'ok_' in m]
+            self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
         Results = self.Data.Results
@@ -722,8 +736,11 @@ class EpochDetail(wx.Panel):
 
     def updateFigure(self, event):
         if self.Data.Datasets != []:
-            if self.CheckboxMarkers.GetValue():
+            markerSelection = self.ComboMarkers.GetSelection()
+            if markerSelection == 0:
                 self.markerValue = []
+            else:
+                self.markerValue = int(self.ComboMarkers.GetValue())
             self.update(self.markerValue)
         event.Skip()
 
@@ -987,12 +1004,12 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
                         self.updateFigure)
         self.hbox.Add(self.ComboOutliers, 0, border=3, flag=flags)
 
-        self.CheckboxMarkers = wx.CheckBox(self, wx.ID_ANY,
-                                           'All Markers')
-        self.CheckboxMarkers.SetValue(True)
-        self.hbox.Add(self.CheckboxMarkers, 0, border=3, flag=flags)
-        wx.EVT_CHECKBOX(
-            self.CheckboxMarkers, self.CheckboxMarkers.Id, self.updateFigure)
+        self.ComboMarkers = wx.ComboBox(self, style=wx.CB_READONLY,
+                                        choices=['All   '])
+        self.ComboMarkers.SetSelection(0)
+        wx.EVT_COMBOBOX(self.ComboMarkers, self.ComboMarkers.Id,
+                        self.updateFigure)
+        self.hbox.Add(self.ComboMarkers, 0, border=3, flag=flags)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
