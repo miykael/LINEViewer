@@ -79,7 +79,7 @@ class Selecter(wx.Panel):
         sizerBoxInformation = wx.StaticBoxSizer(BoxInformation, wx.VERTICAL)
 
         self.TxtInformation = wx.StaticText(PanelDataHandler, wx.ID_ANY,
-                                            style=wx.Left, size=(200, 700))
+                                            style=wx.Left, size=(200, 1200))
         sizerBoxInformation.Add(self.TxtInformation, 0, wx.EXPAND)
         sizerPanelDataHandler.Add(sizerBoxInformation, 0, wx.EXPAND)
 
@@ -137,7 +137,8 @@ class Selecter(wx.Panel):
     def saveTVA(self, event):
         """Saves TVA's of current analysis"""
 
-        SaveTVA(self.Data)
+        SaveTVA(self.Data, self.Data.Results.preCut,
+                self.Data.Results.postCut)
 
         event.Skip()
 

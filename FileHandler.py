@@ -99,12 +99,14 @@ class ReadXYZ:
 
 class SaveTVA:
 
-    def __init__(self, data):
+    def __init__(self, data, precut, postcut):
 
-        dataSize = [e.markerValue.shape[0]
-                    for i, e in enumerate(data.Datasets)]
-        tvaMarker = [1 if 'ok_' in m else 0
-                     for m in data.Results.matrixSelected]
+        dataSize = [
+            len([m for m in e.markerTime
+                 if m > precut and m < e.rawdata.shape[1] - postcut])
+            for e in data.Datasets]
+        tvaMarker = [
+            1 if 'ok_' in m else 0 for m in data.Results.matrixSelected]
 
         # Go through the files and save TVA for each
         counter = 0
