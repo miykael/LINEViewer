@@ -91,18 +91,22 @@ class Results():
             if self.postEpoch < 1000.0:
                 self.postCut = self.sampleRate
 
+            # Drop markers if there's not enough preFrame or postFrame to cut
+            cutsIO = [True if m > self.preCut and m < dataset.shape[
+                1] - self.postCut else False for m in d.markerTime]
+
             epochs = np.array([dataset[:, m - self.preCut:m + self.postCut]
-                               for m in d.markerTime])
+                               for m in d.markerTime[np.where(cutsIO)]])
 
             # Accumulate epoch information
             if i == 0:
                 Data.Orig.epochs = epochs
-                Data.Orig.markers = d.markerValue
+                Data.Orig.markers = d.markerValue[np.where(cutsIO)]
                 Data.Orig.labelsChannel = d.labelsChannel
             else:
                 Data.Orig.epochs = np.vstack((Data.Orig.epochs, epochs))
-                Data.Orig.markers = np.hstack((Data.Orig.markers,
-                                               d.markerValue))
+                Data.Orig.markers = np.hstack(
+                    (Data.Orig.markers, d.markerValue[np.where(cutsIO)]))
             del dataset
 
             Data.InterpolEpochs = np.copy(Data.Orig.epochs)
@@ -253,11 +257,11 @@ class Results():
         if not hasattr(self, 'matrixSelected'):
             self.matrixSelected = np.repeat('ok_normal', self.epochs.shape[0])
             self.matrixSelected[np.where(
-                    self.matrixThreshold.sum(axis=1))[0]] = 'threshold'
+                self.matrixThreshold.sum(axis=1))[0]] = 'threshold'
             self.matrixSelected[np.where(
-                    self.matrixBlink.sum(axis=1))[0]] = 'blink'
+                self.matrixBlink.sum(axis=1))[0]] = 'blink'
             self.matrixSelected[np.where(
-                    self.matrixBridge.sum(axis=1))[0]] = 'bridge'
+                self.matrixBridge.sum(axis=1))[0]] = 'bridge'
 
         else:
 
