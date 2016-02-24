@@ -6,10 +6,6 @@ from FileHandler import ReadBDF, SaveEPH, SaveFigures, SaveTVA
 
 class Selecter(wx.Panel):
 
-    """
-    TODO: SOME TEXT
-    """
-
     def __init__(self, ParentFrame, Data):
 
         # Create Data Frame window
