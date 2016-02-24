@@ -459,6 +459,108 @@ class EpochDetail(wx.Panel):
         # Figure events
         self.canvas.callbacks.connect('pick_event', self.onPick)
 
+        # To record button presses
+        self.canvas.Bind(wx.EVT_CHAR, self.keyDown)
+
+    def keyDown(self, event):
+        """Interact with the figure canvas if keyboard is used"""
+
+        if self.Data.Datasets != []:
+
+            key = event.KeyCode
+
+            if key == 49:
+                self.keySelect(1)
+            elif key == 50:
+                self.keySelect(2)
+            elif key == 51:
+                self.keySelect(3)
+            elif key == 52:
+                self.keySelect(4)
+            elif key == 53:
+                self.keySelect(5)
+            elif key == 54:
+                self.keySelect(6)
+
+            # Shift view
+            elif key == 113:
+                # Key: 'Q'
+                self.shiftViewLeft(event)
+            elif key == 101:
+                # Key: 'E'
+                self.shiftViewRight(event)
+
+        event.Skip()
+
+    def keySelect(self, figID):
+
+        subPlots = self.canvas.figure.get_axes()
+
+        if figID <= len(subPlots):
+
+            selectedID = subPlots[figID - 1].get_title()
+
+            children = subPlots[figID - 1].get_children()
+            textChildren = np.array(
+                [[i, i.get_text()]
+                 for i in children
+                 if 'matplotlib.text.Text' in str(type(i))])
+            titleObject = textChildren[
+                np.where(textChildren[:, 1] == selectedID)[0]][0][0]
+
+            selectedID = int(selectedID[selectedID.find('Epoch') + 6:]) - 1
+            selectedType = self.Data.Results.matrixSelected[selectedID]
+
+            # If Epoch is already selected as an outlier
+            if selectedType in ['selected', 'threshold', 'blink',
+                                'bridge']:
+                color = 'black'
+                titleObject.set_fontweight('normal')
+                if self.CheckboxOutliers.IsChecked():
+                    self.shiftView -= 1
+
+                if selectedType == 'selected':
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'ok_normal'
+                elif selectedType == 'threshold':
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'ok_thresh'
+                elif selectedType == 'blink':
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'ok_blink'
+                elif selectedType == 'bridge':
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'ok_bridge'
+
+            else:
+                titleObject.set_fontweight('bold')
+                if self.CheckboxOutliers.IsChecked():
+                    self.shiftView += 1
+
+                if selectedType == 'ok_normal':
+                    color = '#ff8c00'
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'selected'
+                elif selectedType == 'ok_thresh':
+                    color = 'r'
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'threshold'
+                elif selectedType == 'ok_blink':
+                    color = 'm'
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'blink'
+                elif selectedType == 'ok_bridge':
+                    color = 'b'
+                    self.Data.Results.matrixSelected[
+                        selectedID] = 'bridge'
+
+            titleObject.set_color(color)
+            for ax in titleObject.axes.spines:
+                titleObject.axes.spines[ax].set_color(color)
+            self.Data.Results.updateAnalysis = True
+
+            self.canvas.draw()
+
     def update(self, markerValue, shiftView=0):
         self.figure.clear()
         self.shiftView = shiftView
