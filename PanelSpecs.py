@@ -546,6 +546,7 @@ class Specification(wx.Panel):
         dlg.Destroy()
 
     def resetMarkers(self, event):
+
         if hasattr(self.Data.Results, 'collapsedMarkers'):
             del self.Data.Results.collapsedMarkers
         self.Data.markers2hide = []

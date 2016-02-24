@@ -1,7 +1,7 @@
 ﻿import os
 import wx
 import numpy as np
-from FileHandler import ReadBDF, SaveEPH, SaveFigures, SaveTVA
+from FileHandler import ReadBDF, SaveTVA, SaveEPH, SaveFigures, SaveVerbose
 
 
 class Selecter(wx.Panel):
@@ -160,11 +160,13 @@ class Selecter(wx.Panel):
             # Update before saving
             if self.Data.Results.updateAnalysis:
                 self.Data.Results.updateEpochs(self.Data)
+                self.Data.Results.updateAnalysis = False
 
             # Save outputs
             SaveEPH(resultsName, resultsPath, self.Data.Results,
                     self.Data.markers2hide, self.Data.Results.preFrame)
             SaveFigures(resultsName, resultsPath, self.Data)
+            SaveVerbose(resultsName, resultsPath, self.Data)
 
         dlgTextName.Destroy()
         event.Skip()
@@ -214,13 +216,13 @@ class Selecter(wx.Panel):
             labelsChannel = self.Data.Datasets[0].labelsChannel
             infotext = 'Datasets loaded: %i\n' % len(self.Data.Datasets) + \
                 'Channels: %i\n' % labelsChannel.shape[0] + \
-                'Sampling Rate: %i [Hz]\n\n' % sampleRate
+                'Sampling Freq.: %i [Hz]\n\n' % sampleRate
 
             for d in self.Data.Datasets:
                 name = os.path.basename(d.lvFile)[:-3]
-                recordtime = 'at %s:%s, %s' % (d.startTime[:2],
-                                               d.startTime[3:5],
-                                               d.startDate)
+                recordtime = '%s %s:%s' % (d.startDate,
+                                           d.startTime[:2],
+                                           d.startTime[3:5])
                 duration = round(1.0 * d.dataRecorded * d.durationRecorded, 1)
                 epochs = len(d.markerValue)
                 markers = len(np.unique(d.markerValue))
@@ -230,7 +232,7 @@ class Selecter(wx.Panel):
                     'Epochs:  \t%s\n' % epochs + \
                     'Markers:\t%s\n' % markers + \
                     'Length:\t%sm%ss\n' % length + \
-                    'Recorded %s\n\n' % recordtime
+                    'Date:  \t%s\n\n' % recordtime
 
             dropdown = ['Average'] + labelsChannel.tolist()
 

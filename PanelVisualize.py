@@ -173,6 +173,9 @@ class Overview(wx.Panel):
                                              distChannelBlink,
                                              distChannelSelected]).sum(axis=0)
 
+            # Needed for verbose file
+            self.Data.Results.OoutlierChannels = int(sum(distOutliersChannel))
+
             axes.title.set_text(
                 'Channel Overview - %s Epochs Total (%s Outliers)'
                 % (markers.shape[0], int(sum(distOutliersChannel))))
@@ -269,6 +272,26 @@ class Overview(wx.Panel):
                                         wspace=0.20,
                                         hspace=0.20)
             self.canvas.draw()
+
+            # Save distributions for latter access
+            dist = self.Data.Results
+            dist.OnSelectedOutliers = nSelectedOutliers
+            dist.OdistChannelThreshold = distChannelThreshold
+            dist.OdistChannelBridge = distChannelBridge
+            dist.OBroken = len(brokenID)
+            dist.OBlink = badBlinkEpochs.sum()
+            dist.OpercentageChannels = distOutliersChannel
+            dist.OxaxisChannel = labelsChannel[badChannelsID]
+
+            dist.OoutlierEpochs = nOutliers
+            dist.OdistMarkerOK = distMarkerOK
+            dist.OdistMarkerThreshold = distMarkerThreshold
+            dist.OdistMarkerBridge = distMarkerBridge
+            dist.OdistMarkerBroken = distMarkerBroken
+            dist.OdistMarkerBlink = distMarkerBlink
+            dist.OdistMarkerSelected = distMarkerSelected
+            dist.OpercentageMarker = distOutliersMarker
+            dist.OxaxisMarker = uniqueMarkers.astype('str')
 
 
 class GFPSummary(wx.Panel):

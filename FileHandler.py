@@ -1,12 +1,14 @@
 import numpy as np
 from os import makedirs
-from os.path import exists, join
+from os.path import exists, join, basename
+from datetime import datetime
 
 
 class ReadBDF:
 
     def __init__(self, filename):
 
+        self.bdfFile = filename
         self.lvFile = filename[:-3] + 'lv'
 
         with open(filename, 'rb') as f:
@@ -64,7 +66,8 @@ class ReadBDF:
 
         # Prepare output
         self.rawdata = rawdata[:-1, :]
-        self.startDate = startDate
+        self.startDate = '20%s/%s/%s' % (
+            startDate[6:8], startDate[3:5], startDate[:2])
         self.startTime = startTime
         self.dataRecorded = dataRecorded
         self.durationRecorded = durationRecorded
@@ -182,3 +185,192 @@ class SaveFigures:
         figures.GFPDetailed.figure.savefig(
             join(resultsPath, 'plot_GFP_Detailed.svg'), bbox_inches='tight')
 
+
+class SaveVerbose:
+
+    def __init__(self, resultsName, resultsPath, data):
+
+        # abbreviation to shorten variable name
+        res = data.Results
+
+        # Write Verbose File
+        with open(join(resultsPath, '%s.vbs' % resultsName), 'w') as f:
+            f.writelines('Verbose File\n============\n\n')
+            f.writelines('LINEViewer (Version %s)\n' % data.VERSION)
+            f.writelines(
+                '%s\n\n\n' % datetime.now().strftime('%Y/%m/%d %H:%M:%S'))
+
+            # Information about input files
+            f.writelines('Input File(s):\n--------------\n\n')
+            f.writelines('Number of input file(s):\t%s\n\n' %
+                         len(data.Datasets))
+
+            for i, d in enumerate(data.Datasets):
+
+                f.writelines('File #\t\t\t\t:\t%s\n' % i)
+                f.writelines('File name\t\t\t:\t%s\n' % basename(d.bdfFile))
+                f.writelines('File path\t\t\t:\t%s\n' % d.bdfFile)
+                f.writelines('Timestamp\t\t\t:\t%s:%s %s\n' %
+                             (d.startTime[:2], d.startTime[3:5], d.startDate))
+                duration = round(1.0 * d.dataRecorded * d.durationRecorded, 1)
+                f.writelines('Lenght\t\t\t\t:\t%sm%ss\n' %
+                             (int(duration) / 60, int(duration) % 60))
+                f.writelines('Sampling freq.\t\t:\t%s Hz\n' % d.sampleRate)
+                f.writelines('Sampling points\t\t:\t%s\n' % d.rawdata.shape[1])
+                f.writelines('Channels #\t\t\t:\t%s\n' % d.labelsChannel.shape)
+                uniqueMarkers = np.unique(d.markerValue)
+                f.writelines('Markers #\t\t\t:\t%s\n' % len(uniqueMarkers))
+                f.writelines('Marker value\t\t:\t%s\n' %
+                             ', '.join(uniqueMarkers.astype('str')))
+                f.writelines('\n')
+            f.writelines('\n')
+
+            # Information about output files
+            f.writelines('Output Files:\n-------------\n\n')
+            f.writelines('Folder name\t\t\t:\t%s\n' % resultsName)
+            f.writelines('Output path\t\t\t:\t%s\n' % resultsPath)
+            f.writelines('\n\n')
+
+            # Information about the preprocessing
+            f.writelines(
+                'Processing Information:\n-----------------------\n\n')
+
+            f.writelines('DC removed\t\t\t:\t%s\n' % res.removeDC)
+            f.writelines('Reference to\t\t:\t%s\n' % res.newReference)
+            highcut = res.highcut if res.highcut != 0 else 'None'
+            lowcut = res.lowcut if res.lowcut != 0 else 'None'
+            f.writelines('High-pass filter\t:\t%s\n' % highcut)
+            f.writelines('Low-pass filter\t\t:\t%s\n' % lowcut)
+            notch = res.notchValue if res.doNotch else 'None'
+            f.writelines('Notch\t\t\t\t:\t%s\n' % notch)
+            f.writelines('\n')
+
+            f.writelines('Interpolated ch.\t:\t%s\n' %
+                         data.Specs.channels2interpolate)
+            xyzFile = data.Specs.xyzFile if data.Specs.xyzFile != '' \
+                else 'None'
+            f.writelines('XYZ-file path\t\t:\t%s\n' % xyzFile)
+            f.writelines('\n')
+
+            f.writelines('Epoch duration pre\t:\t%sms / %s sampling points\n' %
+                         (res.preEpoch, res.preFrame))
+            f.writelines(
+                'Epoch duration post\t:\t%sms / %s sampling points\n' %
+                (res.postEpoch, res.postFrame))
+            f.writelines('Baseline correction\t:\t%s\n' % res.baselineCorr)
+            f.writelines('Blink correction\t:\t%s\n' % res.blinkCorr)
+            f.writelines('Bridge correction\t:\t%s\n' % res.bridgeCorr)
+            f.writelines('Thresh. correction\t:\t%s\n' % res.thresholdCorr)
+            f.writelines('Threshold [mikroV]\t:\t%s\n' % res.threshold)
+            f.writelines('Thresh. window [ms]\t:\t%s\n' % res.window)
+            f.writelines('Channels excluded\t:\t%s\n' %
+                         data.Specs.channels2exclude)
+            f.writelines('\n')
+
+            if hasattr(res, 'collapsedTransform'):
+                collapsedInfo = [
+                    '%s -> %s' % (res.collapsedTransform[e], e)
+                    for e in res.collapsedTransform]
+                collapsedInfo = ', '.join(collapsedInfo)
+            else:
+                collapsedInfo = 'None'
+            f.writelines('Markers collapsed\t:\t%s\n' % collapsedInfo)
+            f.writelines('Markers hidden\t\t:\t%s\n' % data.markers2hide)
+            f.writelines('\n\n')
+
+            # Information about the average output
+            f.writelines('Average Information:\n--------------------\n\n')
+
+            epochsTotal = res.epochs.shape[0]
+            epochsOK = res.okID.sum()
+            percentOK = np.round(1. * epochsOK / epochsTotal, 2) * 100
+            f.writelines('Channels #\t\t\t:\t%s\n' % res.epochs.shape[1])
+            f.writelines('Markers #\t\t\t:\t%s\n' % len(res.uniqueMarkers))
+            f.writelines('Marker value\t\t:\t%s\n' %
+                         ', '.join(res.uniqueMarkers.astype('str')))
+            f.writelines('Epochs total #\t\t:\t%s\n' % epochsTotal)
+            f.writelines(
+                'Epochs in average\t:\t{0} / {1}%\n'.format(epochsOK,
+                                                            percentOK))
+            f.writelines('\n')
+
+            selected = len(np.where(res.matrixSelected == 'selected')[0])
+            ok_normal = len(np.where(res.matrixSelected == 'ok_normal')[0])
+            threshold = len(np.where(res.matrixSelected == 'threshold')[0])
+            ok_thresh = len(np.where(res.matrixSelected == 'ok_thresh')[0])
+            blink = len(np.where(res.matrixSelected == 'blink')[0])
+            ok_blink = len(np.where(res.matrixSelected == 'ok_blink')[0])
+            bridge = len(np.where(res.matrixSelected == 'bridge')[0])
+            ok_bridge = len(np.where(res.matrixSelected == 'ok_bridge')[0])
+            modeInfo = '[automatic detection / manually switched]'
+            f.writelines('Epochs accepted\t\t:\t%s / %s %s\n' %
+                         (ok_normal, selected, modeInfo))
+            f.writelines('Epochs threshold\t:\t%s / %s %s\n' %
+                         (threshold, ok_thresh, modeInfo))
+            f.writelines('Epochs Blink\t\t:\t%s / %s %s\n' %
+                         (blink, ok_blink, modeInfo))
+            f.writelines('Epochs Bridge\t\t:\t%s / %s %s\n' %
+                         (bridge, ok_bridge, modeInfo))
+            f.writelines('\n\n')
+
+            # Information about the channel overview
+            f.writelines(
+                'Overview Channel Outliers:\n----------------------------\n\n')
+
+            nFaultyChannels = res.OxaxisChannel.shape[0]
+            distChannelThreshold = res.OdistChannelThreshold[-nFaultyChannels:]
+            distChannelBridge = res.OdistChannelBridge[-nFaultyChannels:]
+            percentageChannel = np.round(
+                res.OpercentageChannels[-nFaultyChannels:], 3) * 100
+            percentageMarker = np.round(res.OpercentageMarker, 3) * 100
+            nChannelOutliers = sum(distChannelThreshold) + \
+                sum(distChannelBridge)
+
+            f.writelines('Outliers Total #\t:\t%s\n' % nChannelOutliers)
+            f.writelines('Outliers Selected\t:\t{0} / {1}%\n'.format(
+                res.OnSelectedOutliers, np.round(
+                    1. * res.OnSelectedOutliers / epochsTotal, 3) * 100))
+            f.writelines('Outliers Broken\t\t:\t{0} / {1}%\n'.format(
+                res.OBroken, np.round(
+                    1. * res.OBroken / epochsTotal, 3) * 100))
+            f.writelines('Outliers Blink\t\t:\t{0} / {1}%\n'.format(
+                res.OBlink, np.round(1. * res.OBlink / epochsTotal, 3) * 100))
+            f.writelines('\n')
+
+            f.writelines('Channel Name\t\t:%s\n' %
+                         ('{:>6}' * nFaultyChannels).format(
+                             *res.OxaxisChannel))
+            f.writelines('Outliers %\t\t\t:{0}\n'.format(
+                ('{:>6}' * nFaultyChannels).format(*percentageChannel)))
+            f.writelines('Threshold #\t\t\t:%s\n' % (
+                '{:>6}' * nFaultyChannels).format(*distChannelThreshold))
+            f.writelines('Bridge #\t\t\t:%s\n' %
+                         ('{:>6}' * nFaultyChannels).format(
+                             *distChannelBridge))
+            f.writelines('\n\n')
+
+            # Information about the marker overview
+            f.writelines(
+                'Overview Marker Outliers:\n---------------------------\n\n')
+
+            nMarkers = len(res.OxaxisMarker)
+            f.writelines('Outliers Total\t\t:\t{0} / {1}%\n'.format(
+                res.OoutlierEpochs, np.round(
+                    1. * res.OoutlierEpochs / epochsTotal, 3) * 100))
+            f.writelines('Marker Name\t\t\t:%s\n' %
+                         ('{:>6}' * nMarkers).format(*res.OxaxisMarker))
+            f.writelines('Outliers %\t\t\t:{0}\n'.format(
+                ('{:>6}' * nMarkers).format(*percentageMarker)))
+            f.writelines('OK #\t\t\t\t:%s\n' %
+                         ('{:>6}' * nMarkers).format(*res.OdistMarkerOK))
+            f.writelines('Selected #\t\t\t:%s\n' %
+                         ('{:>6}' * nMarkers).format(*res.OdistMarkerSelected))
+            f.writelines('Threshold #\t\t\t:%s\n' %
+                         ('{:>6}' * nMarkers).format(
+                             *res.OdistMarkerThreshold))
+            f.writelines('Bridge #\t\t\t:%s\n' %
+                         ('{:>6}' * nMarkers).format(*res.OdistMarkerBridge))
+            f.writelines('Blink #\t\t\t\t:%s\n' %
+                         ('{:>6}' * nMarkers).format(*res.OdistMarkerBlink))
+            f.writelines('Broken #\t\t\t:%s\n' %
+                         ('{:>6}' * nMarkers).format(*res.OdistMarkerBroken))

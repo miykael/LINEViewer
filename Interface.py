@@ -17,6 +17,7 @@ class MainFrame(wx.Frame):
 
         # Default variables
         self.Data = type('Data', (object,), {})()
+        self.Data.VERSION = '0.1'
         self.Data.DirPath = ''
         self.Data.Filenames = []
         self.Data.Datasets = []
