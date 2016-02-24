@@ -861,6 +861,15 @@ class EpochSummary(wx.Panel):
             np.where(self.Data.Results.markers == markerValue)]
         epoch = epochs.mean(axis=0)
 
+        """
+        markerList = [
+            m for m in self.Data.Results.markers
+            if m not in self.Data.markers2hide]
+        markerList = ['All   '] + np.unique(
+            markerList).astype('str').tolist()
+        self.ComboMarkers.SetItems(markerList)
+        """
+
         preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
         postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
         samplingPoints = epoch.shape[1]
