@@ -994,16 +994,15 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         self.hbox.Add(self.TextSizer, 0, border=3, flag=flags)
         self.hbox.Add(self.ComboAmplitude, 0, border=3, flag=flags)
 
-        self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
-        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<")
-        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>")
-        wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
-                      self.shiftViewLeft)
-        wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
-                      self.shiftViewRight)
-        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
-        self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
-        self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
+        self.TextMarker = wx.StaticText(self, wx.ID_ANY, label='Marker:')
+        self.hbox.Add(self.TextMarker, 0, border=3, flag=flags)
+
+        self.ComboMarkers = wx.ComboBox(self, style=wx.CB_READONLY,
+                                        choices=['All   '])
+        self.ComboMarkers.SetSelection(0)
+        wx.EVT_COMBOBOX(self.ComboMarkers, self.ComboMarkers.Id,
+                        self.updateFigure)
+        self.hbox.Add(self.ComboMarkers, 0, border=3, flag=flags)
 
         self.ComboOutliers = wx.ComboBox(
             self, style=wx.CB_READONLY,
@@ -1013,12 +1012,17 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
                         self.updateFigure)
         self.hbox.Add(self.ComboOutliers, 0, border=3, flag=flags)
 
-        self.ComboMarkers = wx.ComboBox(self, style=wx.CB_READONLY,
-                                        choices=['All   '])
-        self.ComboMarkers.SetSelection(0)
-        wx.EVT_COMBOBOX(self.ComboMarkers, self.ComboMarkers.Id,
-                        self.updateFigure)
-        self.hbox.Add(self.ComboMarkers, 0, border=3, flag=flags)
+        self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
+        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
+
+        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<", size=(70, 30))
+        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>", size=(70, 30))
+        wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
+                      self.shiftViewLeft)
+        wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
+                      self.shiftViewRight)
+        self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
+        self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
