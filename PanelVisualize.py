@@ -516,7 +516,7 @@ class EpochDetail(wx.Panel):
                                 'bridge']:
                 color = 'black'
                 titleObject.set_fontweight('normal')
-                if self.CheckboxOutliers.IsChecked():
+                if self.ComboOutliers.GetSelection() <= 2:
                     self.shiftView -= 1
 
                 if selectedType == 'selected':
@@ -534,7 +534,7 @@ class EpochDetail(wx.Panel):
 
             else:
                 titleObject.set_fontweight('bold')
-                if self.CheckboxOutliers.IsChecked():
+                if self.ComboOutliers.GetSelection() <= 2:
                     self.shiftView += 1
 
                 if selectedType == 'ok_normal':
@@ -577,25 +577,15 @@ class EpochDetail(wx.Panel):
             [i for i, m in enumerate(self.Data.Results.markers)
              if m not in self.Data.markers2hide and i in self.id2Show])
 
-        if self.CheckboxOutliers.IsChecked():
+        if self.ComboOutliers.GetSelection() == 0:
             self.id2Show = [
-                i for i in self.id2Show
-                if i in np.where(self.Data.Results.badID)[0]]
+                i for i, m in enumerate(self.Data.Results.matrixSelected)
+                if 'ok_' not in m]
 
-            # Add selected outliers
-            selectedIDs = np.where(
-                self.Data.Results.matrixSelected == 'selected')[0]
-            self.id2Show.extend(list(selectedIDs))
-            self.id2Show.sort()
-
-            # Correct for duplicates
-            self.id2Show = np.unique(self.id2Show)
-
-            # Ignore outliers that are selected to be ok
-            notAnOutlier = [
-                i for i, e in enumerate(self.Data.Results.matrixSelected)
-                if 'ok_' in e]
-            self.id2Show = [i for i in self.id2Show if i not in notAnOutlier]
+        elif self.ComboOutliers.GetSelection() == 1:
+            self.id2Show = [
+                i for i, m in enumerate(self.Data.Results.matrixSelected)
+                if 'ok_' in m]
 
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
         Results = self.Data.Results
@@ -780,7 +770,7 @@ class EpochDetail(wx.Panel):
                                     'bridge']:
                     color = 'black'
                     event.artist.set_fontweight('normal')
-                    if self.CheckboxOutliers.IsChecked():
+                    if self.ComboOutliers.GetSelection() <= 2:
                         self.shiftView -= 1
 
                     if selectedType == 'selected':
@@ -798,7 +788,7 @@ class EpochDetail(wx.Panel):
 
                 else:
                     event.artist.set_fontweight('bold')
-                    if self.CheckboxOutliers.IsChecked():
+                    if self.ComboOutliers.GetSelection() <= 2:
                         self.shiftView += 1
 
                     if selectedType == 'ok_normal':
@@ -989,12 +979,13 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
         self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
 
-        self.CheckboxOutliers = wx.CheckBox(self, wx.ID_ANY,
-                                            'Outliers only')
-        self.CheckboxOutliers.SetValue(True)
-        self.hbox.Add(self.CheckboxOutliers, 0, border=3, flag=flags)
-        wx.EVT_CHECKBOX(
-            self.CheckboxOutliers, self.CheckboxOutliers.Id, self.updateFigure)
+        self.ComboOutliers = wx.ComboBox(
+            self, style=wx.CB_READONLY,
+            choices=['Outliers', 'Accepted', 'All'])
+        self.ComboOutliers.SetSelection(0)
+        wx.EVT_COMBOBOX(self.ComboOutliers, self.ComboOutliers.Id,
+                        self.updateFigure)
+        self.hbox.Add(self.ComboOutliers, 0, border=3, flag=flags)
 
         self.CheckboxMarkers = wx.CheckBox(self, wx.ID_ANY,
                                            'All Markers')
