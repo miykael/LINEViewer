@@ -279,6 +279,23 @@ class Results():
                 self.matrixSelected = np.hstack([self.matrixSelected,
                                                  newSelectedMatrix])
 
+            # Correct if correction filters are off
+            if not self.thresholdCorr:
+                self.matrixSelected[
+                    [i for i, e in enumerate(self.matrixSelected)
+                     if 'thresh' in e]] = 'ok_normal'
+                self.matrixThreshold *= False
+            if not self.bridgeCorr:
+                self.matrixSelected[
+                    [i for i, e in enumerate(self.matrixSelected)
+                     if 'bridge' in e]] = 'ok_normal'
+                self.matrixBridge *= False
+            if not self.blinkCorr:
+                self.matrixSelected[
+                    [i for i, e in enumerate(self.matrixSelected)
+                     if 'blink' in e]] = 'ok_normal'
+                self.matrixBlink *= False
+
             # Update List of ok and bad IDs
             self.okID = np.array([True if 'ok_' in e else False
                                   for e in self.matrixSelected])

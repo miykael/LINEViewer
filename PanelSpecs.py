@@ -312,14 +312,14 @@ class Specification(wx.Panel):
         wx.EVT_TEXT_ENTER(self.Data.Specs.PostEpoch,
                           self.Data.Specs.PostEpoch.Id, self.drawAll)
         wx.EVT_TEXT_ENTER(self.Data.Specs.ThreshValue,
-                          self.Data.Specs.ThreshValue.Id, self.drawEpochs)
+                          self.Data.Specs.ThreshValue.Id, self.useThreshold)
         wx.EVT_TEXT_ENTER(self.Data.Specs.ThreshWindow,
-                          self.Data.Specs.ThreshWindow.Id, self.drawEpochs)
+                          self.Data.Specs.ThreshWindow.Id, self.useThreshold)
         wx.EVT_BUTTON(self.ButtonExclude, self.ButtonExclude.Id,
                       self.excludeChannel)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxThreshold,
                         self.Data.Specs.CheckboxThreshold.Id,
-                        self.useThreshold)
+                        self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBaseline,
                         self.Data.Specs.CheckboxBaseline.Id, self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBridge,
@@ -416,6 +416,11 @@ class Specification(wx.Panel):
             self.Data.Specs.ThreshValue.Disable()
             self.Data.Specs.ThreshWindow.Disable()
             self.ButtonExclude.Disable()
+
+        # Reset matrixSelected
+        if hasattr(self.Data.Results, 'matrixSelected'):
+            del self.Data.Results.matrixSelected
+
         self.drawEpochs(event)
 
     def useNotch(self, event):
