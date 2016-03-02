@@ -350,6 +350,7 @@ class Specification(wx.Panel):
             self.Data.GFPSummary.update(self.Data.Results)
             self.Data.GFPDetailed.update(self.Data.Results)
             self.Data.EpochDetail.update(self.Data.EpochDetail.markerValue)
+            self.Data.EpochSummary.update(self.Data.EpochDetail.markerValue)
         event.Skip()
 
     def useAverage(self, event):

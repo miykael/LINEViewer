@@ -327,7 +327,8 @@ class Results():
         if self.okID.sum() != 0:
             Data.GFPSummary.update(self)
             Data.GFPDetailed.update(self)
-            Data.EpochDetail.update([])
+            Data.EpochDetail.update()
+            Data.EpochSummary.update()
 
 
 def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,

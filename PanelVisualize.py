@@ -357,7 +357,8 @@ class GFPSummary(wx.Panel):
         if self.Data.Datasets != []:
             self.Data.Overview.update(self)
             self.update(self.Data.Results)
-            self.Data.EpochDetail.update([])
+            self.Data.EpochDetail.update()
+            self.Data.EpochSummary.update()
         event.Skip()
 
 
@@ -565,7 +566,7 @@ class EpochDetail(wx.Panel):
 
             self.canvas.draw()
 
-    def update(self, markerValue, shiftView=0):
+    def update(self, markerValue=[], shiftView=0):
         self.figure.clear()
         self.shiftView = shiftView
         self.markerValue = markerValue
@@ -636,7 +637,7 @@ class EpochDetail(wx.Panel):
                 preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
                 postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
                 axes.axvspan(-preEpoch, postEpoch, facecolor='g', alpha=0.1)
-
+                
                 # Check if the epoch is broken
                 isBroken = Results.matrixThreshold[
                     epochID].sum() > (Results.matrixThreshold.shape[1] * 0.2)
@@ -853,82 +854,98 @@ class EpochSummary(wx.Panel):
 
         # Specify relevant variables
         self.Data = Data
-        newFigure(self)
+        newFigure(self, showSummaryEpochs=True)
 
-    def update(self, markerValue):
+        # Figure events
+        self.canvas.callbacks.connect('pick_event', self.onPick)
+
+    def update(self, markerValue=[], shiftView=0):
         self.figure.clear()
-        epochs = self.Data.Results.epochs[
-            np.where(self.Data.Results.markers == markerValue)]
-        epoch = epochs.mean(axis=0)
+        self.shiftView = shiftView
+        self.markerValue = markerValue
 
-        """
-        markerList = [
+        # Set correct markerList and selection
+        self.allMarker = np.unique([
             m for m in self.Data.Results.markers
-            if m not in self.Data.markers2hide]
-        markerList = ['All   '] + np.unique(
-            markerList).astype('str').tolist()
+            if m not in self.Data.markers2hide])
+        markerList = ['All   '] + self.allMarker.astype('str').tolist()
         self.ComboMarkers.SetItems(markerList)
-        """
 
-        preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
-        postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
-        samplingPoints = epoch.shape[1]
+        if self.markerValue == []:
+            self.ComboMarkers.SetSelection(0)
+            self.ComboLayout.SetValue('2x2')
+        else:
+            markerID = markerList.index(str(markerValue))
+            self.shiftView = markerID - 1
+            self.ComboMarkers.SetSelection(markerID)
+            self.ComboLayout.SetValue('1x1')
 
-        xaxis = [int(1.0 * i * (preEpoch + postEpoch) /
-                     samplingPoints - preEpoch) for i in range(samplingPoints)]
+        # Prepare Visualization
+        self.labelsChannel = self.Data.Datasets[0].labelsChannel
+        Results = self.Data.Results
+        samplingPoints = Results.epochs.shape[2]
+        preStimuli = 1000. / (1. * Results.sampleRate /
+                              Results.preCut)
+        postStimuli = 1000. / (1. * Results.sampleRate /
+                               Results.postCut)
+        xaxis = [int(1.0 * i * (preStimuli + postStimuli) /
+                     samplingPoints - preStimuli)
+                 for i in range(samplingPoints)]
 
-        axes = self.figure.add_subplot(1, 1, 1)
-        sizer = np.sqrt(np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
+        # Get Visualization layout
+        layout = self.ComboLayout.GetValue()
+        vPlots = int(layout[-1])
+        hPlots = int(layout[0])
+        self.tiles = vPlots * hPlots
 
-        # detect threshold
-        badChannelThreshold = np.zeros(epoch.shape[0], dtype=int)
-        if self.Data.Specs.CheckboxThreshold.GetValue():
-            windowSteps = int(self.Data.Results.window *
-                              self.Data.Results.sampleRate / 1000.)
-            for j in range(epoch.shape[1] - windowSteps):
-                channelThresholdOff = np.ptp(
-                    epoch[:, j:j + windowSteps],
-                    axis=1) > self.Data.Results.threshold
-                if np.sum(channelThresholdOff) != 0:
-                    badChannelThreshold += channelThresholdOff
+        # Get average epochs of good epochs for all marker
+        avgEpochs = [Results.epochs[np.where(Results.markers[
+            Results.okID] == m)].mean(axis=0) for m in self.allMarker]
 
-        # detect bridge
-        badChannelBridge = np.zeros(epoch.shape[0], dtype=int)
-        if self.Data.Specs.CheckboxBridge.GetValue():
-            corrMatrix = np.where(np.corrcoef(epoch) > .99999)
-            if epoch.shape[0] != corrMatrix[0].shape[0]:
-                corrID = np.unique(
-                    [corrMatrix[0][m]
-                     for m in range(corrMatrix[0].shape[0])
-                     if corrMatrix[0][m] != corrMatrix[1][m]])
-                badChannelBridge[corrID] += 1
+        # Draw the average epochs
+        for k, i in enumerate(range(self.shiftView,
+                                    self.tiles + self.shiftView)):
+            axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
 
-        badChannelIDThreshold = np.where(badChannelThreshold != 0)
-        badChannelIDBridge = np.where(badChannelBridge != 0)
+            if i < len(avgEpochs):
+                markerID = self.allMarker[i]
+                epoch = avgEpochs[i]
+                sizer = np.sqrt(
+                    np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
+                modulator = float(self.ComboAmplitude.GetValue()[:-1])
+                sizer *= modulator / 100.
 
-        minmax = [0, 0]
-        for j, c in enumerate(epoch):
-            if j in badChannelIDThreshold:
-                color = 'r'
-            elif j in badChannelIDBridge:
-                color = 'b'
-            else:
-                color = 'gray'
-            lines = axes.plot(xaxis, c / sizer - j, color)
-            ydata = lines[0].get_ydata()
-            lineMin = ydata.min()
-            lineMax = ydata.max()
-            if minmax[0] > lineMin:
-                minmax[0] = lineMin
-            if minmax[1] < lineMax:
-                minmax[1] = lineMax
+                # Highlight the epoch
+                preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
+                postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
+                axes.axvspan(-preEpoch, postEpoch, facecolor='g', alpha=0.1)
+                
+                # Draw single channels
+                minmax = [0, 0]
+                for j, c in enumerate(epoch):
+                    color = 'gray'
+                    lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
+                    ydata = lines[0].get_ydata()
+                    lineMin = ydata.min()
+                    lineMax = ydata.max()
+                    if minmax[0] > lineMin:
+                        minmax[0] = lineMin
+                    if minmax[1] < lineMax:
+                        minmax[1] = lineMax
+                delta = np.abs(minmax).sum() * .01
+                minmax = [minmax[0] - delta, minmax[1] + delta]
 
-        delta = np.abs(minmax).sum() * .01
-        minmax = [minmax[0] - delta, minmax[1] + delta]
+                axes.set_ylim(minmax)
+                axes.get_yaxis().set_visible(False)
+                axes.title.set_text('Marker %s' % markerID)
+                axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
-        axes.set_ylim(minmax)
-        axes.get_yaxis().set_visible(False)
-        axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
+        currentPage = (self.shiftView / self.tiles) + 1
+        totalPage = (len(avgEpochs) - 1) / self.tiles + 1
+        if totalPage == 0:
+            currentPage = 0
+
+        self.TextPages.SetLabel('Page: %s/%s   ' % (currentPage, totalPage))
 
         self.figure.subplots_adjust(left=0.03,
                                     bottom=0.03,
@@ -938,9 +955,66 @@ class EpochSummary(wx.Panel):
                                     hspace=0.24)
         self.canvas.draw()
 
+    def onPick(self, event):
+
+        # Only do something if left double click
+        if event.mouseevent.dblclick and event.mouseevent.button == 1:
+
+            # Print Line name and color it black if requested
+            if event.artist.get_picker() == 1:
+                event.artist.set_color('black')
+                linenumber = int(event.artist.get_label()[5:])
+                xValue = 1000. * self.Data.Results.postCut / \
+                    self.Data.Results.sampleRate + 1
+                yValue = event.artist.get_data()[1][-1]
+                event.artist.axes.text(xValue, yValue,
+                                       self.labelsChannel[linenumber],
+                                       color='black')
+
+            self.canvas.draw()
+        self.canvas.ReleaseMouse()
+
+    def updateLayout(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue)
+        event.Skip()
+
+    def updateSize(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue, self.shiftView)
+        event.Skip()
+
+    def updateFigure(self, event):
+        if self.Data.Datasets != []:
+            markerList = self.ComboMarkers.GetItems()
+            marker = markerList[self.ComboMarkers.GetSelection()]
+            if 'All' in marker:
+                markerValue = []
+            else:
+                markerValue = int(marker)
+            self.update(markerValue)
+        event.Skip()
+
+    def shiftViewLeft(self, event):
+        if self.Data.Datasets != []:
+            if self.shiftView != 0:
+                viewShift = self.shiftView - self.tiles
+                if viewShift < 0:
+                    viewShift = 0
+                self.update(self.markerValue, viewShift)
+        event.Skip()
+
+    def shiftViewRight(self, event):
+        if self.Data.Datasets != []:
+            if self.shiftView + self.tiles \
+                    < len(self.allMarker):
+                viewShift = self.shiftView + self.tiles
+                self.update(self.markerValue, viewShift)
+        event.Skip()
+
 
 def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
-              showDetailedEpochs=False):
+              showDetailedEpochs=False, showSummaryEpochs=False):
     self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
     self.canvas = FigureCanvas(self, wx.ID_ANY, self.figure)
     self.toolbar = NavigationToolbar(self.canvas)
@@ -1011,6 +1085,50 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         wx.EVT_COMBOBOX(self.ComboOutliers, self.ComboOutliers.Id,
                         self.updateFigure)
         self.hbox.Add(self.ComboOutliers, 0, border=3, flag=flags)
+
+        self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
+        self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
+
+        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<", size=(70, 30))
+        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>", size=(70, 30))
+        wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
+                      self.shiftViewLeft)
+        wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
+                      self.shiftViewRight)
+        self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
+        self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
+
+    if showSummaryEpochs:
+        self.TextLayout = wx.StaticText(self, wx.ID_ANY, label='Layout:')
+        self.ComboLayout = wx.ComboBox(self, style=wx.CB_READONLY,
+                                       choices=['1x1', '1x2', '2x2', '2x3'])
+        self.ComboLayout.SetSelection(2)
+        wx.EVT_COMBOBOX(self.ComboLayout, self.ComboLayout.Id,
+                        self.updateLayout)
+        self.hbox.Add(self.TextLayout, 0, border=3, flag=flags)
+        self.hbox.Add(self.ComboLayout, 0, border=3, flag=flags)
+
+        self.TextSizer = wx.StaticText(self, wx.ID_ANY, label='Amplitude:')
+        self.ComboAmplitude = wx.ComboBox(
+            self, style=wx.CB_READONLY,
+            choices=['750%', '500%', '400%', '300%', '200%', '150%',
+                     '125%', '100%', '90%', '80%', '70%', '60%',
+                     '50%', '40%', '30%', '20%', '10%', '5%'])
+        self.ComboAmplitude.SetSelection(7)
+        wx.EVT_COMBOBOX(self.ComboAmplitude, self.ComboAmplitude.Id,
+                        self.updateSize)
+        self.hbox.Add(self.TextSizer, 0, border=3, flag=flags)
+        self.hbox.Add(self.ComboAmplitude, 0, border=3, flag=flags)
+
+        self.TextMarker = wx.StaticText(self, wx.ID_ANY, label='Marker:')
+        self.hbox.Add(self.TextMarker, 0, border=3, flag=flags)
+
+        self.ComboMarkers = wx.ComboBox(self, style=wx.CB_READONLY,
+                                        choices=['All   '])
+        self.ComboMarkers.SetSelection(0)
+        wx.EVT_COMBOBOX(self.ComboMarkers, self.ComboMarkers.Id,
+                        self.updateFigure)
+        self.hbox.Add(self.ComboMarkers, 0, border=3, flag=flags)
 
         self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
         self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
