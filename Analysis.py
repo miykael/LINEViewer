@@ -66,16 +66,16 @@ class Results():
             # 3. Run Butterworth Low-, High- or Bandpassfilter
             if self.doPass:
                 if self.lowcut != 0 and self.highcut != 0:
-                    dataset = butter_bandpass_filter(dataset,
-                                                     d.sampleRate,
-                                                     highcut=self.highcut,
-                                                     lowcut=self.lowcut)
+                    dataset = butter_bandpass_filter_old(dataset,
+                                                         d.sampleRate,
+                                                         highcut=self.highcut,
+                                                         lowcut=self.lowcut)
 
             # 4. Notch Filter
             if self.doNotch:
-                dataset = butter_bandpass_filter(dataset,
-                                                 d.sampleRate,
-                                                 notch=self.notchValue)
+                dataset = butter_bandpass_filter_old(dataset,
+                                                     d.sampleRate,
+                                                     notch=self.notchValue)
 
             # Create epochs
             self.preFrame = int(
