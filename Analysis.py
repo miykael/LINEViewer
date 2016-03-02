@@ -51,11 +51,11 @@ class Results():
         for i, d in enumerate(Data.Datasets):
             dataset = np.copy(d.rawdata)
 
-            # Remove DC
+            # 1. Remove DC
             if self.removeDC:
                 dataset -= np.vstack(dataset.mean(axis=1))
 
-            # Average or specific reference
+            # 2. Average or specific reference
             if self.average:
                 dataset -= dataset.mean(axis=0)
             elif self.newReference != '':
@@ -63,7 +63,7 @@ class Results():
                 if self.newReference != 'Average':
                     dataset -= dataset[electrodeID]
 
-            # Run Butterworth Low-, High- or Bandpassfilter
+            # 3. Run Butterworth Low-, High- or Bandpassfilter
             if self.doPass:
                 if self.lowcut != 0 and self.highcut != 0:
                     dataset = butter_bandpass_filter(dataset,
@@ -71,7 +71,7 @@ class Results():
                                                      highcut=self.highcut,
                                                      lowcut=self.lowcut)
 
-            # Notch Filter
+            # 4. Notch Filter
             if self.doNotch:
                 dataset = butter_bandpass_filter(dataset,
                                                  d.sampleRate,
