@@ -633,11 +633,6 @@ class EpochDetail(wx.Panel):
                 modulator = float(self.ComboAmplitude.GetValue()[:-1])
                 sizer *= modulator / 100.
 
-                # Highlight the epoch
-                preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
-                postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
-                axes.axvspan(-preEpoch, postEpoch, facecolor='g', alpha=0.1)
-                
                 # Check if the epoch is broken
                 isBroken = Results.matrixThreshold[
                     epochID].sum() > (Results.matrixThreshold.shape[1] * 0.2)
@@ -915,11 +910,6 @@ class EpochSummary(wx.Panel):
                 modulator = float(self.ComboAmplitude.GetValue()[:-1])
                 sizer *= modulator / 100.
 
-                # Highlight the epoch
-                preEpoch = float(self.Data.Specs.PreEpoch.GetValue())
-                postEpoch = float(self.Data.Specs.PostEpoch.GetValue())
-                axes.axvspan(-preEpoch, postEpoch, facecolor='g', alpha=0.1)
-                
                 # Draw single channels
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
