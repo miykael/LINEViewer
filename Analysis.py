@@ -84,12 +84,15 @@ class Results():
             self.postFrame = int(
                 np.round(self.postEpoch * self.sampleRate * 0.001))
             self.postCut = np.copy(self.postFrame)
+
+            """
             # time pre stimuli should be at least 200ms for visualization
             if self.preEpoch < 200.0:
                 self.preCut = int(self.sampleRate * .2)
             # time post stimuli should be at least 1000ms for visualization
             if self.postEpoch < 1000.0:
                 self.postCut = self.sampleRate
+            """
 
             # Drop markers if there's not enough preFrame or postFrame to cut
             cutsIO = [True if m > self.preCut and m < dataset.shape[
@@ -195,6 +198,7 @@ class Results():
                 # Check for Threshold outliers
                 badThresholdChannelID = []
                 if self.thresholdCorr:
+                    """
                     for j in range(e_short.shape[1] - windowSteps):
                         badChannels = np.where(
                             np.ptp(e_short[:, j:j + windowSteps], axis=1) >
@@ -204,6 +208,11 @@ class Results():
                         badThresholdChannelID = np.unique(
                             badThresholdChannelID)
                         self.matrixThreshold[i][badThresholdChannelID] = True
+                    """
+                    badChannels = np.where(
+                        ((e_short > self.threshold) |
+                         (e_short < -self.threshold)).mean(axis=1))[0]
+                    self.matrixThreshold[i][badChannels] = True
 
                 # Check for Bridge outliers
                 if self.bridgeCorr:
