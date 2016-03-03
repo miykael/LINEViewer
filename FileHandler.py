@@ -187,6 +187,13 @@ class SaveFigures:
         figures.GFPDetailed.figure.savefig(
             join(resultsPath, 'plot_GFP_Detailed.svg'), bbox_inches='tight')
 
+        markers = figures.EpochSummary.ComboMarkers.GetItems()[1:]
+        for m in markers:
+            figures.EpochSummary.update(int(m))
+            figures.EpochSummary.figure.savefig(
+                join(resultsPath, 'plot_Average_Marker_%.3d.svg' % int(m)),
+                bbox_inches='tight')
+
 
 class SaveVerbose:
 
