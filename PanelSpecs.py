@@ -291,7 +291,7 @@ class Specification(wx.Panel):
                       self.excludeChannel)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxThreshold,
                         self.Data.Specs.CheckboxThreshold.Id,
-                        self.drawEpochs)
+                        self.useThreshold)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBaseline,
                         self.Data.Specs.CheckboxBaseline.Id, self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBridge,
