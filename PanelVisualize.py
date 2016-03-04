@@ -991,7 +991,18 @@ class EpochSummary(wx.Panel):
                 viewShift = self.shiftView - self.tiles
                 if viewShift < 0:
                     viewShift = 0
-                self.update(self.markerValue, viewShift)
+
+                markerList = self.ComboMarkers.GetItems()
+                if self.markerValue == []:
+                    marker = []
+                else:
+                    markerID = markerList.index(str(self.markerValue)) - 1
+                    if markerID < 1:
+                        marker = []
+                    else:
+                        marker = markerList[markerID]
+
+                self.update(marker, viewShift)
         event.Skip()
 
     def shiftViewRight(self, event):
@@ -999,7 +1010,17 @@ class EpochSummary(wx.Panel):
             if self.shiftView + self.tiles \
                     < len(self.allMarker):
                 viewShift = self.shiftView + self.tiles
-                self.update(self.markerValue, viewShift)
+
+                markerList = self.ComboMarkers.GetItems()
+                if self.markerValue == []:
+                    marker = []
+                else:
+                    markerID = markerList.index(str(self.markerValue)) + 1
+                    if markerID >= len(markerList):
+                        markerID = len(markerList) - 1
+                    marker = markerList[markerID]
+
+                self.update(marker, viewShift)
         event.Skip()
 
 
