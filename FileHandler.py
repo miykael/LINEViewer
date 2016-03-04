@@ -271,7 +271,6 @@ class SaveVerbose:
             f.writelines('Bridge correction\t:\t%s\n' % res.bridgeCorr)
             f.writelines('Thresh. correction\t:\t%s\n' % res.thresholdCorr)
             f.writelines('Threshold [mikroV]\t:\t%s\n' % res.threshold)
-            f.writelines('Thresh. window [ms]\t:\t%s\n' % res.window)
             f.writelines('Channels excluded\t:\t%s\n' %
                          data.Specs.channels2exclude)
             f.writelines('\n')

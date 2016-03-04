@@ -199,46 +199,20 @@ class Specification(wx.Panel):
         sizerBoxEpoch.Add(self.Data.Specs.CheckboxBlink, 0, wx.EXPAND)
 
         # Threshold Specification
-        self.Data.Specs.CheckboxThreshold = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                        'Threshold Detection')
+        PanelThresh = wx.Panel(PanelSpecs, wx.ID_ANY)
+        sizerThresh = wx.BoxSizer(wx.HORIZONTAL)
+        self.Data.Specs.CheckboxThreshold = wx.CheckBox(PanelThresh, wx.ID_ANY,
+                                                        'Thresh. [uV]')
         self.Data.Specs.CheckboxThreshold.SetValue(True)
-        sizerBoxEpoch.Add(self.Data.Specs.CheckboxThreshold, 0, wx.EXPAND)
-        sizerBoxEpoch.AddSpacer(5)
-
-        PanelThreshTitle = wx.Panel(PanelSpecs, wx.ID_ANY)
-        sizerThreshTitle = wx.BoxSizer(wx.HORIZONTAL)
-        sizerThreshTitle.AddSpacer(5)
-
-        TextThreshValue = wx.StaticText(PanelThreshTitle, wx.ID_ANY,
-                                        label="Thresh. [uV]")
-        sizerThreshTitle.Add(TextThreshValue, 0, wx.EXPAND)
-        sizerThreshTitle.AddSpacer(15)
-        sizerThreshTitle.AddSpacer(2)
-        TextThreshWindow = wx.StaticText(PanelThreshTitle, wx.ID_ANY,
-                                         label="Window [ms]")
-        sizerThreshTitle.Add(TextThreshWindow, 0, wx.EXPAND)
-        PanelThreshTitle.SetSizer(sizerThreshTitle)
-        sizerBoxEpoch.Add(PanelThreshTitle, 0, wx.EXPAND)
-        sizerBoxEpoch.AddSpacer(2)
-
-        PanelThreshField = wx.Panel(PanelSpecs, wx.ID_ANY)
-        sizerThreshField = wx.BoxSizer(wx.HORIZONTAL)
-        sizerThreshField.AddSpacer(3)
-        self.Data.Specs.ThreshValue = wx.TextCtrl(PanelThreshField, wx.ID_ANY,
+        self.Data.Specs.ThreshValue = wx.TextCtrl(PanelThresh, wx.ID_ANY,
                                                   size=(67, 25),
                                                   style=wx.TE_PROCESS_ENTER,
                                                   value=str(80.0))
-        sizerThreshField.Add(self.Data.Specs.ThreshValue, 0, wx.EXPAND)
-        sizerThreshField.AddSpacer(15)
-        sizerThreshField.AddSpacer(15)
-        sizerThreshField.AddSpacer(3)
-        self.Data.Specs.ThreshWindow = wx.TextCtrl(PanelThreshField, wx.ID_ANY,
-                                                   size=(67, 25),
-                                                   style=wx.TE_PROCESS_ENTER,
-                                                   value=str(100.0))
-        sizerThreshField.Add(self.Data.Specs.ThreshWindow, 0, wx.EXPAND)
-        PanelThreshField.SetSizer(sizerThreshField)
-        sizerBoxEpoch.Add(PanelThreshField, 0, wx.EXPAND)
+        sizerThresh.Add(self.Data.Specs.CheckboxThreshold, 0, wx.EXPAND)
+        sizerThresh.AddSpacer(5)
+        sizerThresh.Add(self.Data.Specs.ThreshValue, 0, wx.EXPAND)
+        PanelThresh.SetSizer(sizerThresh)
+        sizerBoxEpoch.Add(PanelThresh, 0, wx.EXPAND)
         sizerBoxEpoch.AddSpacer(5)
 
         self.ButtonExclude = wx.Button(
@@ -313,8 +287,6 @@ class Specification(wx.Panel):
                           self.Data.Specs.PostEpoch.Id, self.drawAll)
         wx.EVT_TEXT_ENTER(self.Data.Specs.ThreshValue,
                           self.Data.Specs.ThreshValue.Id, self.useThreshold)
-        wx.EVT_TEXT_ENTER(self.Data.Specs.ThreshWindow,
-                          self.Data.Specs.ThreshWindow.Id, self.useThreshold)
         wx.EVT_BUTTON(self.ButtonExclude, self.ButtonExclude.Id,
                       self.excludeChannel)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxThreshold,
@@ -411,11 +383,9 @@ class Specification(wx.Panel):
     def useThreshold(self, event):
         if self.Data.Specs.CheckboxThreshold.GetValue():
             self.Data.Specs.ThreshValue.Enable()
-            self.Data.Specs.ThreshWindow.Enable()
             self.ButtonExclude.Enable()
         else:
             self.Data.Specs.ThreshValue.Disable()
-            self.Data.Specs.ThreshWindow.Disable()
             self.ButtonExclude.Disable()
 
         # Reset matrixSelected

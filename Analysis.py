@@ -141,11 +141,6 @@ class Results():
         except ValueError:
             self.threshold = 80.0
             Data.Specs.ThreshValue.SetValue(str(self.threshold))
-        try:
-            self.window = float(Data.Specs.ThreshWindow.GetValue())
-        except ValueError:
-            self.window = 100.0
-            Data.Specs.ThreshWindow.SetValue(str(self.window))
         self.excludeChannel = Data.Specs.channels2exclude
 
         # Copy epoch and marker values
@@ -186,7 +181,6 @@ class Results():
             self.matrixBridge = np.copy(emptyMatrix)
             self.matrixBlink = np.zeros(
                 (epochs.shape[0], epochs.shape[2])).astype('bool')
-            windowSteps = int(self.window * self.sampleRate / 1000.)
 
             # Go through all the epochs
             for i, e_long in enumerate(epochs):
@@ -198,17 +192,6 @@ class Results():
                 # Check for Threshold outliers
                 badThresholdChannelID = []
                 if self.thresholdCorr:
-                    """
-                    for j in range(e_short.shape[1] - windowSteps):
-                        badChannels = np.where(
-                            np.ptp(e_short[:, j:j + windowSteps], axis=1) >
-                            self.threshold)[0]
-                        badThresholdChannelID.extend(list(badChannels))
-                    if badThresholdChannelID != []:
-                        badThresholdChannelID = np.unique(
-                            badThresholdChannelID)
-                        self.matrixThreshold[i][badThresholdChannelID] = True
-                    """
                     badChannels = np.where(
                         ((e_short > self.threshold) |
                          (e_short < -self.threshold)).mean(axis=1))[0]
