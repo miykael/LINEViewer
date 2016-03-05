@@ -221,7 +221,7 @@ class SaveVerbose:
                 f.writelines('File path\t\t\t:\t%s\n' % d.bdfFile)
                 f.writelines('Timestamp\t\t\t:\t%s:%s %s\n' %
                              (d.startTime[:2], d.startTime[3:5], d.startDate))
-                duration = round(1.0 * d.dataRecorded * d.durationRecorded, 1)
+                duration = round(float(d.dataRecorded) * d.durationRecorded, 1)
                 f.writelines('Lenght\t\t\t\t:\t%sm%ss\n' %
                              (int(duration) / 60, int(duration) % 60))
                 f.writelines('Sampling freq.\t\t:\t%s Hz\n' % d.sampleRate)
@@ -291,7 +291,7 @@ class SaveVerbose:
 
             epochsTotal = res.epochs.shape[0]
             epochsOK = res.okID.sum()
-            percentOK = np.round(1. * epochsOK / epochsTotal, 2) * 100
+            percentOK = np.round(float(epochsOK) / epochsTotal, 2) * 100
             f.writelines('Channels #\t\t\t:\t%s\n' % res.epochs.shape[1])
             f.writelines('Markers #\t\t\t:\t%s\n' % len(res.uniqueMarkers))
             f.writelines('Marker value\t\t:\t%s\n' %
@@ -337,12 +337,12 @@ class SaveVerbose:
             f.writelines('Outliers Total #\t:\t%s\n' % nChannelOutliers)
             f.writelines('Outliers Selected\t:\t{0} / {1}%\n'.format(
                 res.OnSelectedOutliers, np.round(
-                    1. * res.OnSelectedOutliers / epochsTotal, 3) * 100))
+                    float(res.OnSelectedOutliers) / epochsTotal, 3) * 100))
             f.writelines('Outliers Broken\t\t:\t{0} / {1}%\n'.format(
                 res.OBroken, np.round(
-                    1. * res.OBroken / epochsTotal, 3) * 100))
+                    float(res.OBroken) / epochsTotal, 3) * 100))
             f.writelines('Outliers Blink\t\t:\t{0} / {1}%\n'.format(
-                res.OBlink, np.round(1. * res.OBlink / epochsTotal, 3) * 100))
+                res.OBlink, np.round(float(res.OBlink) / epochsTotal, 3) * 100))
             f.writelines('\n')
 
             f.writelines('Channel Name\t\t:%s\n' %
@@ -364,7 +364,7 @@ class SaveVerbose:
             nMarkers = len(res.OxaxisMarker)
             f.writelines('Outliers Total\t\t:\t{0} / {1}%\n'.format(
                 res.OoutlierEpochs, np.round(
-                    1. * res.OoutlierEpochs / epochsTotal, 3) * 100))
+                    float(res.OoutlierEpochs) / epochsTotal, 3) * 100))
             f.writelines('Marker Name\t\t\t:%s\n' %
                          ('{:>6}' * nMarkers).format(*res.OxaxisMarker))
             f.writelines('Outliers %\t\t\t:{0}\n'.format(

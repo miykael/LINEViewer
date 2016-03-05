@@ -186,7 +186,7 @@ class Overview(wx.Panel):
             axes.set_xticklabels(badChannelsLabel, rotation=90)
 
             # Write percentage of outliers in channel overview plot
-            distOutliersChannel = 1. * distOutliersChannel / markers.shape[0]
+            distOutliersChannel = float(distOutliersChannel) / markers.shape[0]
             ticks = axes.get_xticks()
             for i, d in enumerate(distOutliersChannel):
                 percentage = np.round(distOutliersChannel[i] * 100., 1)
@@ -233,8 +233,8 @@ class Overview(wx.Panel):
                                               distMarkerBlink)), axis=0),
                      label='Broken', alpha=0.5)
 
-            percentageBad = 1 - 1. * \
-                sum(distMarkerOK) / self.Data.Results.okID.shape[0]
+            percentageBad = 1 - float(
+                sum(distMarkerOK)) / self.Data.Results.okID.shape[0]
             nOutliers = int(
                 self.Data.Results.okID.shape[0] - sum(distMarkerOK))
             axes.title.set_text(
@@ -605,11 +605,11 @@ class EpochDetail(wx.Panel):
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
         Results = self.Data.Results
         samplingPoints = Results.epochs.shape[2]
-        preStimuli = 1000. / (1. * Results.sampleRate /
+        preStimuli = 1000. / (float(Results.sampleRate) /
                               Results.preCut)
-        postStimuli = 1000. / (1. * Results.sampleRate /
+        postStimuli = 1000. / (float(Results.sampleRate) /
                                Results.postCut)
-        xaxis = [int(1.0 * i * (preStimuli + postStimuli) /
+        xaxis = [int(float(i) * (preStimuli + postStimuli) /
                      samplingPoints - preStimuli)
                  for i in range(samplingPoints)]
 
@@ -879,11 +879,11 @@ class EpochSummary(wx.Panel):
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
         Results = self.Data.Results
         samplingPoints = Results.epochs.shape[2]
-        preStimuli = 1000. / (1. * Results.sampleRate /
+        preStimuli = 1000. / (float(Results.sampleRate) /
                               Results.preCut)
-        postStimuli = 1000. / (1. * Results.sampleRate /
+        postStimuli = 1000. / (float(Results.sampleRate) /
                                Results.postCut)
-        xaxis = [int(1.0 * i * (preStimuli + postStimuli) /
+        xaxis = [int(float(i) * (preStimuli + postStimuli) /
                      samplingPoints - preStimuli)
                  for i in range(samplingPoints)]
 
@@ -1165,7 +1165,7 @@ def findSquare(number):
         return 1, 1
     else:
         s1 = int(np.round(np.sqrt(number)))
-        s2 = int(np.ceil(1.0 * number / s1))
+        s2 = int(np.ceil(float(number) / s1))
         return s1, s2
 
 

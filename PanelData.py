@@ -224,7 +224,7 @@ class Selecter(wx.Panel):
                 recordtime = '%s %s:%s' % (d.startDate,
                                            d.startTime[:2],
                                            d.startTime[3:5])
-                duration = round(1.0 * d.dataRecorded * d.durationRecorded, 1)
+                duration = round(float(d.dataRecorded) * d.durationRecorded, 1)
                 epochs = len(d.markerValue)
                 markers = len(np.unique(d.markerValue))
                 length = (int(duration) / 60, int(duration) % 60)
