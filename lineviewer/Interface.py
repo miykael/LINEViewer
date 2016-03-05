@@ -12,7 +12,7 @@ class MainFrame(wx.Frame):
     """
 
     def __init__(self):
-        wx.Frame.__init__(self, None, wx.ID_ANY, title="LINEViewer 0.1.2",
+        wx.Frame.__init__(self, None, wx.ID_ANY, title="LINEViewer 0.1.4",
                           pos=(0, 0), size=(1200, 1000))
 
         # Default variables

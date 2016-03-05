@@ -1,10 +1,17 @@
-from distutils.core import setup
+"""
+LINEViewer: Python based EEG analysis tool to give you a rough data overview
+
+See: https://github.com/miykael/LINEViewer
+"""
+
+# Always prefer setuptools over distutils
+from setuptools import setup
 
 if __name__ == "__main__":
     setup(
         name='lineviewer',
         packages=['lineviewer'],
-        version='0.1.3',
+        version='0.1.4',
         description='Python based EEG analysis tool for a rough data overview',
         long_description="""Python based EEG analysis tool to give you a rough
         data overview""",
@@ -12,6 +19,15 @@ if __name__ == "__main__":
         author='Michael Notter',
         author_email='michaelnotter@hotmail.com',
         url='https://github.com/miykael/LINEViewer',
-        download_url='https://github.com/miykael/LINEViewer/tarball/0.1.3',
+        download_url='https://github.com/miykael/LINEViewer/tarball/0.1.4',
         keywords=['LINE', 'LINEViewer', 'EEG'],
+        classifiers=[
+            'Development Status :: 4 - Beta',
+            'Intended Audience :: Science/Research',
+            'License :: OSI Approved :: GNU Affero General Public License v3',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: OS Independent',
+            'Operating System :: POSIX :: Linux',
+            'Programming Language :: Python :: 2.7',
+            'Topic :: Scientific/Engineering'],
     )

@@ -2,6 +2,6 @@
 # Python based EEG analysis tool to give you a rough data overview #
 ####################################################################
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 __package__ = 'lineviewer'
 __url__ = 'https://github.com/miykael/LINEViewer'
