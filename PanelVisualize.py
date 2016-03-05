@@ -357,8 +357,8 @@ class GFPSummary(wx.Panel):
         if self.Data.Datasets != []:
             self.Data.Overview.update(self)
             self.update(self.Data.Results)
-            self.Data.EpochDetail.update()
-            self.Data.EpochSummary.update()
+            self.Data.EpochDetail.update([])
+            self.Data.EpochSummary.update([])
         event.Skip()
 
 
