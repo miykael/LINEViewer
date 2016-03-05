@@ -4,7 +4,7 @@ if __name__ == "__main__":
     setup(
         name='lineviewer',
         packages=['lineviewer'],
-        version='0.1.0',
+        version='0.1.2',
         description='Python based EEG analysis tool for a rough data overview',
         long_description="""Python based EEG analysis tool to give you a rough
         data overview""",
