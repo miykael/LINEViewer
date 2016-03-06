@@ -30,5 +30,6 @@ if __name__ == "__main__":
             'Operating System :: POSIX :: Linux',
             'Programming Language :: Python :: 2.7',
             'Topic :: Scientific/Engineering'],
-        install_requires=['datetime', 'matplotlib', 'numpy', 'scipy', 'wx'],
+        install_requires=[
+            'matplotlib>=1.4', 'numpy>=1.9', 'scipy>=16.0', 'wxpython>=3.0'],
     )

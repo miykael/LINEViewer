@@ -186,7 +186,7 @@ class Overview(wx.Panel):
             axes.set_xticklabels(badChannelsLabel, rotation=90)
 
             # Write percentage of outliers in channel overview plot
-            distOutliersChannel = float(distOutliersChannel) / markers.shape[0]
+            distOutliersChannel = 1. * distOutliersChannel / markers.shape[0]
             ticks = axes.get_xticks()
             for i, d in enumerate(distOutliersChannel):
                 percentage = np.round(distOutliersChannel[i] * 100., 1)

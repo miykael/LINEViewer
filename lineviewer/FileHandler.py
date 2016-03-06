@@ -1,7 +1,7 @@
+import time
 import numpy as np
 from os import makedirs
 from os.path import exists, join, basename
-from datetime import datetime
 
 
 class ReadBDF:
@@ -206,8 +206,7 @@ class SaveVerbose:
         with open(join(resultsPath, '%s.vbs' % resultsName), 'w') as f:
             f.writelines('Verbose File\n============\n\n')
             f.writelines('LINEViewer (Version %s)\n' % data.VERSION)
-            f.writelines(
-                '%s\n\n\n' % datetime.now().strftime('%Y/%m/%d %H:%M:%S'))
+            f.writelines('%s\n\n\n' % time.strftime('%Y/%m/%d %H:%M:%S'))
 
             # Information about input files
             f.writelines('Input File(s):\n--------------\n\n')
