@@ -13,6 +13,8 @@ __author_email__ = 'michaelnotter@hotmail.com'
 __downloadUrl__ = 'https://github.com/miykael/LINEViewer/releases/'
 __url__ = 'https://github.com/miykael/LINEViewer'
 
-# Runs the app on import
-app = StartLINEViewer()
-app.MainLoop()
+
+# To start the gui
+def gui():
+    app = StartLINEViewer()
+    app.MainLoop()
