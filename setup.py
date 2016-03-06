@@ -9,7 +9,7 @@ from setuptools import setup
 
 if __name__ == "__main__":
     setup(
-        name='lineviewer',
+        name='LINEViewer',
         packages=['lineviewer'],
         version='0.1.4',
         description='Python based EEG analysis tool for a rough data overview',
@@ -30,4 +30,5 @@ if __name__ == "__main__":
             'Operating System :: POSIX :: Linux',
             'Programming Language :: Python :: 2.7',
             'Topic :: Scientific/Engineering'],
+        install_requires=['datetime', 'matplotlib', 'numpy', 'scipy', 'wx'],
     )

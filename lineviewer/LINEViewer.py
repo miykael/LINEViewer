@@ -1,5 +1,6 @@
 import wx
 import Interface
+from os.path import join, dirname, abspath
 
 """
 Start LINEViewer and open the GUI
@@ -21,7 +22,8 @@ class LINEViewerSplashScreen(wx.SplashScreen):
     """Opens LINEViewer Splash Screen and after exit starts LINEViewer"""
 
     def __init__(self, parent=None):
-        aBitmap = wx.Image(name="LINEViewer_logo.png").ConvertToBitmap()
+        logopath = join(dirname(abspath(__file__)), 'LINEViewer_logo.png')
+        aBitmap = wx.Image(name=logopath).ConvertToBitmap()
         splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
         splashDuration = 1000
         wx.SplashScreen.__init__(self, aBitmap, splashStyle,
@@ -32,11 +34,5 @@ class LINEViewerSplashScreen(wx.SplashScreen):
     def OnExit(self, event):
         self.Hide()
         MyFrame = Interface.MainFrame()
-        app.SetTopWindow(MyFrame)
         MyFrame.Show(True)
         event.Skip()
-
-# Opens the GUI if script is run directly
-if __name__ == "__main__":
-    app = StartLINEViewer()
-    app.MainLoop()

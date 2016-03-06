@@ -1,7 +1,18 @@
-####################################################################
-# Python based EEG analysis tool to give you a rough data overview #
-####################################################################
+# Part of the LINEViewer library
+# Copyright (C) 2016 Michael Notter
+# Distributed under the terms of the GNU General Public License (GPL).
 
+from LINEViewer import StartLINEViewer
+
+# version info for LINEViewer
 __version__ = '0.1.4'
 __package__ = 'lineviewer'
+__license__ = 'GNU GPLv3 (or more recent equivalent)'
+__author__ = 'Michael Notter'
+__author_email__ = 'michaelnotter@hotmail.com'
+__downloadUrl__ = 'https://github.com/miykael/LINEViewer/releases/'
 __url__ = 'https://github.com/miykael/LINEViewer'
+
+# Runs the app on import
+app = StartLINEViewer()
+app.MainLoop()
