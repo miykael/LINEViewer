@@ -13,13 +13,13 @@ if __name__ == "__main__":
         packages=['lineviewer'],
         version='0.1.4',
         description='Python based EEG analysis tool for a rough data overview',
-        long_description="""Python based EEG analysis tool to give you a rough
-        data overview""",
+        long_description="""
+        Python based EEG analysis tool to give you a rough data overview""",
         license='GNU GENERAL PUBLIC LICENSE',
         author='Michael Notter',
         author_email='michaelnotter@hotmail.com',
         url='https://github.com/miykael/LINEViewer',
-        download_url='https://github.com/miykael/LINEViewer/tarball/0.1.4',
+        download_url='https://github.com/miykael/LINEViewer/releases/tag/0.1.4',
         keywords=['LINE', 'LINEViewer', 'EEG'],
         classifiers=[
             'Development Status :: 4 - Beta',
