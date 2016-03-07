@@ -13,7 +13,7 @@ class MainFrame(wx.Frame):
     """
 
     def __init__(self):
-        wx.Frame.__init__(self, None, wx.ID_ANY, title="LINEViewer 0.1.7",
+        wx.Frame.__init__(self, None, wx.ID_ANY, title="LINEViewer 0.1.8",
                           pos=(0, 0), size=(1200, 1000))
         logopath = join(dirname(abspath(__file__)), 'favicon_256.ico')
         self.SetIcon(wx.Icon(logopath, wx.BITMAP_TYPE_ICO))
