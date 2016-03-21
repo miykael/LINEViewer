@@ -35,7 +35,7 @@ class Specification(wx.Panel):
         # Average Reference
         self.Data.Specs.CheckboxAverage = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                       'Average Reference')
-        self.Data.Specs.CheckboxAverage.SetValue(True)
+        self.Data.Specs.CheckboxAverage.SetValue(False)
         sizerBoxData.Add(self.Data.Specs.CheckboxAverage, 0, wx.EXPAND)
 
         # Specific Reference
@@ -48,7 +48,7 @@ class Specification(wx.Panel):
         sizerNewRef.AddSpacer(5)
 
         self.Data.Specs.DropDownNewRef = wx.ComboBox(PanelNewRef, wx.ID_ANY,
-                                                     value='', choices=[],
+                                                     value='None', choices=[],
                                                      style=wx.CB_READONLY,
                                                      size=(100, 25))
         sizerNewRef.Add(self.Data.Specs.DropDownNewRef, 0, wx.EXPAND)
@@ -328,11 +328,13 @@ class Specification(wx.Panel):
     def useAverage(self, event):
         if self.Data.Specs.CheckboxAverage.GetValue():
             self.Data.Specs.DropDownNewRef.SetSelection(0)
-            self.Data.Specs.DropDownNewRef.SetValue('')
+        else:
+            self.Data.Specs.DropDownNewRef.SetSelection(1)
         self.drawAll(event)
 
     def useNewRef(self, event):
         if self.Data.Specs.DropDownNewRef.GetSelection() == 0:
+            self.Data.Specs.CheckboxAverage.SetValue(True)
             self.useAverage(event)
             event.Skip()
         else:

@@ -235,11 +235,11 @@ class Selecter(wx.Panel):
                     'Length:\t%sm%ss\n' % length + \
                     'Date:  \t%s\n\n' % recordtime
 
-            dropdown = ['Average'] + labelsChannel.tolist()
+            dropdown = ['Average', 'None'] + labelsChannel.tolist()
 
             self.Data.Specs.DropDownNewRef.SetItems(dropdown)
 
         self.TxtInformation.SetLabel(infotext)
 
-        self.Data.Specs.DropDownNewRef.SetSelection(0)
-        self.Data.Specs.DropDownNewRef.SetValue('')
+        self.Data.Specs.DropDownNewRef.SetSelection(1)
+        self.Data.Specs.DropDownNewRef.SetValue('None')

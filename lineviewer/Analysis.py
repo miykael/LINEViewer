@@ -58,7 +58,7 @@ class Results():
             # 2. Average or specific reference
             if self.average:
                 dataset -= dataset.mean(axis=0)
-            elif self.newReference != '':
+            elif self.newReference != 'None':
                 electrodeID = np.where(d.labelsChannel == self.newReference)[0]
                 if self.newReference != 'Average':
                     dataset -= dataset[electrodeID]
