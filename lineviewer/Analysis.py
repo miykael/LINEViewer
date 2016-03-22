@@ -199,7 +199,7 @@ class Results():
 
                 # Check for Bridge outliers
                 if self.bridgeCorr:
-                    corrMatrix = np.where(np.corrcoef(e_short) > .99999)
+                    corrMatrix = np.where(np.corrcoef(e_short) > .999)
                     badBridgeChannelID = np.unique(
                         [corrMatrix[0][m] for m in range(len(corrMatrix[0]))
                          if corrMatrix[0][m] != corrMatrix[1][m]])
@@ -287,6 +287,17 @@ class Results():
                     [i for i, e in enumerate(self.matrixSelected)
                      if 'blink' in e]] = 'ok_normal'
                 self.matrixBlink *= False
+
+            # Correct if correction filters are on
+            if self.thresholdCorr:
+                self.matrixSelected[[i for i in np.where(self.matrixThreshold.sum(axis=1))[0]
+                                     if self.matrixSelected[i] == 'ok_normal']] = 'threshold'
+            if self.bridgeCorr:
+                self.matrixSelected[[i for i in np.where(self.matrixBridge.sum(axis=1))[0]
+                                     if self.matrixSelected[i] == 'ok_normal']] = 'bridge'
+            if self.blinkCorr:
+                self.matrixSelected[[i for i in np.where(self.matrixBlink.sum(axis=1))[0]
+                                     if self.matrixSelected[i] == 'ok_normal']] = 'blink'
 
             # Update List of ok and bad IDs
             self.okID = np.array([True if 'ok_' in e else False
