@@ -868,7 +868,6 @@ class EpochSummary(wx.Panel):
 
         if self.markerValue == []:
             self.ComboMarkers.SetSelection(0)
-            self.ComboLayout.SetValue('2x2')
         else:
             markerID = markerList.index(str(markerValue))
             self.shiftView = markerID - 1
@@ -966,7 +965,8 @@ class EpochSummary(wx.Panel):
 
     def updateLayout(self, event):
         if hasattr(self, 'markerValue'):
-            self.update(self.markerValue)
+            self.update([])
+            self.ComboMarkers.SetSelection(0)
         event.Skip()
 
     def updateSize(self, event):
