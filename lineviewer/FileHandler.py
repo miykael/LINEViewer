@@ -208,37 +208,6 @@ class SaveVerbose:
             f.writelines('LINEViewer (Version %s)\n' % data.VERSION)
             f.writelines('%s\n\n\n' % time.strftime('%Y/%m/%d %H:%M:%S'))
 
-            # Information about input files
-            f.writelines('Input File(s):\n--------------\n\n')
-            f.writelines('Number of input file(s):\t%s\n\n' %
-                         len(data.Datasets))
-
-            for i, d in enumerate(data.Datasets):
-
-                f.writelines('File #\t\t\t\t:\t%s\n' % i)
-                f.writelines('File name\t\t\t:\t%s\n' % basename(d.bdfFile))
-                f.writelines('File path\t\t\t:\t%s\n' % d.bdfFile)
-                f.writelines('Timestamp\t\t\t:\t%s:%s %s\n' %
-                             (d.startTime[:2], d.startTime[3:5], d.startDate))
-                duration = round(float(d.dataRecorded) * d.durationRecorded, 1)
-                f.writelines('Lenght\t\t\t\t:\t%sm%ss\n' %
-                             (int(duration) / 60, int(duration) % 60))
-                f.writelines('Sampling freq.\t\t:\t%s Hz\n' % d.sampleRate)
-                f.writelines('Sampling points\t\t:\t%s\n' % d.rawdata.shape[1])
-                f.writelines('Channels #\t\t\t:\t%s\n' % d.labelsChannel.shape)
-                uniqueMarkers = np.unique(d.markerValue)
-                f.writelines('Markers #\t\t\t:\t%s\n' % len(uniqueMarkers))
-                f.writelines('Marker value\t\t:\t%s\n' %
-                             ', '.join(uniqueMarkers.astype('str')))
-                f.writelines('\n')
-            f.writelines('\n')
-
-            # Information about output files
-            f.writelines('Output Files:\n-------------\n\n')
-            f.writelines('Folder name\t\t\t:\t%s\n' % resultsName)
-            f.writelines('Output path\t\t\t:\t%s\n' % resultsPath)
-            f.writelines('\n\n')
-
             # Information about the preprocessing
             f.writelines(
                 'Processing Information:\n-----------------------\n\n')
@@ -381,3 +350,34 @@ class SaveVerbose:
                          ('{:>6}' * nMarkers).format(*res.OdistMarkerBlink))
             f.writelines('Broken #\t\t\t:%s\n' %
                          ('{:>6}' * nMarkers).format(*res.OdistMarkerBroken))
+            f.writelines('\n\n')
+
+            # Information about input files
+            f.writelines('Input File(s):\n--------------\n\n')
+            f.writelines('Number of input file(s):\t%s\n\n' %
+                         len(data.Datasets))
+
+            for i, d in enumerate(data.Datasets):
+
+                f.writelines('File #\t\t\t\t:\t%s\n' % i)
+                f.writelines('File name\t\t\t:\t%s\n' % basename(d.bdfFile))
+                f.writelines('File path\t\t\t:\t%s\n' % d.bdfFile)
+                f.writelines('Timestamp\t\t\t:\t%s:%s %s\n' %
+                             (d.startTime[:2], d.startTime[3:5], d.startDate))
+                duration = round(float(d.dataRecorded) * d.durationRecorded, 1)
+                f.writelines('Lenght\t\t\t\t:\t%sm%ss\n' %
+                             (int(duration) / 60, int(duration) % 60))
+                f.writelines('Sampling freq.\t\t:\t%s Hz\n' % d.sampleRate)
+                f.writelines('Sampling points\t\t:\t%s\n' % d.rawdata.shape[1])
+                f.writelines('Channels #\t\t\t:\t%s\n' % d.labelsChannel.shape)
+                uniqueMarkers = np.unique(d.markerValue)
+                f.writelines('Markers #\t\t\t:\t%s\n' % len(uniqueMarkers))
+                f.writelines('Marker value\t\t:\t%s\n' %
+                             ', '.join(uniqueMarkers.astype('str')))
+                f.writelines('\n')
+            f.writelines('\n')
+
+            # Information about output files
+            f.writelines('Output Files:\n-------------\n\n')
+            f.writelines('Folder name\t\t\t:\t%s\n' % resultsName)
+            f.writelines('Output path\t\t\t:\t%s\n' % resultsPath)
