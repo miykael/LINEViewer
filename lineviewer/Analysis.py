@@ -145,15 +145,7 @@ class Results():
 
         # Copy epoch and marker values
         epochs = np.copy(Data.InterpolEpochs)
-        if not hasattr(self, 'collapsedMarkers'):
-            markers = np.copy(Data.Orig.markers)
-        else:
-            markers = np.copy(Data.Orig.markers)
-            for i in self.collapsedTransform:
-                for j in self.collapsedTransform[i]:
-                    markers[np.where(markers == j)[0]] = int(i)
-            self.collapsedMarkers = markers
-            markers = self.collapsedMarkers
+        markers = np.copy(Data.Orig.markers)
 
         # Baseline Correction
         if self.baselineCorr:
@@ -290,14 +282,17 @@ class Results():
 
             # Correct if correction filters are on
             if self.thresholdCorr:
-                self.matrixSelected[[i for i in np.where(self.matrixThreshold.sum(axis=1))[0]
-                                     if self.matrixSelected[i] == 'ok_normal']] = 'threshold'
+                self.matrixSelected[
+                    [i for i in np.where(self.matrixThreshold.sum(axis=1))[0]
+                     if self.matrixSelected[i] == 'ok_normal']] = 'threshold'
             if self.bridgeCorr:
-                self.matrixSelected[[i for i in np.where(self.matrixBridge.sum(axis=1))[0]
-                                     if self.matrixSelected[i] == 'ok_normal']] = 'bridge'
+                self.matrixSelected[
+                    [i for i in np.where(self.matrixBridge.sum(axis=1))[0]
+                     if self.matrixSelected[i] == 'ok_normal']] = 'bridge'
             if self.blinkCorr:
-                self.matrixSelected[[i for i in np.where(self.matrixBlink.sum(axis=1))[0]
-                                     if self.matrixSelected[i] == 'ok_normal']] = 'blink'
+                self.matrixSelected[
+                    [i for i in np.where(self.matrixBlink.sum(axis=1))[0]
+                     if self.matrixSelected[i] == 'ok_normal']] = 'blink'
 
             # Update List of ok and bad IDs
             self.okID = np.array([True if 'ok_' in e else False
@@ -308,10 +303,32 @@ class Results():
         goodEpochs = epochs[self.okID]
         goodMarkers = markers[self.okID]
 
-        # Create average epochs
-        self.uniqueMarkers = np.unique(goodMarkers)
-        self.avgEpochs = [goodEpochs[np.where(goodMarkers == u)].mean(axis=0)
-                          for u in self.uniqueMarkers]
+        # Create average epochs but weighs collapsed markers accordingly
+        if not hasattr(self, 'collapsedMarkers'):
+            self.uniqueMarkers = np.unique(goodMarkers)
+            self.avgEpochs = [
+                goodEpochs[np.where(goodMarkers == u)].mean(axis=0)
+                for u in self.uniqueMarkers]
+        else:
+            # Create average epochs but weigh collapsed markers
+            self.avgEpochs = []
+            self.uniqueMarkers = np.unique(self.collapsedMarkers[self.okID])
+            for i, u in enumerate(self.uniqueMarkers):
+
+                # Weigh collapsed markers to get average
+                if len(markers[markers == u]) == 0:
+                    collapseID = [c[1] for c in self.collapsedTransform
+                                  if int(c[0]) == u][0]
+                    self.avgEpochs.append(
+                        np.array([goodEpochs[np.where(
+                            goodMarkers == c)[0]].mean(axis=0)
+                            for c in collapseID]).mean(axis=0))
+                else:
+                    self.avgEpochs.append(
+                        goodEpochs[np.where(goodMarkers == u)[0]].mean(axis=0))
+
+            self.markers = self.collapsedMarkers
+
         self.avgGFP = [calculateGFP(a) for a in self.avgEpochs]
         self.avgGMD = [calculateGMD(a) for a in self.avgEpochs]
 

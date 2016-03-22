@@ -437,7 +437,7 @@ class Specification(wx.Panel):
             else:
                 markers = self.Data.Results.collapsedMarkers
             markers = np.unique(markers)
-            markers = markers.tolist()+self.Data.markers2hide
+            markers = markers.tolist() + self.Data.markers2hide
             markers = np.unique(markers).tolist()
             markers.sort()
             markerTxt = [str(m) for m in markers]
@@ -466,7 +466,7 @@ class Specification(wx.Panel):
         if self.Data.Datasets != []:
             if not hasattr(self.Data.Results, 'collapsedMarkers'):
                 markers = np.copy(self.Data.Results.markers)
-                self.Data.Results.collapsedTransform = {}
+                self.Data.Results.collapsedTransform = []
             else:
                 markers = self.Data.Results.collapsedMarkers
             markers = np.unique(markers)
@@ -507,8 +507,8 @@ class Specification(wx.Panel):
                     for i, e in enumerate(markers2collapse):
                         rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
                     self.Data.Results.collapsedMarkers = rawMarkers
-                    self.Data.Results.collapsedTransform[
-                        newMarkerName] = markers2collapse
+                    self.Data.Results.collapsedTransform.append(
+                        [newMarkerName, markers2collapse])
 
                     # Should more markers be collapsed
                     dlgMore = wx.MessageDialog(

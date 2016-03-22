@@ -892,18 +892,14 @@ class EpochSummary(wx.Panel):
         hPlots = int(layout[0])
         self.tiles = vPlots * hPlots
 
-        # Get average epochs of good epochs for all marker
-        avgEpochs = [Results.epochs[np.where(Results.markers[
-            Results.okID] == m)].mean(axis=0) for m in self.allMarker]
-
         # Draw the average epochs
         for k, i in enumerate(range(self.shiftView,
                                     self.tiles + self.shiftView)):
             axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
 
-            if i < len(avgEpochs):
+            if i < len(Results.avgEpochs):
                 markerID = self.allMarker[i]
-                epoch = avgEpochs[i]
+                epoch = Results.avgEpochs[i]
                 sizer = np.sqrt(
                     np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
                 modulator = float(self.ComboAmplitude.GetValue()[:-1])
@@ -930,7 +926,7 @@ class EpochSummary(wx.Panel):
                 axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
 
         currentPage = (self.shiftView / self.tiles) + 1
-        totalPage = (len(avgEpochs) - 1) / self.tiles + 1
+        totalPage = (len(Results.avgEpochs) - 1) / self.tiles + 1
         if totalPage == 0:
             currentPage = 0
 
