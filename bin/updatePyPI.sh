@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Replace the version number in all files
-sed -i 's/0\.1\.10/0\.1\.11/g' \
+sed -i 's/0\.1\.11/0\.1\.12/g' \
     ../setup.py \
+    ../README.rst \
     ../lineviewer/__init__.py \
     ../lineviewer/Interface.py
 
