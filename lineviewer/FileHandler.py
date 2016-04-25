@@ -203,7 +203,7 @@ class SaveVerbose:
         res = data.Results
 
         # Write Verbose File
-        with open(join(resultsPath, '%s.vbs' % resultsName), 'w') as f:
+        with open(join(resultsPath, '%s.vrb' % resultsName), 'w') as f:
             f.writelines('Verbose File\n============\n\n')
             f.writelines('LINEViewer (Version %s)\n' % data.VERSION)
             f.writelines('%s\n\n\n' % time.strftime('%Y/%m/%d %H:%M:%S'))
