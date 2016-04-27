@@ -12,26 +12,10 @@ class Results():
     def updateAll(self, Data):
 
         # Get Specifications
+        self.sampleRate = Data.Datasets[0].sampleRate
         self.removeDC = Data.Specs.CheckboxDC.GetValue()
         self.average = Data.Specs.CheckboxAverage.GetValue()
         self.newReference = Data.Specs.DropDownNewRef.GetValue()
-        self.doPass = Data.Specs.CheckboxPass.GetValue()
-        try:
-            self.lowcut = float(Data.Specs.LowPass.GetValue())
-        except ValueError:
-            self.lowcut = 80.0
-            Data.Specs.LowPass.SetValue(str(self.lowcut))
-        try:
-            self.highcut = float(Data.Specs.HighPass.GetValue())
-        except ValueError:
-            self.highcut = 0.1
-            Data.Specs.HighPass.SetValue(str(self.highcut))
-        self.doNotch = Data.Specs.CheckboxNotch.GetValue()
-        try:
-            self.notchValue = float(Data.Specs.Notch.GetValue())
-        except ValueError:
-            self.notchValue = 50.0
-            Data.Specs.Notch.SetValue(str(self.notch))
         try:
             self.preEpoch = float(Data.Specs.PreEpoch.GetValue())
         except ValueError:
@@ -42,31 +26,49 @@ class Results():
         except ValueError:
             self.postEpoch = 500.0
             Data.Specs.PostEpoch.SetValue(str(self.postEpoch))
-        self.sampleRate = Data.Datasets[0].sampleRate
+        self.doPass = Data.Specs.CheckboxPass.GetValue()
+        try:
+            self.lowcut = float(Data.Specs.LowPass.GetValue())
 
-        # Chech that Lowpass and Highpass value are between accepted values
-        nyquistFreq = self.sampleRate * 0.5
-        if self.lowcut > nyquistFreq:
-            self.lowcut = nyquistFreq - 1
+            # Checks that Lowpass value is below nyquist frequency
+            nyquistFreq = self.sampleRate * 0.5
+            if self.lowcut > nyquistFreq:
+                self.lowcut = nyquistFreq - 1
+                Data.Specs.LowPass.SetValue(str(self.lowcut))
+                dlg = wx.Mes1sageDialog(
+                    Data.Overview, "Low pass value was above the nyquist " +
+                    "frequency (%s Hz). The value was set to %s Hz." % (
+                        nyquistFreq, self.lowcut),
+                    "Info", wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+        except ValueError:
+            self.lowcut = 0
             Data.Specs.LowPass.SetValue(str(self.lowcut))
-            dlg = wx.MessageDialog(
-                Data.Overview, "Low pass value was above the nyquist " +
-                "frequency (%s Hz). The value was set to %s Hz." % (
-                    nyquistFreq, self.lowcut),
-                "Info", wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
+        try:
+            self.highcut = float(Data.Specs.HighPass.GetValue())
 
-        minFreq = 1. / (self.preEpoch + self.postEpoch)
-        if self.highcut < minFreq:
-            self.highcut = minFreq
+            # Checks that Highpass value is above sampling frequency
+            minFreq = 1. / int(np.round(
+                (self.preEpoch + self.postEpoch) * self.sampleRate * 0.001))
+            if self.highcut < minFreq:
+                self.highcut = minFreq
+                Data.Specs.HighPass.SetValue(str(self.highcut))
+                dlg = wx.MessageDialog(
+                    Data.Overview, "High pass value was below minimum " +
+                    "Frequency and was adjusted to %.4f Hz." % minFreq,
+                    "Info", wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+        except ValueError:
+            self.highcut = 0
             Data.Specs.HighPass.SetValue(str(self.highcut))
-            dlg = wx.MessageDialog(
-                Data.Overview, "High pass value was below minimum Frequency " +
-                "and was adjusted to %.4f Hz." % minFreq,
-                "Info", wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
+        self.doNotch = Data.Specs.CheckboxNotch.GetValue()
+        try:
+            self.notchValue = float(Data.Specs.Notch.GetValue())
+        except ValueError:
+            self.notchValue = 50.0
+            Data.Specs.Notch.SetValue(str(self.notch))
 
         # Data object to save original epoch information
         Data.Orig = type('Orig', (object,), {})()
