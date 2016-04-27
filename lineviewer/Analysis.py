@@ -44,6 +44,30 @@ class Results():
             Data.Specs.PostEpoch.SetValue(str(self.postEpoch))
         self.sampleRate = Data.Datasets[0].sampleRate
 
+        # Chech that Lowpass and Highpass value are between accepted values
+        nyquistFreq = self.sampleRate * 0.5
+        if self.lowcut > nyquistFreq:
+            self.lowcut = nyquistFreq - 1
+            Data.Specs.LowPass.SetValue(str(self.lowcut))
+            dlg = wx.MessageDialog(
+                Data.Overview, "Low pass value was above the nyquist " +
+                "frequency (%s Hz). The value was set to %s Hz." % (
+                    nyquistFreq, self.lowcut),
+                "Info", wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+
+        minFreq = 1. / (self.preEpoch + self.postEpoch)
+        if self.highcut < minFreq:
+            self.highcut = minFreq
+            Data.Specs.HighPass.SetValue(str(self.highcut))
+            dlg = wx.MessageDialog(
+                Data.Overview, "High pass value was below minimum Frequency " +
+                "and was adjusted to %.4f Hz." % minFreq,
+                "Info", wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+
         # Data object to save original epoch information
         Data.Orig = type('Orig', (object,), {})()
 
@@ -66,16 +90,16 @@ class Results():
             # 3. Run Butterworth Low-, High- or Bandpassfilter
             if self.doPass:
                 if self.lowcut != 0 and self.highcut != 0:
-                    dataset = butter_bandpass_filter_old(dataset,
-                                                         d.sampleRate,
-                                                         highcut=self.highcut,
-                                                         lowcut=self.lowcut)
+                    dataset = butter_bandpass_filter(dataset,
+                                                     d.sampleRate,
+                                                     highcut=self.highcut,
+                                                     lowcut=self.lowcut)
 
             # 4. Notch Filter
             if self.doNotch:
-                dataset = butter_bandpass_filter_old(dataset,
-                                                     d.sampleRate,
-                                                     notch=self.notchValue)
+                dataset = butter_bandpass_filter(dataset,
+                                                 d.sampleRate,
+                                                 notch=self.notchValue)
 
             # Create epochs
             self.preFrame = int(
@@ -365,6 +389,7 @@ def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,
 
 def butter_bandpass_filter_old(data, fs, highcut=0, lowcut=0,
                                order=2, notch=-1.0):
+    # CARTOOL Version
 
     N = np.log2(fs)
     divisorHigh = float(2**(N - 1) + 2**(N - 3))
