@@ -265,12 +265,7 @@ class Overview(wx.Panel):
                     verticalalignment='bottom', rotation=90)
 
             # Adjust and draw histograms
-            self.figure.subplots_adjust(left=0.05,
-                                        bottom=0.05,
-                                        right=0.95,
-                                        top=0.95,
-                                        wspace=0.20,
-                                        hspace=0.20)
+            self.figure.tight_layout()
             self.canvas.draw()
 
             # Save distributions for latter access
@@ -330,10 +325,7 @@ class GFPSummary(wx.Panel):
             plt.ylabel('GFP')
             plt.title('GFP Overview')
             plt.legend(Results.uniqueMarkers[markers2show])
-            self.figure.subplots_adjust(left=0.03,
-                                        bottom=0.04,
-                                        right=0.98,
-                                        top=0.97)
+            self.figure.tight_layout()
             plt.grid(self.CheckboxGrid.IsChecked())
             self.canvas.draw()
 
@@ -416,12 +408,7 @@ class GFPDetailed(wx.Panel):
                 axes.title.set_text(
                     'Marker: %s [N=%s]' % (shownMarkers[i], nMarkers))
                 axes.grid(self.CheckboxGrid.IsChecked())
-            self.figure.subplots_adjust(left=0.03,
-                                        bottom=0.03,
-                                        right=0.98,
-                                        top=0.97,
-                                        wspace=0.20,
-                                        hspace=0.24)
+            self.figure.tight_layout()
             self.canvas.draw()
 
     def updateFigure(self, event):
@@ -722,12 +709,7 @@ class EpochDetail(wx.Panel):
 
         self.TextPages.SetLabel('Page: %s/%s   ' % (currentPage, totalPage))
 
-        self.figure.subplots_adjust(left=0.03,
-                                    bottom=0.03,
-                                    right=0.98,
-                                    top=0.97,
-                                    wspace=0.20,
-                                    hspace=0.24)
+        self.figure.tight_layout()
         self.canvas.draw()
 
     def updateFigure(self, event):
@@ -932,12 +914,7 @@ class EpochSummary(wx.Panel):
 
         self.TextPages.SetLabel('Page: %s/%s   ' % (currentPage, totalPage))
 
-        self.figure.subplots_adjust(left=0.03,
-                                    bottom=0.03,
-                                    right=0.98,
-                                    top=0.97,
-                                    wspace=0.20,
-                                    hspace=0.24)
+        self.figure.tight_layout()
         self.canvas.draw()
 
     def onPick(self, event):
