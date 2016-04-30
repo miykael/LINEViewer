@@ -647,6 +647,10 @@ class EpochDetail(wx.Panel):
                 # Draw single channels
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
+                    if self.ComboOverlay.GetValue() == 'Overlay':
+                        delta = 0
+                    else:
+                        delta = j
                     if isBroken:
                         color = 'c'
                         axes.title.set_fontweight('bold')
@@ -655,7 +659,7 @@ class EpochDetail(wx.Panel):
                             axes.spines[ax].set_color(color)
                     elif Results.matrixThreshold[epochID][j]:
                         color = 'r'
-                        axes.text(postStimuli + 1, c[-1] / sizer - j,
+                        axes.text(postStimuli + 1, c[-1] / sizer - delta,
                                   self.labelsChannel[j], color=color)
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
@@ -663,7 +667,7 @@ class EpochDetail(wx.Panel):
                             axes.spines[ax].set_color(color)
                     elif Results.matrixBridge[epochID][j]:
                         color = 'b'
-                        axes.text(postStimuli + 1, c[-1] / sizer - j,
+                        axes.text(postStimuli + 1, c[-1] / sizer - delta,
                                   self.labelsChannel[j], color=color)
                         axes.title.set_fontweight('bold')
                         axes.title.set_color(color)
@@ -672,7 +676,8 @@ class EpochDetail(wx.Panel):
                     else:
                         color = 'gray'
 
-                    lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
+                    lines = axes.plot(xaxis, c / sizer - delta, color,
+                                      picker=1)
                     ydata = lines[0].get_ydata()
                     lineMin = ydata.min()
                     lineMax = ydata.max()
@@ -825,6 +830,11 @@ class EpochDetail(wx.Panel):
             self.update(self.markerValue, self.shiftView)
         event.Skip()
 
+    def updateOverlay(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue)
+        event.Skip()
+
 
 class EpochSummary(wx.Panel):
 
@@ -894,8 +904,13 @@ class EpochSummary(wx.Panel):
                 # Draw single channels
                 minmax = [0, 0]
                 for j, c in enumerate(epoch):
+                    if self.ComboOverlay.GetValue() == 'Overlay':
+                        delta = 0
+                    else:
+                        delta = j
                     color = 'gray'
-                    lines = axes.plot(xaxis, c / sizer - j, color, picker=1)
+                    lines = axes.plot(xaxis, c / sizer - delta, color,
+                                      picker=1)
                     ydata = lines[0].get_ydata()
                     lineMin = ydata.min()
                     lineMax = ydata.max()
@@ -1001,6 +1016,11 @@ class EpochSummary(wx.Panel):
                 self.update(marker, viewShift)
         event.Skip()
 
+    def updateOverlay(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue)
+        event.Skip()
+
 
 def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
               showDetailedEpochs=False, showSummaryEpochs=False):
@@ -1078,8 +1098,8 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
         self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
 
-        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<", size=(70, 30))
-        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>", size=(70, 30))
+        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<", size=(35, 30))
+        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>", size=(35, 30))
         wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
                       self.shiftViewLeft)
         wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
@@ -1122,14 +1142,23 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         self.TextPages = wx.StaticText(self, wx.ID_ANY, label='Page: 0/0 ')
         self.hbox.Add(self.TextPages, 0, border=3, flag=flags)
 
-        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<", size=(70, 30))
-        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>", size=(70, 30))
+        self.goLeftButton = wx.Button(self, wx.ID_ANY, "<<", size=(35, 30))
+        self.goRightButton = wx.Button(self, wx.ID_ANY, ">>", size=(35, 30))
         wx.EVT_BUTTON(self.goLeftButton, self.goLeftButton.Id,
                       self.shiftViewLeft)
         wx.EVT_BUTTON(self.goRightButton, self.goRightButton.Id,
                       self.shiftViewRight)
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
         self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
+
+    if showDetailedEpochs or showSummaryEpochs:
+        self.ComboOverlay = wx.ComboBox(
+            self, style=wx.CB_READONLY,
+            choices=['Spread', 'Overlay'])
+        self.ComboOverlay.SetSelection(0)
+        wx.EVT_COMBOBOX(self.ComboOverlay, self.ComboOverlay.Id,
+                        self.updateOverlay)
+        self.hbox.Add(self.ComboOverlay, 0, border=3, flag=flags)
 
     self.sizer.Add(self.hbox, 0, flag=wx.ALIGN_LEFT | wx.TOP)
 
