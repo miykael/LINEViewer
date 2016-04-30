@@ -344,6 +344,8 @@ class GFPSummary(wx.Panel):
                 self.canvas.ReleaseMouse()
                 self.Data.markers2hide = []
                 self.Data.Results.updateEpochs(self.Data)
+        else:
+            self.canvas.ReleaseMouse()
 
     def updateFigure(self, event):
         if self.Data.Datasets != []:
@@ -434,7 +436,7 @@ class GFPDetailed(wx.Panel):
 
                 self.Data.EpochDetail.update(markerID)
                 self.ParentFrame.SetSelection(3)
-                self.canvas.ReleaseMouse()
+            self.canvas.ReleaseMouse()
 
 
 class EpochDetail(wx.Panel):
@@ -809,7 +811,9 @@ class EpochDetail(wx.Panel):
                 self.Data.Results.updateAnalysis = True
 
             self.canvas.draw()
-        self.canvas.ReleaseMouse()
+
+        if event.mouseevent.name == 'button_press_event':
+            self.canvas.ReleaseMouse()
 
     def updateLayout(self, event):
         if hasattr(self, 'markerValue'):
@@ -934,7 +938,8 @@ class EpochSummary(wx.Panel):
                                        color='black')
 
             self.canvas.draw()
-        self.canvas.ReleaseMouse()
+        if event.mouseevent.name == 'button_press_event':
+            self.canvas.ReleaseMouse()
 
     def updateLayout(self, event):
         if hasattr(self, 'markerValue'):
