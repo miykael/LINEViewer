@@ -33,9 +33,9 @@ class Results():
             # Checks that Lowpass value is below nyquist frequency
             nyquistFreq = self.sampleRate * 0.5
             if self.lowcut > nyquistFreq:
-                self.lowcut = nyquistFreq - 1
+                self.lowcut = nyquistFreq - 0.001
                 Data.Specs.LowPass.SetValue(str(self.lowcut))
-                dlg = wx.Mes1sageDialog(
+                dlg = wx.MessageDialog(
                     Data.Overview, "Low pass value was above the nyquist " +
                     "frequency (%s Hz). The value was set to %s Hz." % (
                         nyquistFreq, self.lowcut),
@@ -51,7 +51,7 @@ class Results():
             # Checks that Highpass value is above sampling frequency
             minFreq = 1. / int(np.round(
                 (self.preEpoch + self.postEpoch) * self.sampleRate * 0.001))
-            if self.highcut < minFreq:
+            if self.highcut <= minFreq:
                 self.highcut = minFreq
                 Data.Specs.HighPass.SetValue(str(self.highcut))
                 dlg = wx.MessageDialog(
