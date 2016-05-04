@@ -4,14 +4,22 @@ from os import makedirs
 from os.path import exists, join, basename
 
 
-class ReadBDF:
+class ReadEEG:
 
     def __init__(self, filename):
 
-        self.bdfFile = filename
-        self.lvFile = filename[:-3] + 'lv'
+        self.filename = filename
 
-        with open(filename, 'rb') as f:
+        if filename[-3:] == 'bdf':
+            self.readBDF()
+        elif filename[-3:] == 'eeg':
+            self.readBrainVision()
+
+    def readBDF(self):
+
+        self.eegFile = self.filename.replace('.bdf', '.lv')
+
+        with open(self.filename, 'rb') as f:
             offset = 168
             f.seek(offset)
             startDate = f.read(8).strip()
@@ -31,9 +39,9 @@ class ReadBDF:
 
             offset += (40) * nbChannels
 
-        if not exists(self.lvFile):
+        if not exists(self.eegFile):
 
-            with open(filename, 'rb') as f:
+            with open(self.filename, 'rb') as f:
                 f.seek(offset)
                 rawdata = np.fromfile(f, dtype='uint8').reshape(-1, 3)
 
@@ -49,11 +57,11 @@ class ReadBDF:
             rawdata = np.rollaxis(
                 rawdata, 1).reshape(nbChannels, -1)
 
-            lvFile = np.memmap(self.lvFile, mode='w+', dtype='float32',
-                               shape=rawdata.shape)
-            lvFile[:] = rawdata[:]
+            eegFile = np.memmap(self.eegFile, mode='w+', dtype='float32',
+                                shape=rawdata.shape)
+            eegFile[:] = rawdata[:]
 
-        rawdata = np.memmap(self.lvFile, mode='r', dtype='float32',
+        rawdata = np.memmap(self.eegFile, mode='r', dtype='float32',
                             shape=(nbChannels, sampleRate * dataRecorded))
 
         # Create Marker value and timestamp
@@ -74,6 +82,76 @@ class ReadBDF:
         self.sampleRate = sampleRate
         self.markerTime = markerTime
         self.markerValue = markerValue
+        self.fileType = 'BDF'
+
+    def readBrainVision(self):
+
+        self.eegFile = self.filename
+        hdrFile = self.eegFile.replace('.eeg', '.vhdr')
+        markerFile = self.eegFile.replace('.eeg', '.vmrk')
+
+        # Aggregate Header Information
+        with open(hdrFile) as f:
+            tmpHeader = f.readlines()
+
+        self.labelsChannel = []
+        readChannelNames = False
+        for line in tmpHeader:
+            if readChannelNames:
+                if line[0] == ';':
+                    continue
+                elif line[0:2] == 'Ch':
+                    channelName = line.split(',')[0]
+                    idEqual = channelName.index('=')
+                    channelName = channelName[idEqual + 1:]
+                    self.labelsChannel.append(channelName)
+                else:
+                    readChannelNames = False
+            elif 'SamplingInterval=' in line:
+                sampleInterval = int(line[17:-2])
+                self.sampleRate = int(1e6 / float(sampleInterval))
+            elif 'BinaryFormat=' in line:
+                binaryFormat = line[13:-2]
+            elif 'recording started at' in line:
+                self.startTime = line[-11:-3]
+            elif '[Channel Infos]' in line:
+                readChannelNames = True
+
+        self.labelsChannel = np.asarray(self.labelsChannel)
+
+        # Aggregate Marker Information
+        with open(markerFile) as f:
+            tmpMarker = f.readlines()
+
+        tmpMarker = [m[:-2].split(',') for m in tmpMarker if m[:2] == 'Mk']
+
+        self.markerValue = []
+        self.markerTime = []
+        for e in tmpMarker:
+            if 'New Segment' in e[0]:
+                recDate = e[5][:8]
+                self.startDate = '%s/%s/%s' % (
+                    recDate[:4], recDate[4:6], recDate[6:])
+            else:
+                self.markerValue.append(e[1])
+                self.markerTime.append(int(e[2]))
+
+        self.markerValue = np.array(self.markerValue)
+        self.markerTime = np.array(self.markerTime)
+
+        # Aggregate Data Information
+        numberFormat = {'INT_16': np.int16,
+                        'IEEE_FLOAT_32': np.float32}
+        dataType = numberFormat[binaryFormat]
+
+        rawdata = np.memmap(self.eegFile, dataType, 'r')
+        nbChannels = self.labelsChannel.shape[0]
+        timepoints = rawdata.shape[0] / nbChannels
+
+        self.dataRecorded = float(timepoints) / self.sampleRate
+        self.durationRecorded = 1
+        self.rawdata = np.rollaxis(rawdata.reshape(timepoints, nbChannels), 1)
+        self.fileType = 'BrainVision'
 
 
 class ReadXYZ:
@@ -308,7 +386,8 @@ class SaveVerbose:
                 res.OBroken, np.round(
                     float(res.OBroken) / epochsTotal, 3) * 100))
             f.writelines('Outliers Blink\t\t:\t{0} / {1}%\n'.format(
-                res.OBlink, np.round(float(res.OBlink) / epochsTotal, 3) * 100))
+                res.OBlink, np.round(float(res.OBlink) / epochsTotal,
+                                     3) * 100))
             f.writelines('\n')
 
             f.writelines('Channel Name\t\t:%s\n' %
@@ -358,8 +437,8 @@ class SaveVerbose:
             for i, d in enumerate(data.Datasets):
 
                 f.writelines('File #\t\t\t\t:\t%s\n' % i)
-                f.writelines('File name\t\t\t:\t%s\n' % basename(d.bdfFile))
-                f.writelines('File path\t\t\t:\t%s\n' % d.bdfFile)
+                f.writelines('File name\t\t\t:\t%s\n' % basename(d.filename))
+                f.writelines('File path\t\t\t:\t%s\n' % d.filename)
                 f.writelines('Timestamp\t\t\t:\t%s:%s %s\n' %
                              (d.startTime[:2], d.startTime[3:5], d.startDate))
                 duration = round(float(d.dataRecorded) * d.durationRecorded, 1)

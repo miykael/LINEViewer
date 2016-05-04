@@ -1,7 +1,7 @@
 ﻿import os
 import wx
 import numpy as np
-from FileHandler import ReadBDF, SaveTVA, SaveEPH, SaveFigures, SaveVerbose
+from FileHandler import ReadEEG, SaveTVA, SaveEPH, SaveFigures, SaveVerbose
 
 
 class Selecter(wx.Panel):
@@ -97,11 +97,11 @@ class Selecter(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonDataSaveEPH.Id, self.saveEPH)
 
     def loadData(self, event):
-        """Load BDF files"""
+        """Load EEG files"""
 
         DirPath = self.Data.DirPath
-        wildcard = "BDF files (*.bdf)|*.bdf"
-        dlg = wx.FileDialog(None, "Load BDF file(s)",
+        wildcard = "EEG files (*.bdf,*.eeg)|*.bdf;*.eeg"
+        dlg = wx.FileDialog(None, "Load EEG file(s)",
                             defaultDir=DirPath,
                             wildcard=wildcard, style=wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
@@ -118,7 +118,7 @@ class Selecter(wx.Panel):
                                     for e in newlist])
             if newElements.sum() != 0:
 
-                newfiles = [ReadBDF(f) for f in filelist
+                newfiles = [ReadEEG(f) for f in filelist
                             if os.path.basename(f)[:-4] not in oldlist]
 
                 self.Data.Filenames += [e for e in newlist if e not in oldlist]
@@ -191,7 +191,7 @@ class Selecter(wx.Panel):
             for i, e in enumerate(self.Data.Datasets):
                 length = len(e.markerValue)
                 if i not in id2keep:
-                    selected2Keep[start:length+start] = False
+                    selected2Keep[start:length + start] = False
                 start += length
 
             newMatrixSelected = self.Data.Results.matrixSelected[selected2Keep]
@@ -220,7 +220,7 @@ class Selecter(wx.Panel):
                 'Sampling Freq.: %i [Hz]\n\n' % sampleRate
 
             for d in self.Data.Datasets:
-                name = os.path.basename(d.lvFile)[:-3]
+                name = os.path.basename(d.eegFile).split('.')[0]
                 recordtime = '%s %s:%s' % (d.startDate,
                                            d.startTime[:2],
                                            d.startTime[3:5])
