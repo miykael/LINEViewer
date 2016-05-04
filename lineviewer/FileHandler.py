@@ -27,7 +27,6 @@ class ReadBDF:
             offset += 20 + 216 * nbChannels
             f.seek(offset)
             sampleRate = [int(f.read(8)) for i in range(nbChannels)]
-            sampleEqual = np.unique(sampleRate).shape[0] == 1
             sampleRate = sampleRate[0]
 
             offset += (40) * nbChannels
@@ -73,7 +72,6 @@ class ReadBDF:
         self.durationRecorded = durationRecorded
         self.labelsChannel = labelsChannel[:-1]
         self.sampleRate = sampleRate
-        self.sampleEqual = sampleEqual
         self.markerTime = markerTime
         self.markerValue = markerValue
 
