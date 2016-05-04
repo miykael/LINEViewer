@@ -17,7 +17,7 @@ class ReadEEG:
 
     def readBDF(self):
 
-        self.eegFile = self.filename.replace('.bdf', '.lv')
+        self.eegFile = self.filename.replace('.bdf', '.lineviewer')
 
         with open(self.filename, 'rb') as f:
             offset = 168
@@ -187,7 +187,7 @@ class SaveTVA:
         # Go through the files and save TVA for each
         counter = 0
         for i, n in enumerate(data.Filenames):
-            filename = join(data.DirPath, n + '.lv.tva')
+            filename = join(data.DirPath, n + '.lineviewer.tva')
 
             with open(filename, 'w') as f:
 
