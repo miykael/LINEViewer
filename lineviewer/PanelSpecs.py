@@ -490,22 +490,19 @@ class Specification(wx.Panel):
 
             while True:
                 dlgText = wx.TextEntryDialog(
-                    None, 'What should be the new value of the marker?\n' +
-                    'Only integer values between 0 and 255 are accepted!')
+                    None, 'What should be the new value of the marker?\n')
                 if dlgText.ShowModal() == wx.ID_OK:
                     newMarkerName = dlgText.GetValue()
-                    if not newMarkerName.isdigit():
-                        continue
                     dlgText.Destroy()
 
                     markers2collapse = np.array(markerTxt,
-                                                dtype='uint8')[selected]
+                                                dtype='str')[selected]
                     if not hasattr(self.Data.Results, 'collapsedMarkers'):
                         rawMarkers = np.copy(self.Data.Results.markers)
                     else:
                         rawMarkers = self.Data.Results.collapsedMarkers
                     for i, e in enumerate(markers2collapse):
-                        rawMarkers[rawMarkers == e] = np.uint8(newMarkerName)
+                        rawMarkers[rawMarkers == e] = np.str(newMarkerName)
                     self.Data.Results.collapsedMarkers = rawMarkers
                     self.Data.Results.collapsedTransform.append(
                         [newMarkerName, markers2collapse])

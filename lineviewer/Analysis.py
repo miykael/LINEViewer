@@ -339,12 +339,14 @@ class Results():
             # Create average epochs but weigh collapsed markers
             self.avgEpochs = []
             self.uniqueMarkers = np.unique(self.collapsedMarkers[self.okID])
+
             for i, u in enumerate(self.uniqueMarkers):
 
                 # Weigh collapsed markers to get average
                 if len(markers[markers == u]) == 0:
+
                     collapseID = [c[1] for c in self.collapsedTransform
-                                  if int(c[0]) == u][0]
+                                  if c[0] == u][0]
                     self.avgEpochs.append(
                         np.array([goodEpochs[np.where(
                             goodMarkers == c)[0]].mean(axis=0)

@@ -567,8 +567,11 @@ class EpochDetail(wx.Panel):
             markerList).astype('str').tolist()
         self.ComboMarkers.SetItems(markerList)
 
-        self.id2Show = np.where(
-            self.Data.Results.markers == self.markerValue)[0]
+        if self.markerValue == []:
+            self.id2Show = []
+        else:
+            self.id2Show = np.where(
+                self.Data.Results.markers == self.markerValue)[0]
 
         if self.markerValue == []:
             self.ComboMarkers.SetSelection(0)
@@ -725,7 +728,7 @@ class EpochDetail(wx.Panel):
             if markerSelection == 0:
                 self.markerValue = []
             else:
-                self.markerValue = int(self.ComboMarkers.GetValue())
+                self.markerValue = str(self.ComboMarkers.GetValue())
             self.update(self.markerValue)
         event.Skip()
 
@@ -974,7 +977,7 @@ class EpochSummary(wx.Panel):
             if 'All' in marker:
                 markerValue = []
             else:
-                markerValue = int(marker)
+                markerValue = str(marker)
             self.update(markerValue)
         event.Skip()
 

@@ -81,7 +81,7 @@ class ReadEEG:
         self.labelsChannel = labelsChannel[:-1]
         self.sampleRate = sampleRate
         self.markerTime = markerTime
-        self.markerValue = markerValue
+        self.markerValue = np.copy(markerValue).astype('|S16')
         self.fileType = 'BDF'
 
     def readBrainVision(self):
@@ -136,7 +136,7 @@ class ReadEEG:
                 self.markerValue.append(e[1])
                 self.markerTime.append(int(e[2]))
 
-        self.markerValue = np.array(self.markerValue)
+        self.markerValue = np.array(self.markerValue).astype('|S16')
         self.markerTime = np.array(self.markerTime)
 
         # Aggregate Data Information
@@ -265,9 +265,9 @@ class SaveFigures:
 
         markers = figures.EpochSummary.ComboMarkers.GetItems()[1:]
         for m in markers:
-            figures.EpochSummary.update(int(m))
+            figures.EpochSummary.update(str(m))
             figures.EpochSummary.figure.savefig(
-                join(resultsPath, 'plot_Average_Marker_%.3d.png' % int(m)),
+                join(resultsPath, 'plot_Average_Marker_%s.png' % str(m)),
                 bbox_inches='tight')
 
 
