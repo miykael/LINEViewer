@@ -111,15 +111,6 @@ class Results():
                 np.round(self.postEpoch * self.sampleRate * 0.001))
             self.postCut = np.copy(self.postFrame)
 
-            """
-            # time pre stimuli should be at least 200ms for visualization
-            if self.preEpoch < 200.0:
-                self.preCut = int(self.sampleRate * .2)
-            # time post stimuli should be at least 1000ms for visualization
-            if self.postEpoch < 1000.0:
-                self.postCut = self.sampleRate
-            """
-
             # Drop markers if there's not enough preFrame or postFrame to cut
             cutsIO = [True if m > self.preCut and m < dataset.shape[
                 1] - self.postCut else False for m in d.markerTime]
