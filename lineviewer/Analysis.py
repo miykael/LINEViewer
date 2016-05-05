@@ -411,28 +411,6 @@ def butter_bandpass_param(fs, highcut=0, lowcut=0, order=2, notch=-1.0):
     return b, a
 
 
-def butter_bandpass_param_old(fs, highcut=0, lowcut=0, order=2, notch=-1.0):
-    # CARTOOL Version
-
-    N = np.log2(fs)
-    divisorHigh = float(2**(N - 1) + 2**(N - 3))
-    divisorLow = float(2**(N - 2) + 2**(N - 3) + 2**(N - 5))
-
-    if notch > 0:
-        b, a = butter(order, [(notch / divisorHigh) - 1. / divisorHigh,
-                              (notch / divisorLow) + 1. / divisorLow],
-                      btype='bandstop')
-    else:
-        if lowcut == 0:
-            b, a = butter(order, highcut / divisorHigh, btype='high')
-        elif highcut == 0:
-            b, a = butter(order, lowcut / divisorLow, btype='low')
-        else:
-            b, a = butter(order, [highcut / divisorHigh, lowcut / divisorLow],
-                          btype='band')
-    return b, a
-
-
 def calculateGFP(dataset):
     # Global Field Potential
     return dataset.std(axis=0)
