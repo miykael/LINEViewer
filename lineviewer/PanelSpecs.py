@@ -181,10 +181,28 @@ class Specification(wx.Panel):
         sizerBoxEpoch.AddSpacer(5)
 
         # Baseline Correction
-        self.Data.Specs.CheckboxBaseline = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                       'Baseline Correction')
-        self.Data.Specs.CheckboxBaseline.SetValue(True)
-        sizerBoxEpoch.Add(self.Data.Specs.CheckboxBaseline, 0, wx.EXPAND)
+        PanelBaseTitle = wx.Panel(PanelSpecs, wx.ID_ANY)
+        sizerBaseTitle = wx.BoxSizer(wx.HORIZONTAL)
+        sizerBaseTitle.AddSpacer(5)
+        TextBase = wx.StaticText(PanelBaseTitle, wx.ID_ANY,
+                                 label="Baseline Correction")
+        sizerBaseTitle.Add(TextBase, 0, wx.EXPAND)
+        PanelBaseTitle.SetSizer(sizerBaseTitle)
+        sizerBoxEpoch.Add(PanelBaseTitle, 0, wx.EXPAND)
+        sizerBoxEpoch.AddSpacer(2)
+
+        PanelBaseDrop = wx.Panel(PanelSpecs, wx.ID_ANY)
+        sizerBaseDrop = wx.BoxSizer(wx.HORIZONTAL)
+        sizerBaseDrop.AddSpacer(3)
+        self.Data.Specs.DropDownBase = wx.ComboBox(
+            PanelBaseDrop, wx.ID_ANY, value='None',
+            choices=['None', 'pre2zero', 'pre2post'],
+            style=wx.CB_READONLY, size=(100, 25))
+        self.Data.Specs.DropDownBase.SetSelection(0)
+        sizerBaseDrop.Add(self.Data.Specs.DropDownBase, 0, wx.EXPAND)
+        PanelBaseDrop.SetSizer(sizerBaseDrop)
+        sizerBoxEpoch.Add(PanelBaseDrop, 0, wx.EXPAND)
+        sizerBoxEpoch.AddSpacer(5)
 
         # Bridge Specification
         self.Data.Specs.CheckboxBridge = wx.CheckBox(PanelSpecs, wx.ID_ANY,
@@ -292,8 +310,8 @@ class Specification(wx.Panel):
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxThreshold,
                         self.Data.Specs.CheckboxThreshold.Id,
                         self.useThreshold)
-        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBaseline,
-                        self.Data.Specs.CheckboxBaseline.Id, self.drawEpochs)
+        wx.EVT_COMBOBOX(self.Data.Specs.DropDownBase,
+                        self.Data.Specs.DropDownBase.Id, self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBridge,
                         self.Data.Specs.CheckboxBridge.Id, self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBlink,

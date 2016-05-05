@@ -91,8 +91,6 @@ class Results():
             # 2. Average or specific reference
             if self.average or self.newReference != 'None':
 
-                print "Hallo"
-
                 if self.average:
                     refOffset = tmpDataset.mean(axis=0)
                 elif self.newReference != 'None':
@@ -167,7 +165,7 @@ class Results():
     def updateEpochs(self, Data):
 
         # Get Specifications
-        self.baselineCorr = Data.Specs.CheckboxBaseline.GetValue()
+        self.baselineCorr = Data.Specs.DropDownBase.GetSelection()
         self.bridgeCorr = Data.Specs.CheckboxBridge.GetValue()
         self.blinkCorr = Data.Specs.CheckboxBlink.GetValue()
         self.thresholdCorr = Data.Specs.CheckboxThreshold.GetValue()
@@ -184,11 +182,18 @@ class Results():
 
         # Baseline Correction
         if self.baselineCorr:
+
             for e in epochs:
-                baselineAvg = [
-                    [c] for c in np.mean(e[:, self.preCut -
-                                           self.preFrame:self.preCut],
-                                         axis=1)]
+
+                # if pre2zero is selected
+                if self.baselineCorr == 1:
+                    baselineAvg = [[c] for c in np.mean(
+                        e[:, self.preCut - self.preFrame:self.preCut], axis=1)]
+
+                # if pre2post is selected
+                elif self.baselineCorr == 2:
+                    baselineAvg = [[c] for c in e.mean(axis=1)]
+
                 e -= baselineAvg
 
         # Correct Epochs for Threshold, Bridge and Blink outliers
