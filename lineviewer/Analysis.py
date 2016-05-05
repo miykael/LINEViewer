@@ -78,8 +78,9 @@ class Results():
         # Filter Channel Signal
         for i, d in enumerate(Data.Datasets):
 
-            tmpFilename = splitext(d.filename)[0]+'.lineviewerTemp'
-            tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32', shape=d.rawdata.shape)
+            tmpFilename = splitext(d.filename)[0] + '.lineviewerTempData'
+            tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32',
+                                   shape=d.rawdata.shape)
             tmpDataset[:] = d.rawdata[:]
 
             # 1. Remove DC
@@ -94,7 +95,8 @@ class Results():
                 if self.average:
                     refOffset = tmpDataset.mean(axis=0)
                 elif self.newReference != 'None':
-                    electrodeID = np.where(d.labelsChannel == self.newReference)[0]
+                    electrodeID = np.where(
+                        d.labelsChannel == self.newReference)[0]
                     if self.newReference != 'Average':
                         refOffset = tmpDataset[electrodeID]
                 for t in range(tmpDataset.shape[0]):
@@ -196,6 +198,14 @@ class Results():
 
                 e -= baselineAvg
 
+        # Common parameters
+        emptyMatrix = np.zeros(
+            (epochs.shape[0], epochs.shape[1])).astype('bool')
+        self.matrixThreshold = np.copy(emptyMatrix)
+        self.matrixBridge = np.copy(emptyMatrix)
+        self.matrixBlink = np.zeros(
+            (epochs.shape[0], epochs.shape[2])).astype('bool')
+
         # Correct Epochs for Threshold, Bridge and Blink outliers
         if self.thresholdCorr or self.bridgeCorr or self.blinkCorr:
 
@@ -205,14 +215,6 @@ class Results():
                 "Outlier detection progress",
                 "Time remaining for Outlier Detection", progressMax,
                 style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
-
-            # Common parameters
-            emptyMatrix = np.zeros(
-                (epochs.shape[0], epochs.shape[1])).astype('bool')
-            self.matrixThreshold = np.copy(emptyMatrix)
-            self.matrixBridge = np.copy(emptyMatrix)
-            self.matrixBlink = np.zeros(
-                (epochs.shape[0], epochs.shape[2])).astype('bool')
 
             # Go through all the epochs
             for i, e_long in enumerate(epochs):
@@ -231,7 +233,7 @@ class Results():
 
                 # Check for Bridge outliers
                 if self.bridgeCorr:
-                    corrMatrix = np.where(np.corrcoef(e_short) > .999)
+                    corrMatrix = np.where(np.corrcoef(e_short) > .9999)
                     badBridgeChannelID = np.unique(
                         [corrMatrix[0][m] for m in range(len(corrMatrix[0]))
                          if corrMatrix[0][m] != corrMatrix[1][m]])
@@ -244,7 +246,8 @@ class Results():
                     channels2Check = [j for j in range(e_long.shape[0])
                                       if j not in badThresholdChannelID]
                     stdOverTime = e_long[channels2Check].std(axis=0)
-                    blinkTimes = stdOverTime > stdOverTime.mean() * 3
+                    stdThresh = 3
+                    blinkTimes = stdOverTime > stdOverTime.mean() * stdThresh
                     blinks = np.where(blinkTimes)[0]
                     blinkGroups = np.split(
                         blinks, np.where(np.diff(blinks) != 1)[0] + 1)
@@ -265,11 +268,9 @@ class Results():
                 self.matrixThreshold[:, excludeID] *= False
 
             # Specifying ID of good and bad epochs
-            self.badBlinkEpochs = self.matrixBlink[
-                :, self.preCut - self.preFrame:self.preCut +
-                self.postFrame].sum(axis=1).astype('bool')
-            badIDs = self.matrixThreshold.sum(
-                axis=1) + self.matrixBridge.sum(axis=1) + self.badBlinkEpochs
+            badIDs = self.matrixThreshold.sum(axis=1) \
+                + self.matrixBridge.sum(axis=1) \
+                + self.matrixBlink.sum(axis=1)
             self.badID = badIDs.astype('bool')
             self.okID = np.invert(self.badID)
 
@@ -303,23 +304,6 @@ class Results():
                 self.matrixSelected = np.hstack([self.matrixSelected,
                                                  newSelectedMatrix])
 
-            # Correct if correction filters are off
-            if not self.thresholdCorr:
-                self.matrixSelected[
-                    [i for i, e in enumerate(self.matrixSelected)
-                     if 'thresh' in e]] = 'ok_normal'
-                self.matrixThreshold *= False
-            if not self.bridgeCorr:
-                self.matrixSelected[
-                    [i for i, e in enumerate(self.matrixSelected)
-                     if 'bridge' in e]] = 'ok_normal'
-                self.matrixBridge *= False
-            if not self.blinkCorr:
-                self.matrixSelected[
-                    [i for i, e in enumerate(self.matrixSelected)
-                     if 'blink' in e]] = 'ok_normal'
-                self.matrixBlink *= False
-
             # Correct if correction filters are on
             if self.thresholdCorr:
                 self.matrixSelected[
@@ -334,10 +318,27 @@ class Results():
                     [i for i in np.where(self.matrixBlink.sum(axis=1))[0]
                      if self.matrixSelected[i] == 'ok_normal']] = 'blink'
 
-            # Update List of ok and bad IDs
-            self.okID = np.array([True if 'ok_' in e else False
-                                  for e in self.matrixSelected])
-            self.badID = np.invert(self.okID)
+        # Correct if correction filters are off
+        if not self.thresholdCorr:
+            self.matrixSelected[
+                [i for i, e in enumerate(self.matrixSelected)
+                 if 'thresh' in e]] = 'ok_normal'
+            self.matrixThreshold *= False
+        if not self.bridgeCorr:
+            self.matrixSelected[
+                [i for i, e in enumerate(self.matrixSelected)
+                 if 'bridge' in e]] = 'ok_normal'
+            self.matrixBridge *= False
+        if not self.blinkCorr:
+            self.matrixSelected[
+                [i for i, e in enumerate(self.matrixSelected)
+                 if 'blink' in e]] = 'ok_normal'
+            self.matrixBlink *= False
+
+        # Update List of ok and bad IDs
+        self.okID = np.array([True if 'ok_' in e else False
+                              for e in self.matrixSelected])
+        self.badID = np.invert(self.okID)
 
         # Drop bad Epochs for average
         goodEpochs = epochs[self.okID]

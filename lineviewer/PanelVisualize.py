@@ -36,13 +36,13 @@ class Overview(wx.Panel):
             # Disregard outliers if they are selected as being ok
             self.Data.Results.matrixBridge[
                 np.where(matrixSelected == 'ok_bridge')[0]] = False
-            self.Data.Results.badBlinkEpochs[
+            self.Data.Results.matrixBlink[
                 np.where(matrixSelected == 'ok_blink')[0]] = False
             self.Data.Results.matrixThreshold[
                 np.where(matrixSelected == 'ok_thresh')[0]] = False
 
             matrixBridge = np.copy(self.Data.Results.matrixBridge)
-            badBlinkEpochs = np.copy(self.Data.Results.badBlinkEpochs)
+            matrixBlink = np.copy(self.Data.Results.matrixBlink)
             matrixThreshold = np.copy(self.Data.Results.matrixThreshold)
 
             # Check for broken Epochs; if 25% of channels are over threshold
@@ -50,7 +50,7 @@ class Overview(wx.Panel):
                                 matrixThreshold.shape[1] * 0.2)[0]
             matrixThreshold[brokenID] *= False
             matrixBridge[brokenID] *= False
-            badBlinkEpochs[brokenID] *= False
+            matrixBlink[brokenID] *= False
 
             # Get distribution of channels
             distChannelSelected = []
@@ -93,10 +93,10 @@ class Overview(wx.Panel):
                 distChannelThreshold.extend([0])
                 distChannelBridge.extend([0])
                 badChannelsLabel.extend(['Broken'])
-            if badBlinkEpochs.sum() != 0:
+            if matrixBlink.sum() != 0:
                 distChannelSelected.extend([0])
                 distChannelBroken.extend([0])
-                distChannelBlink.extend([badBlinkEpochs.sum()])
+                distChannelBlink.extend([matrixBlink.sum()])
                 distChannelThreshold.extend([0])
                 distChannelBridge.extend([0])
                 badChannelsLabel.extend(['Blink'])
@@ -116,7 +116,8 @@ class Overview(wx.Panel):
                 np.where(matrixBridge.sum(axis=1).astype('bool'))[0])
             markerIDBridge = [
                 m for m in markerIDBridge if m not in markerIDThreshold]
-            markerIDBlink = list(np.where(badBlinkEpochs)[0])
+            markerIDBlink = list(
+                np.where(matrixBlink.sum(axis=1).astype('bool'))[0])
             markerIDBlink = [
                 m for m in markerIDBlink
                 if m not in markerIDThreshold + markerIDBridge]
@@ -274,7 +275,7 @@ class Overview(wx.Panel):
             dist.OdistChannelThreshold = distChannelThreshold
             dist.OdistChannelBridge = distChannelBridge
             dist.OBroken = len(brokenID)
-            dist.OBlink = badBlinkEpochs.sum()
+            dist.OBlink = matrixBlink.sum()
             dist.OpercentageChannels = distOutliersChannel
             dist.OxaxisChannel = labelsChannel[badChannelsID]
 
