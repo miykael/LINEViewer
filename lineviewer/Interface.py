@@ -41,11 +41,11 @@ class MainFrame(wx.Frame):
         # Panel: Visualization
         self.PanelOption = wx.Notebook(MainPanel, wx.ID_ANY,
                                        style=wx.NB_TOP, size=(1000, 1000))
-        self.Data.EpochSummary = PanelVisualize.EpochSummary(
+        self.Data.ERPSummary = PanelVisualize.ERPSummary(
             self.PanelOption, self.Data)
-        self.Data.GFPDetailed = PanelVisualize.GFPDetailed(
+        self.Data.GFPDetail = PanelVisualize.GFPDetail(
             self.PanelOption, self.Data)
-        self.Data.EpochDetail = PanelVisualize.EpochDetail(
+        self.Data.EpochsDetail = PanelVisualize.EpochsDetail(
             self.PanelOption, self.Data)
         self.Data.Overview = PanelVisualize.Overview(self.PanelOption,
                                                      self.Data)
@@ -54,11 +54,11 @@ class MainFrame(wx.Frame):
 
         self.PanelOption.AddPage(self.Data.Overview, 'Overview')
         self.PanelOption.AddPage(self.Data.GFPSummary, 'GFP - Summary')
-        self.PanelOption.AddPage(self.Data.GFPDetailed, 'GFP - Detailed')
-        self.PanelOption.AddPage(self.Data.EpochDetail,
-                                 'Epoch - Detailed')
-        self.PanelOption.AddPage(self.Data.EpochSummary,
-                                 'Marker - Epoch Average')
+        self.PanelOption.AddPage(self.Data.GFPDetail, 'GFP - Detail')
+        self.PanelOption.AddPage(self.Data.ERPSummary,
+                                 'ERP - Summary')
+        self.PanelOption.AddPage(self.Data.EpochsDetail,
+                                 'Epochs - Detail')
         self.Data.GFPSummary.SetFocus()
         sizerMainH.Add(self.PanelOption, wx.ID_ANY, wx.EXPAND)
 

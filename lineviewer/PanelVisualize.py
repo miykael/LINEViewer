@@ -302,7 +302,7 @@ class GFPSummary(wx.Panel):
         newFigure(self, showGrid=True)
 
         # Figure events
-        self.canvas.mpl_connect('button_press_event', self.gotoDetailedGFP)
+        self.canvas.mpl_connect('button_press_event', self.gotoDetailGFP)
 
     def update(self, Results):
         if self.Data.Datasets == []:
@@ -329,7 +329,7 @@ class GFPSummary(wx.Panel):
             plt.grid(self.CheckboxGrid.IsChecked())
             self.canvas.draw()
 
-    def gotoDetailedGFP(self, event):
+    def gotoDetailGFP(self, event):
         ax = event.inaxes
         if ax is None:
             return
@@ -351,12 +351,12 @@ class GFPSummary(wx.Panel):
         if self.Data.Datasets != []:
             self.Data.Overview.update(self)
             self.update(self.Data.Results)
-            self.Data.EpochDetail.update([])
-            self.Data.EpochSummary.update([])
+            self.Data.EpochsDetail.update([])
+            self.Data.ERPSummary.update([])
         event.Skip()
 
 
-class GFPDetailed(wx.Panel):
+class GFPDetail(wx.Panel):
 
     def __init__(self, ParentFrame, Data):
 
@@ -369,7 +369,7 @@ class GFPDetailed(wx.Panel):
         newFigure(self, showGrid=True, showGFP=True, showGMD=True)
 
         # Figure events
-        self.canvas.mpl_connect('button_press_event', self.zoomInDetailedGFP)
+        self.canvas.mpl_connect('button_press_event', self.zoomInDetailGFP)
 
     def update(self, Results):
 
@@ -418,7 +418,7 @@ class GFPDetailed(wx.Panel):
             self.update(self.Data.Results)
         event.Skip()
 
-    def zoomInDetailedGFP(self, event):
+    def zoomInDetailGFP(self, event):
         ax = event.inaxes
         if ax is None:
             return
@@ -427,19 +427,19 @@ class GFPDetailed(wx.Panel):
             if event.button is 1:
                 subplotID = event.inaxes.get_subplotspec().num1
                 markerID = self.Data.Results.uniqueMarkers[subplotID]
-                self.Data.EpochSummary.update(markerID)
+                self.Data.ERPSummary.update(markerID)
 
-                comboMarker = self.Data.EpochDetail.ComboMarkers
+                comboMarker = self.Data.EpochsDetail.ComboMarkers
                 selectionID = int(np.where(np.array(
                     comboMarker.GetItems()) == str(markerID))[0])
                 comboMarker.SetSelection(selectionID)
 
-                self.Data.EpochDetail.update(markerID)
+                self.Data.EpochsDetail.update(markerID)
                 self.ParentFrame.SetSelection(3)
             self.canvas.ReleaseMouse()
 
 
-class EpochDetail(wx.Panel):
+class EpochsDetail(wx.Panel):
 
     def __init__(self, ParentFrame, Data):
 
@@ -448,7 +448,7 @@ class EpochDetail(wx.Panel):
 
         # Specify relevant variables
         self.Data = Data
-        newFigure(self, showDetailedEpochs=True)
+        newFigure(self, showDetailEpochs=True)
 
         # Figure events
         self.canvas.callbacks.connect('pick_event', self.onPick)
@@ -839,7 +839,7 @@ class EpochDetail(wx.Panel):
         event.Skip()
 
 
-class EpochSummary(wx.Panel):
+class ERPSummary(wx.Panel):
 
     def __init__(self, ParentFrame, Data):
 
@@ -1026,7 +1026,7 @@ class EpochSummary(wx.Panel):
 
 
 def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
-              showDetailedEpochs=False, showSummaryEpochs=False):
+              showDetailEpochs=False, showSummaryEpochs=False):
     self.figure = plt.figure(facecolor=(0.95, 0.95, 0.95))
     self.canvas = FigureCanvas(self, wx.ID_ANY, self.figure)
     self.toolbar = NavigationToolbar(self.canvas)
@@ -1058,7 +1058,7 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         wx.EVT_CHECKBOX(
             self.CheckboxGMD, self.CheckboxGMD.Id, self.updateFigure)
 
-    if showDetailedEpochs:
+    if showDetailEpochs:
         self.TextLayout = wx.StaticText(self, wx.ID_ANY, label='Layout:')
         self.ComboLayout = wx.ComboBox(self, style=wx.CB_READONLY,
                                        choices=['1x1', '1x2', '2x2', '2x3'])
@@ -1154,7 +1154,7 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
         self.hbox.Add(self.goLeftButton, 0, border=3, flag=flags)
         self.hbox.Add(self.goRightButton, 0, border=3, flag=flags)
 
-    if showDetailedEpochs or showSummaryEpochs:
+    if showDetailEpochs or showSummaryEpochs:
         self.ComboOverlay = wx.ComboBox(
             self, style=wx.CB_READONLY,
             choices=['Spread', 'Overlay'])

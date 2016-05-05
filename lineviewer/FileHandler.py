@@ -260,14 +260,14 @@ class SaveFigures:
             join(resultsPath, 'plot_Overview.png'), bbox_inches='tight')
         figures.GFPSummary.figure.savefig(
             join(resultsPath, 'plot_GFP_Summary.png'), bbox_inches='tight')
-        figures.GFPDetailed.figure.savefig(
-            join(resultsPath, 'plot_GFP_Detailed.png'), bbox_inches='tight')
+        figures.GFPDetail.figure.savefig(
+            join(resultsPath, 'plot_GFP_Detail.png'), bbox_inches='tight')
 
-        markers = figures.EpochSummary.ComboMarkers.GetItems()[1:]
+        markers = figures.ERPSummary.ComboMarkers.GetItems()[1:]
         for m in markers:
-            figures.EpochSummary.update(str(m))
-            figures.EpochSummary.figure.savefig(
-                join(resultsPath, 'plot_Average_Marker_%s.png' % str(m)),
+            figures.ERPSummary.update(str(m))
+            figures.ERPSummary.figure.savefig(
+                join(resultsPath, 'plot_ERP_Marker_%s.png' % str(m)),
                 bbox_inches='tight')
 
 
@@ -330,9 +330,8 @@ class SaveVerbose:
             f.writelines('Markers hidden\t\t:\t%s\n' % data.markers2hide)
             f.writelines('\n\n')
 
-            # Information about the average output
-            f.writelines('Average Information:\n--------------------\n\n')
-
+            # Information about the ERP output
+            f.writelines('ERP Information:\n----------------\n\n')
             epochsTotal = res.epochs.shape[0]
             epochsOK = res.okID.sum()
             percentOK = np.round(float(epochsOK) / epochsTotal, 2) * 100
@@ -342,8 +341,8 @@ class SaveVerbose:
                          ', '.join(res.uniqueMarkers.astype('str')))
             f.writelines('Epochs total #\t\t:\t%s\n' % epochsTotal)
             f.writelines(
-                'Epochs in average\t:\t{0} / {1}%\n'.format(epochsOK,
-                                                            percentOK))
+                'Epochs in ERP\t:\t{0} / {1}%\n'.format(epochsOK,
+                                                        percentOK))
             f.writelines('\n')
 
             selected = len(np.where(res.matrixSelected == 'selected')[0])

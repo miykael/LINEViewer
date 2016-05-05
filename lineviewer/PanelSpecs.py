@@ -320,9 +320,9 @@ class Specification(wx.Panel):
         if self.Data.Datasets != []:
             self.Data.Overview.update(self.Data.Results)
             self.Data.GFPSummary.update(self.Data.Results)
-            self.Data.GFPDetailed.update(self.Data.Results)
-            self.Data.EpochDetail.update(self.Data.EpochDetail.markerValue)
-            self.Data.EpochSummary.update(self.Data.EpochDetail.markerValue)
+            self.Data.GFPDetail.update(self.Data.Results)
+            self.Data.EpochsDetail.update(self.Data.EpochsDetail.markerValue)
+            self.Data.ERPSummary.update(self.Data.EpochsDetail.markerValue)
         event.Skip()
 
     def useAverage(self, event):

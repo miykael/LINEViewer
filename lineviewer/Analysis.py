@@ -91,6 +91,8 @@ class Results():
             # 2. Average or specific reference
             if self.average or self.newReference != 'None':
 
+                print "Hallo"
+
                 if self.average:
                     refOffset = tmpDataset.mean(axis=0)
                 elif self.newReference != 'None':
@@ -372,9 +374,9 @@ class Results():
         # Don't show more if no epoch survived
         if self.okID.sum() != 0:
             Data.GFPSummary.update(self)
-            Data.GFPDetailed.update(self)
-            Data.EpochDetail.update([])
-            Data.EpochSummary.update([])
+            Data.GFPDetail.update(self)
+            Data.EpochsDetail.update([])
+            Data.ERPSummary.update([])
 
 
 def butter_bandpass_param(fs, highcut=0, lowcut=0, order=2, notch=-1.0):
