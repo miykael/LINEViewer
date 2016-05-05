@@ -352,8 +352,8 @@ class GFPSummary(wx.Panel):
         if self.Data.Datasets != []:
             self.Data.Overview.update(self)
             self.update(self.Data.Results)
-            self.Data.EpochsDetail.update([])
             self.Data.ERPSummary.update([])
+            self.Data.EpochsDetail.update([])
         event.Skip()
 
 
@@ -438,6 +438,192 @@ class GFPDetail(wx.Panel):
                 self.Data.EpochsDetail.update(markerID)
                 self.ParentFrame.SetSelection(3)
             self.canvas.ReleaseMouse()
+
+
+class ERPSummary(wx.Panel):
+
+    def __init__(self, ParentFrame, Data):
+
+        # Create Data Frame window
+        wx.Panel.__init__(self, parent=ParentFrame, style=wx.SUNKEN_BORDER)
+
+        # Specify relevant variables
+        self.Data = Data
+        newFigure(self, showSummaryEpochs=True)
+
+        # Figure events
+        self.canvas.callbacks.connect('pick_event', self.onPick)
+
+    def update(self, markerValue=[], shiftView=0):
+        self.figure.clear()
+        self.shiftView = shiftView
+        self.markerValue = markerValue
+
+        # Set correct markerList and selection
+        self.allMarker = np.unique([
+            m for m in self.Data.Results.markers
+            if m not in self.Data.markers2hide])
+        markerList = ['All   '] + self.allMarker.astype('str').tolist()
+        self.ComboMarkers.SetItems(markerList)
+
+        if self.markerValue == []:
+            self.ComboMarkers.SetSelection(0)
+        else:
+            markerID = markerList.index(str(markerValue))
+            self.shiftView = markerID - 1
+            self.ComboMarkers.SetSelection(markerID)
+            self.ComboLayout.SetValue('1x1')
+
+        # Prepare Visualization
+        self.labelsChannel = self.Data.Datasets[0].labelsChannel
+        Results = self.Data.Results
+        samplingPoints = Results.epochs.shape[2]
+        preStimuli = 1000. / (float(Results.sampleRate) /
+                              Results.preCut)
+        postStimuli = 1000. / (float(Results.sampleRate) /
+                               Results.postCut)
+        xaxis = [int(float(i) * (preStimuli + postStimuli) /
+                     samplingPoints - preStimuli)
+                 for i in range(samplingPoints)]
+
+        # Get Visualization layout
+        layout = self.ComboLayout.GetValue()
+        vPlots = int(layout[-1])
+        hPlots = int(layout[0])
+        self.tiles = vPlots * hPlots
+
+        # Draw the average epochs
+        for k, i in enumerate(range(self.shiftView,
+                                    self.tiles + self.shiftView)):
+            axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
+
+            if i < len(Results.avgEpochs):
+                markerID = self.allMarker[i]
+                epoch = Results.avgEpochs[i]
+                sizer = np.sqrt(
+                    np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
+                modulator = float(self.ComboAmplitude.GetValue()[:-1])
+                sizer *= modulator / 100.
+
+                # Draw single channels
+                minmax = [0, 0]
+                for j, c in enumerate(epoch):
+                    if self.ComboOverlay.GetValue() == 'Overlay':
+                        delta = 0
+                    else:
+                        delta = j
+                    color = 'gray'
+                    lines = axes.plot(xaxis, c / sizer - delta, color,
+                                      picker=1)
+                    ydata = lines[0].get_ydata()
+                    lineMin = ydata.min()
+                    lineMax = ydata.max()
+                    if minmax[0] > lineMin:
+                        minmax[0] = lineMin
+                    if minmax[1] < lineMax:
+                        minmax[1] = lineMax
+                delta = np.abs(minmax).sum() * .01
+                minmax = [minmax[0] - delta, minmax[1] + delta]
+
+                axes.set_ylim(minmax)
+                axes.get_yaxis().set_visible(False)
+                axes.title.set_text('Marker %s' % markerID)
+                axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
+
+        currentPage = (self.shiftView / self.tiles) + 1
+        totalPage = (len(Results.avgEpochs) - 1) / self.tiles + 1
+        if totalPage == 0:
+            currentPage = 0
+
+        self.TextPages.SetLabel('Page: %s/%s   ' % (currentPage, totalPage))
+
+        self.figure.tight_layout()
+        self.canvas.draw()
+
+    def onPick(self, event):
+
+        # Only do something if left double click
+        if event.mouseevent.dblclick and event.mouseevent.button == 1:
+
+            # Print Line name and color it black if requested
+            if event.artist.get_picker() == 1:
+                event.artist.set_color('black')
+                linenumber = int(event.artist.get_label()[5:])
+                xValue = 1000. * self.Data.Results.postCut / \
+                    self.Data.Results.sampleRate + 1
+                yValue = event.artist.get_data()[1][-1]
+                event.artist.axes.text(xValue, yValue,
+                                       self.labelsChannel[linenumber],
+                                       color='black')
+
+            self.canvas.draw()
+        if event.mouseevent.name == 'button_press_event':
+            self.canvas.ReleaseMouse()
+
+    def updateLayout(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update([])
+            self.ComboMarkers.SetSelection(0)
+        event.Skip()
+
+    def updateSize(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue, self.shiftView)
+        event.Skip()
+
+    def updateFigure(self, event):
+        if self.Data.Datasets != []:
+            markerList = self.ComboMarkers.GetItems()
+            marker = markerList[self.ComboMarkers.GetSelection()]
+            if 'All' in marker:
+                markerValue = []
+            else:
+                markerValue = str(marker)
+            self.update(markerValue)
+        event.Skip()
+
+    def shiftViewLeft(self, event):
+        if self.Data.Datasets != []:
+            if self.shiftView != 0:
+                viewShift = self.shiftView - self.tiles
+                if viewShift < 0:
+                    viewShift = 0
+
+                markerList = self.ComboMarkers.GetItems()
+                if self.markerValue == []:
+                    marker = []
+                else:
+                    markerID = markerList.index(str(self.markerValue)) - 1
+                    if markerID < 1:
+                        marker = []
+                    else:
+                        marker = markerList[markerID]
+
+                self.update(marker, viewShift)
+        event.Skip()
+
+    def shiftViewRight(self, event):
+        if self.Data.Datasets != []:
+            if self.shiftView + self.tiles \
+                    < len(self.allMarker):
+                viewShift = self.shiftView + self.tiles
+
+                markerList = self.ComboMarkers.GetItems()
+                if self.markerValue == []:
+                    marker = []
+                else:
+                    markerID = markerList.index(str(self.markerValue)) + 1
+                    if markerID >= len(markerList):
+                        markerID = len(markerList) - 1
+                    marker = markerList[markerID]
+
+                self.update(marker, viewShift)
+        event.Skip()
+
+    def updateOverlay(self, event):
+        if hasattr(self, 'markerValue'):
+            self.update(self.markerValue)
+        event.Skip()
 
 
 class EpochsDetail(wx.Panel):
@@ -832,192 +1018,6 @@ class EpochsDetail(wx.Panel):
     def updateSize(self, event):
         if hasattr(self, 'markerValue'):
             self.update(self.markerValue, self.shiftView)
-        event.Skip()
-
-    def updateOverlay(self, event):
-        if hasattr(self, 'markerValue'):
-            self.update(self.markerValue)
-        event.Skip()
-
-
-class ERPSummary(wx.Panel):
-
-    def __init__(self, ParentFrame, Data):
-
-        # Create Data Frame window
-        wx.Panel.__init__(self, parent=ParentFrame, style=wx.SUNKEN_BORDER)
-
-        # Specify relevant variables
-        self.Data = Data
-        newFigure(self, showSummaryEpochs=True)
-
-        # Figure events
-        self.canvas.callbacks.connect('pick_event', self.onPick)
-
-    def update(self, markerValue=[], shiftView=0):
-        self.figure.clear()
-        self.shiftView = shiftView
-        self.markerValue = markerValue
-
-        # Set correct markerList and selection
-        self.allMarker = np.unique([
-            m for m in self.Data.Results.markers
-            if m not in self.Data.markers2hide])
-        markerList = ['All   '] + self.allMarker.astype('str').tolist()
-        self.ComboMarkers.SetItems(markerList)
-
-        if self.markerValue == []:
-            self.ComboMarkers.SetSelection(0)
-        else:
-            markerID = markerList.index(str(markerValue))
-            self.shiftView = markerID - 1
-            self.ComboMarkers.SetSelection(markerID)
-            self.ComboLayout.SetValue('1x1')
-
-        # Prepare Visualization
-        self.labelsChannel = self.Data.Datasets[0].labelsChannel
-        Results = self.Data.Results
-        samplingPoints = Results.epochs.shape[2]
-        preStimuli = 1000. / (float(Results.sampleRate) /
-                              Results.preCut)
-        postStimuli = 1000. / (float(Results.sampleRate) /
-                               Results.postCut)
-        xaxis = [int(float(i) * (preStimuli + postStimuli) /
-                     samplingPoints - preStimuli)
-                 for i in range(samplingPoints)]
-
-        # Get Visualization layout
-        layout = self.ComboLayout.GetValue()
-        vPlots = int(layout[-1])
-        hPlots = int(layout[0])
-        self.tiles = vPlots * hPlots
-
-        # Draw the average epochs
-        for k, i in enumerate(range(self.shiftView,
-                                    self.tiles + self.shiftView)):
-            axes = self.figure.add_subplot(vPlots, hPlots, k + 1)
-
-            if i < len(Results.avgEpochs):
-                markerID = self.allMarker[i]
-                epoch = Results.avgEpochs[i]
-                sizer = np.sqrt(
-                    np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
-                modulator = float(self.ComboAmplitude.GetValue()[:-1])
-                sizer *= modulator / 100.
-
-                # Draw single channels
-                minmax = [0, 0]
-                for j, c in enumerate(epoch):
-                    if self.ComboOverlay.GetValue() == 'Overlay':
-                        delta = 0
-                    else:
-                        delta = j
-                    color = 'gray'
-                    lines = axes.plot(xaxis, c / sizer - delta, color,
-                                      picker=1)
-                    ydata = lines[0].get_ydata()
-                    lineMin = ydata.min()
-                    lineMax = ydata.max()
-                    if minmax[0] > lineMin:
-                        minmax[0] = lineMin
-                    if minmax[1] < lineMax:
-                        minmax[1] = lineMax
-                delta = np.abs(minmax).sum() * .01
-                minmax = [minmax[0] - delta, minmax[1] + delta]
-
-                axes.set_ylim(minmax)
-                axes.get_yaxis().set_visible(False)
-                axes.title.set_text('Marker %s' % markerID)
-                axes.vlines(0, minmax[0], minmax[1], linestyles='dotted')
-
-        currentPage = (self.shiftView / self.tiles) + 1
-        totalPage = (len(Results.avgEpochs) - 1) / self.tiles + 1
-        if totalPage == 0:
-            currentPage = 0
-
-        self.TextPages.SetLabel('Page: %s/%s   ' % (currentPage, totalPage))
-
-        self.figure.tight_layout()
-        self.canvas.draw()
-
-    def onPick(self, event):
-
-        # Only do something if left double click
-        if event.mouseevent.dblclick and event.mouseevent.button == 1:
-
-            # Print Line name and color it black if requested
-            if event.artist.get_picker() == 1:
-                event.artist.set_color('black')
-                linenumber = int(event.artist.get_label()[5:])
-                xValue = 1000. * self.Data.Results.postCut / \
-                    self.Data.Results.sampleRate + 1
-                yValue = event.artist.get_data()[1][-1]
-                event.artist.axes.text(xValue, yValue,
-                                       self.labelsChannel[linenumber],
-                                       color='black')
-
-            self.canvas.draw()
-        if event.mouseevent.name == 'button_press_event':
-            self.canvas.ReleaseMouse()
-
-    def updateLayout(self, event):
-        if hasattr(self, 'markerValue'):
-            self.update([])
-            self.ComboMarkers.SetSelection(0)
-        event.Skip()
-
-    def updateSize(self, event):
-        if hasattr(self, 'markerValue'):
-            self.update(self.markerValue, self.shiftView)
-        event.Skip()
-
-    def updateFigure(self, event):
-        if self.Data.Datasets != []:
-            markerList = self.ComboMarkers.GetItems()
-            marker = markerList[self.ComboMarkers.GetSelection()]
-            if 'All' in marker:
-                markerValue = []
-            else:
-                markerValue = str(marker)
-            self.update(markerValue)
-        event.Skip()
-
-    def shiftViewLeft(self, event):
-        if self.Data.Datasets != []:
-            if self.shiftView != 0:
-                viewShift = self.shiftView - self.tiles
-                if viewShift < 0:
-                    viewShift = 0
-
-                markerList = self.ComboMarkers.GetItems()
-                if self.markerValue == []:
-                    marker = []
-                else:
-                    markerID = markerList.index(str(self.markerValue)) - 1
-                    if markerID < 1:
-                        marker = []
-                    else:
-                        marker = markerList[markerID]
-
-                self.update(marker, viewShift)
-        event.Skip()
-
-    def shiftViewRight(self, event):
-        if self.Data.Datasets != []:
-            if self.shiftView + self.tiles \
-                    < len(self.allMarker):
-                viewShift = self.shiftView + self.tiles
-
-                markerList = self.ComboMarkers.GetItems()
-                if self.markerValue == []:
-                    marker = []
-                else:
-                    markerID = markerList.index(str(self.markerValue)) + 1
-                    if markerID >= len(markerList):
-                        markerID = len(markerList) - 1
-                    marker = markerList[markerID]
-
-                self.update(marker, viewShift)
         event.Skip()
 
     def updateOverlay(self, event):

@@ -147,21 +147,6 @@ class Results():
             if exists(tmpFilename):
                 remove(tmpFilename)
 
-            Data.interpolEpochs = np.copy(Data.Orig.epochs)
-
-        self.interpolationCheck(Data, False)
-
-    def interpolationCheck(self, Data, forceInterpolation):
-
-        # Reset matrixSelected if updateAll or interpolationCheck is called
-        if hasattr(self, 'matrixSelected'):
-            del self.matrixSelected
-
-        # Do interpolation if needed
-        if Data.Specs.channels2interpolate != [] or forceInterpolation:
-            Data.interpolEpochs = np.copy(Data.Orig.epochs)
-            Data = interpolateChannels(self, Data, Data.Specs.xyzFile)
-
         self.updateEpochs(Data)
 
     def updateEpochs(self, Data):
@@ -179,7 +164,7 @@ class Results():
         self.excludeChannel = Data.Specs.channels2exclude
 
         # Copy epoch and marker values
-        epochs = np.copy(Data.interpolEpochs)
+        epochs = np.copy(Data.Orig.epochs)
         markers = np.copy(Data.Orig.markers)
 
         # Baseline Correction
@@ -372,8 +357,29 @@ class Results():
 
             self.markers = self.collapsedMarkers
 
-        self.avgGFP = [calculateGFP(a) for a in self.avgEpochs]
-        self.avgGMD = [calculateGMD(a) for a in self.avgEpochs]
+        self.origAvgEpochs = np.copy(self.avgEpochs)
+        self.interpolationCheck(Data)
+
+    def interpolationCheck(self, Data):
+
+        # Interpolate channels if necessary
+        if Data.Specs.channels2interpolate != []:
+
+            interpolatedEpochs = interpolateChannels(
+                np.array(self.origAvgEpochs),
+                Data.Specs.channels2interpolate,
+                Data.Specs.xyzFile)
+
+            self.avgGFP = [calculateGFP(a) for a in interpolatedEpochs]
+            self.avgGMD = [calculateGMD(a) for a in interpolatedEpochs]
+
+            self.avgEpochs = [e for e in interpolatedEpochs]
+
+        else:
+            self.avgGFP = [calculateGFP(a) for a in self.origAvgEpochs]
+            self.avgGMD = [calculateGMD(a) for a in self.origAvgEpochs]
+
+            self.avgEpochs = np.copy(self.origAvgEpochs)
 
         Data.Overview.update(self)
 
@@ -440,10 +446,9 @@ def calculateGMD(dataset):
     return np.insert(GMD, 0, 0)
 
 
-def interpolateChannels(self, Data, xyz):
+def interpolateChannels(epochs, channels2interpolate, xyz):
 
     xyz = ReadXYZ(xyz)
-    channels2interpolate = Data.Specs.channels2interpolate
 
     id2interp = [i for i, e in enumerate(xyz.labels)
                  if e in channels2interpolate]
@@ -465,14 +470,7 @@ def interpolateChannels(self, Data, xyz):
     matrice = np.concatenate((matrice, addZeros), axis=0)
     matriceInv = np.linalg.inv(matrice)
 
-    # Create Progressbar for interpolation
-    progressMax = Data.interpolEpochs.shape[0]
-    dlg = wx.ProgressDialog(
-        "Interpolation Progress", "Time remaining for Interpolation",
-        progressMax,
-        style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
-
-    for count, epoch in enumerate(Data.interpolEpochs):
+    for count, epoch in enumerate(epochs):
 
         signal = np.copy(epoch.T)
 
@@ -494,10 +492,6 @@ def interpolateChannels(self, Data, xyz):
             K[np.isnan(K)] = 0
             IntData = np.dot(Coef, np.concatenate((K, Q), axis=0))
             signal[:, b] = IntData
-        Data.interpolEpochs[count] = signal.T
+        epochs[count] = signal.T
 
-        dlg.Update(count)
-
-    dlg.Destroy()
-
-    return Data
+    return epochs

@@ -114,28 +114,6 @@ class Specification(wx.Panel):
         sizerPanelSpecs.Add(sizerBoxData, 0, wx.EXPAND)
         sizerPanelSpecs.AddSpacer(20)
 
-        # Box: Interpolation Specifications
-        BoxSpecInterpolation = wx.StaticBox(PanelSpecs,
-                                            wx.ID_ANY, style=wx.CENTRE,
-                                            label="Interpolation")
-        BoxSpecInterpolation.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,
-                                             wx.BOLD))
-        sizerBoxInterpolation = wx.StaticBoxSizer(BoxSpecInterpolation,
-                                                  wx.VERTICAL)
-
-        self.ButtonInterpolate = wx.Button(
-            PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="&Channels to interpolate")
-        self.ButtonInterpolate.Enable()
-        self.Data.Specs.channels2interpolate = []
-        sizerBoxInterpolation.Add(self.ButtonInterpolate, 0, wx.EXPAND)
-        self.Data.Specs.xyzFile = ''
-        self.TextInterpolated = wx.StaticText(
-            PanelSpecs, wx.ID_ANY, label='No interpolated channels\n\n')
-        sizerBoxInterpolation.Add(self.TextInterpolated, 0, wx.EXPAND)
-        sizerPanelSpecs.Add(sizerBoxInterpolation, 0, wx.EXPAND)
-        sizerPanelSpecs.AddSpacer(20)
-
         # Box: Epoch Filters Specifications
         BoxSpecEpoch = wx.StaticBox(PanelSpecs, wx.ID_ANY, style=wx.CENTRE,
                                     label="Epoch Filters")
@@ -272,6 +250,28 @@ class Specification(wx.Panel):
         sizerPanelSpecs.Add(sizerBoxMarker, 0, wx.EXPAND)
         sizerPanelSpecs.AddSpacer(20)
 
+        # Box: Interpolation Specifications
+        BoxSpecInterpolation = wx.StaticBox(PanelSpecs,
+                                            wx.ID_ANY, style=wx.CENTRE,
+                                            label="Interpolation")
+        BoxSpecInterpolation.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,
+                                             wx.BOLD))
+        sizerBoxInterpolation = wx.StaticBoxSizer(BoxSpecInterpolation,
+                                                  wx.VERTICAL)
+
+        self.ButtonInterpolate = wx.Button(
+            PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
+            label="&Channels to interpolate")
+        self.ButtonInterpolate.Enable()
+        self.Data.Specs.channels2interpolate = []
+        sizerBoxInterpolation.Add(self.ButtonInterpolate, 0, wx.EXPAND)
+        self.Data.Specs.xyzFile = ''
+        self.TextInterpolated = wx.StaticText(
+            PanelSpecs, wx.ID_ANY, label='No interpolated channels\n\n')
+        sizerBoxInterpolation.Add(self.TextInterpolated, 0, wx.EXPAND)
+        sizerPanelSpecs.Add(sizerBoxInterpolation, 0, wx.EXPAND)
+        sizerPanelSpecs.AddSpacer(20)
+
         # Create vertical structure of Data Handler Frame
         sizerFrame = wx.BoxSizer(wx.VERTICAL)
         sizerFrame.AddSpacer(3)
@@ -339,8 +339,8 @@ class Specification(wx.Panel):
             self.Data.Overview.update(self.Data.Results)
             self.Data.GFPSummary.update(self.Data.Results)
             self.Data.GFPDetail.update(self.Data.Results)
-            self.Data.EpochsDetail.update(self.Data.EpochsDetail.markerValue)
             self.Data.ERPSummary.update(self.Data.EpochsDetail.markerValue)
+            self.Data.EpochsDetail.update(self.Data.EpochsDetail.markerValue)
         event.Skip()
 
     def useAverage(self, event):
@@ -378,16 +378,18 @@ class Specification(wx.Panel):
 
                 if self.Data.Specs.xyzFile == '':
                     self.xyzPath = self.Data.DirPath
+
+                    dlgXYZ = wx.FileDialog(None, "Load xyz file",
+                                           defaultDir=self.xyzPath,
+                                           wildcard='*.xyz')
+                    if dlgXYZ.ShowModal() == wx.ID_OK:
+                        self.Data.Specs.xyzFile = dlgXYZ.GetPath()
+                        self.Data.Results.interpolationCheck(self.Data)
+                    dlgXYZ.Destroy()
                 else:
                     self.xyzPath = dirname(self.Data.Specs.xyzFile)
+                    self.Data.Results.interpolationCheck(self.Data)
 
-                dlgXYZ = wx.FileDialog(None, "Load xyz file",
-                                       defaultDir=self.xyzPath,
-                                       wildcard='*.xyz')
-                if dlgXYZ.ShowModal() == wx.ID_OK:
-                    self.Data.Specs.xyzFile = dlgXYZ.GetPath()
-                    self.Data.Results.interpolationCheck(self.Data, True)
-                dlgXYZ.Destroy()
                 labeltxt = 'Interpolated Channels:\n' + \
                     ''.join([e + ', ' if i % 7 != 6
                              else e + ',\n'

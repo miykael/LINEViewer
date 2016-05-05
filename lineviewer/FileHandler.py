@@ -218,7 +218,7 @@ class SaveEPH:
 
             # Write GFP data into EPH file
             nTimepoint = results.avgGFP[0].shape[0]
-            filename = '%s.Epoch_%.3d.GFP.eph' % (resultsName, m)
+            filename = '%s.Epoch_%s.GFP.eph' % (resultsName, m)
             with open(join(resultsPath, filename), 'w') as f:
                 f.writelines('{:>15}\t{:>15}\t{:>25}\n'.format(
                     1, nTimepoint, results.sampleRate))
@@ -234,7 +234,7 @@ class SaveEPH:
 
             # Write electrode data into EPH file
             nSignal, nTimepoint = results.avgEpochs[0].shape
-            filename = '%s.Epoch_%.3d.eph' % (resultsName, m)
+            filename = '%s.Epoch_%s.eph' % (resultsName, m)
             with open(join(resultsPath, filename), 'w') as f:
                 f.writelines('{:>15}\t{:>15}\t{:>25}\n'.format(
                     nSignal, nTimepoint, results.sampleRate))
@@ -298,13 +298,6 @@ class SaveVerbose:
             f.writelines('Notch\t\t\t\t:\t%s\n' % notch)
             f.writelines('\n')
 
-            f.writelines('Interpolated ch.\t:\t%s\n' %
-                         data.Specs.channels2interpolate)
-            xyzFile = data.Specs.xyzFile if data.Specs.xyzFile != '' \
-                else 'None'
-            f.writelines('XYZ-file path\t\t:\t%s\n' % xyzFile)
-            f.writelines('\n')
-
             f.writelines('Epoch duration pre\t:\t%sms / %s sampling points\n' %
                          (res.preEpoch, res.preFrame))
             f.writelines(
@@ -328,6 +321,13 @@ class SaveVerbose:
                 collapsedInfo = 'None'
             f.writelines('Markers collapsed\t:\t%s\n' % collapsedInfo)
             f.writelines('Markers hidden\t\t:\t%s\n' % data.markers2hide)
+            f.writelines('\n')
+
+            f.writelines('Interpolated ch.\t:\t%s\n' %
+                         data.Specs.channels2interpolate)
+            xyzFile = data.Specs.xyzFile if data.Specs.xyzFile != '' \
+                else 'None'
+            f.writelines('XYZ-file path\t\t:\t%s\n' % xyzFile)
             f.writelines('\n\n')
 
             # Information about the ERP output
