@@ -1,5 +1,7 @@
 import wx
 import numpy as np
+from os import remove
+from os.path import splitext, exists
 from FileHandler import ReadXYZ
 from scipy.signal import butter, filtfilt
 
@@ -75,33 +77,43 @@ class Results():
 
         # Filter Channel Signal
         for i, d in enumerate(Data.Datasets):
-            dataset = np.copy(d.rawdata)
+
+            tmpFilename = splitext(d.filename)[0]+'.lineviewerTemp'
+            tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32', shape=d.rawdata.shape)
+            tmpDataset[:] = d.rawdata[:]
 
             # 1. Remove DC
             if self.removeDC:
-                dataset -= np.vstack(dataset.mean(axis=1))
+                dcOffset = np.vstack(tmpDataset.mean(axis=1))
+                for t in range(tmpDataset.shape[0]):
+                    tmpDataset[t] -= dcOffset[t]
 
             # 2. Average or specific reference
-            if self.average:
-                dataset -= dataset.mean(axis=0)
-            elif self.newReference != 'None':
-                electrodeID = np.where(d.labelsChannel == self.newReference)[0]
-                if self.newReference != 'Average':
-                    dataset -= dataset[electrodeID]
+            if self.average or self.newReference != 'None':
+
+                if self.average:
+                    refOffset = tmpDataset.mean(axis=0)
+                elif self.newReference != 'None':
+                    electrodeID = np.where(d.labelsChannel == self.newReference)[0]
+                    if self.newReference != 'Average':
+                        refOffset = tmpDataset[electrodeID]
+                for t in range(tmpDataset.shape[0]):
+                    tmpDataset[t] -= refOffset[t]
 
             # 3. Run Butterworth Low-, High- or Bandpassfilter
-            if self.doPass:
-                if self.lowcut != 0 and self.highcut != 0:
-                    dataset = butter_bandpass_filter(dataset,
-                                                     d.sampleRate,
-                                                     highcut=self.highcut,
-                                                     lowcut=self.lowcut)
+            if self.doPass and self.lowcut != 0 and self.highcut != 0:
+                b, a = butter_bandpass_param(d.sampleRate,
+                                             highcut=self.highcut,
+                                             lowcut=self.lowcut)
+                for t in range(tmpDataset.shape[0]):
+                    tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
 
             # 4. Notch Filter
             if self.doNotch:
-                dataset = butter_bandpass_filter(dataset,
-                                                 d.sampleRate,
-                                                 notch=self.notchValue)
+                b, a = butter_bandpass_param(d.sampleRate,
+                                             notch=self.notchValue)
+                for t in range(tmpDataset.shape[0]):
+                    tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
 
             # Create epochs
             self.preFrame = int(
@@ -112,10 +124,10 @@ class Results():
             self.postCut = np.copy(self.postFrame)
 
             # Drop markers if there's not enough preFrame or postFrame to cut
-            cutsIO = [True if m > self.preCut and m < dataset.shape[
+            cutsIO = [True if m > self.preCut and m < tmpDataset.shape[
                 1] - self.postCut else False for m in d.markerTime]
 
-            epochs = np.array([dataset[:, m - self.preCut:m + self.postCut]
+            epochs = np.array([tmpDataset[:, m - self.preCut:m + self.postCut]
                                for m in d.markerTime[np.where(cutsIO)]])
 
             # Accumulate epoch information
@@ -127,9 +139,13 @@ class Results():
                 Data.Orig.epochs = np.vstack((Data.Orig.epochs, epochs))
                 Data.Orig.markers = np.hstack(
                     (Data.Orig.markers, d.markerValue[np.where(cutsIO)]))
-            del dataset
 
-            Data.InterpolEpochs = np.copy(Data.Orig.epochs)
+            # Clean up of temporary files and variables
+            del tmpDataset
+            if exists(tmpFilename):
+                remove(tmpFilename)
+
+            Data.interpolEpochs = np.copy(Data.Orig.epochs)
 
         self.interpolationCheck(Data, False)
 
@@ -141,7 +157,7 @@ class Results():
 
         # Do interpolation if needed
         if Data.Specs.channels2interpolate != [] or forceInterpolation:
-            Data.InterpolEpochs = np.copy(Data.Orig.epochs)
+            Data.interpolEpochs = np.copy(Data.Orig.epochs)
             Data = interpolateChannels(self, Data, Data.Specs.xyzFile)
 
         self.updateEpochs(Data)
@@ -161,7 +177,7 @@ class Results():
         self.excludeChannel = Data.Specs.channels2exclude
 
         # Copy epoch and marker values
-        epochs = np.copy(Data.InterpolEpochs)
+        epochs = np.copy(Data.interpolEpochs)
         markers = np.copy(Data.Orig.markers)
 
         # Baseline Correction
@@ -361,8 +377,7 @@ class Results():
             Data.EpochSummary.update([])
 
 
-def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,
-                           order=2, notch=-1.0):
+def butter_bandpass_param(fs, highcut=0, lowcut=0, order=2, notch=-1.0):
 
     nyq = 0.5 * fs
     low = lowcut / nyq
@@ -379,11 +394,10 @@ def butter_bandpass_filter(data, fs, highcut=0, lowcut=0,
             b, a = butter(order, low, btype='low')
         else:
             b, a = butter(order, [high, low], btype='band')
-    return filtfilt(b, a, data)
+    return b, a
 
 
-def butter_bandpass_filter_old(data, fs, highcut=0, lowcut=0,
-                               order=2, notch=-1.0):
+def butter_bandpass_param_old(fs, highcut=0, lowcut=0, order=2, notch=-1.0):
     # CARTOOL Version
 
     N = np.log2(fs)
@@ -402,7 +416,7 @@ def butter_bandpass_filter_old(data, fs, highcut=0, lowcut=0,
         else:
             b, a = butter(order, [highcut / divisorHigh, lowcut / divisorLow],
                           btype='band')
-    return filtfilt(b, a, data)
+    return b, a
 
 
 def calculateGFP(dataset):
@@ -444,13 +458,13 @@ def interpolateChannels(self, Data, xyz):
     matriceInv = np.linalg.inv(matrice)
 
     # Create Progressbar for interpolation
-    progressMax = Data.InterpolEpochs.shape[0]
+    progressMax = Data.interpolEpochs.shape[0]
     dlg = wx.ProgressDialog(
         "Interpolation Progress", "Time remaining for Interpolation",
         progressMax,
         style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
 
-    for count, epoch in enumerate(Data.InterpolEpochs):
+    for count, epoch in enumerate(Data.interpolEpochs):
 
         signal = np.copy(epoch.T)
 
@@ -472,7 +486,7 @@ def interpolateChannels(self, Data, xyz):
             K[np.isnan(K)] = 0
             IntData = np.dot(Coef, np.concatenate((K, Q), axis=0))
             signal[:, b] = IntData
-        Data.InterpolEpochs[count] = signal.T
+        Data.interpolEpochs[count] = signal.T
 
         dlg.Update(count)
 
