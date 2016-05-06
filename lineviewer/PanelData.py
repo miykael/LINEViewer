@@ -54,7 +54,7 @@ class Selecter(wx.Panel):
         sizerResample = wx.BoxSizer(wx.HORIZONTAL)
         sizerResample.AddSpacer(3)
         TextResample = wx.StaticText(PanelResample, wx.ID_ANY,
-                                   label="Resample to", style=wx.CENTRE)
+                                     label="Reslice to", style=wx.CENTRE)
         sizerResample.Add(TextResample, 0, wx.CENTER)
         sizerResample.AddSpacer(5)
 
@@ -63,6 +63,10 @@ class Selecter(wx.Panel):
                                     style=wx.TE_PROCESS_ENTER,
                                     value='')
         sizerResample.Add(self.Resample, 0, wx.CENTER)
+        sizerResample.AddSpacer(3)
+        TextResampleHz = wx.StaticText(PanelResample, wx.ID_ANY,
+                                     label="[Hz]", style=wx.CENTRE)
+        sizerResample.Add(TextResampleHz, 0, wx.CENTER)
         PanelResample.SetSizer(sizerResample)
         sizerBoxInput.Add(PanelResample, 0, wx.EXPAND)
 
@@ -116,7 +120,6 @@ class Selecter(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonDataSaveEPH.Id, self.saveEPH)
         wx.EVT_TEXT_ENTER(self.Resample, self.Resample.Id, self.resampleData)
 
-
     def loadData(self, event):
         """Load EEG files"""
 
@@ -139,14 +142,18 @@ class Selecter(wx.Panel):
                                     for e in newlist])
             if newElements.sum() != 0:
 
-                # Wihch sampling rate to use
+                # Which sampling rate to use
                 try:
                     sampleRate = int(self.Resample.GetValue())
                 except ValueError:
                     sampleRate = 0
 
+                # Which channels to exclude from analysis completly
+                excludeChannel = self.Data.Specs.channels2exclude
+
                 # Read all the files
-                newfiles = [ReadEEG(f, sampleRate) for f in filelist
+                newfiles = [ReadEEG(f, sampleRate, excludeChannel)
+                            for f in filelist
                             if os.path.basename(f)[:-4] not in oldlist]
 
                 self.Data.Filenames += [e for e in newlist if e not in oldlist]
@@ -251,10 +258,13 @@ class Selecter(wx.Panel):
                 self.Resample.SetValue(str(oldSampleRate))
                 newSampleRate = oldSampleRate
 
+            # Which channels to exclude from analysis completly
+            excludeChannel = self.Data.Specs.channels2exclude
+
             if oldSampleRate != newSampleRate:
 
                 filelist = [f.filename for f in self.Data.Datasets]
-                newfiles = [ReadEEG(f, newSampleRate) for f in filelist]
+                newfiles = [ReadEEG(f, newSampleRate, excludeChannel) for f in filelist]
 
                 self.Data.Datasets = newfiles
                 self.updateInformation()

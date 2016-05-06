@@ -158,7 +158,7 @@ class Results():
         except ValueError:
             self.threshold = 80.0
             Data.Specs.ThreshValue.SetValue(str(self.threshold))
-        self.excludeChannel = Data.Specs.channels2exclude
+        self.ignoreChannel = Data.Specs.channels2ignore
 
         # Copy epoch values
         epochs = np.copy(Data.epochs)
@@ -243,10 +243,10 @@ class Results():
             dlg.Destroy()
 
             # Exclude Channels from thresholding
-            if self.excludeChannel != []:
-                excludeID = [i for i, e in enumerate(Data.labelsChannel)
-                             if e in self.excludeChannel]
-                self.matrixThreshold[:, excludeID] *= False
+            if self.ignoreChannel != []:
+                ignoreID = [i for i, e in enumerate(Data.labelsChannel)
+                             if e in self.ignoreChannel]
+                self.matrixThreshold[:, ignoreID] *= False
 
             # Specifying ID of good and bad epochs
             badIDs = self.matrixThreshold.sum(axis=1) \

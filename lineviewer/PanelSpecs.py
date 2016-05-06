@@ -1,6 +1,7 @@
 ﻿import wx
 import numpy as np
 from os.path import dirname
+from FileHandler import ReadEEG
 
 
 class Specification(wx.Panel):
@@ -111,6 +112,15 @@ class Specification(wx.Panel):
         sizerNotch.Add(self.Data.Specs.Notch, 0, wx.EXPAND)
         PanelNotch.SetSizer(sizerNotch)
         sizerBoxData.Add(PanelNotch, 0, wx.EXPAND)
+
+        # Box: Channels to Ignore
+        self.ButtonChannel = wx.Button(
+            PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
+            label="Exclude &Channels")
+        self.ButtonChannel.Enable()
+        self.Data.Specs.channels2exclude = []
+        sizerBoxData.Add(self.ButtonChannel, 0, wx.EXPAND)
+
         sizerPanelSpecs.Add(sizerBoxData, 0, wx.EXPAND)
         sizerPanelSpecs.AddSpacer(20)
 
@@ -215,7 +225,7 @@ class Specification(wx.Panel):
             PanelSpecs, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
             label="&Exclude channels from Thr.")
         self.ButtonExclude.Enable()
-        self.Data.Specs.channels2exclude = []
+        self.Data.Specs.channels2ignore = []
         sizerBoxEpoch.Add(self.ButtonExclude, 0, wx.EXPAND)
 
         sizerPanelSpecs.Add(sizerBoxEpoch, 0, wx.EXPAND)
@@ -296,8 +306,8 @@ class Specification(wx.Panel):
                         self.Data.Specs.CheckboxPass.Id, self.usePass)
         wx.EVT_COMBOBOX(self.Data.Specs.DropDownNewRef,
                         self.Data.Specs.DropDownNewRef.Id, self.useNewRef)
-        wx.EVT_BUTTON(self.ButtonInterpolate, self.ButtonInterpolate.Id,
-                      self.interpolateChannels)
+        wx.EVT_BUTTON(self.ButtonChannel, self.ButtonChannel.Id,
+                      self.excludeChannels)
 
         wx.EVT_TEXT_ENTER(self.Data.Specs.PreEpoch,
                           self.Data.Specs.PreEpoch.Id, self.drawAll)
@@ -306,7 +316,7 @@ class Specification(wx.Panel):
         wx.EVT_TEXT_ENTER(self.Data.Specs.ThreshValue,
                           self.Data.Specs.ThreshValue.Id, self.useThreshold)
         wx.EVT_BUTTON(self.ButtonExclude, self.ButtonExclude.Id,
-                      self.excludeChannel)
+                      self.ignoreChannelThresh)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxThreshold,
                         self.Data.Specs.CheckboxThreshold.Id,
                         self.useThreshold)
@@ -323,6 +333,9 @@ class Specification(wx.Panel):
                       self.collapseMarkers)
         wx.EVT_BUTTON(self.ButtonMarkerReset, self.ButtonMarkerReset.Id,
                       self.resetMarkers)
+
+        wx.EVT_BUTTON(self.ButtonInterpolate, self.ButtonInterpolate.Id,
+                      self.interpolateChannels)
 
     def drawAll(self, event):
         if self.Data.Datasets != []:
@@ -432,7 +445,7 @@ class Specification(wx.Panel):
             self.Data.Specs.LowPass.Disable()
         self.drawAll(event)
 
-    def excludeChannel(self, event):
+    def ignoreChannelThresh(self, event):
         if self.Data.Datasets != []:
             channels = self.Data.Datasets[0].labelsChannel
             dlg = wx.MultiChoiceDialog(
@@ -440,12 +453,36 @@ class Specification(wx.Panel):
                 message='Which channels should be ingored?',
                 choices=channels)
             selected = [i for i, e in enumerate(channels)
+                        if e in self.Data.Specs.channels2ignore]
+            dlg.SetSelections(selected)
+            if dlg.ShowModal() == wx.ID_OK:
+                self.Data.Specs.channels2ignore = [
+                    channels[x] for x in dlg.GetSelections()]
+                self.Data.Results.updateEpochs(self.Data)
+            dlg.Destroy()
+        event.Skip()
+
+    def excludeChannels(self, event):
+        if self.Data.Datasets != []:
+            channels = self.Data.Datasets[0].labelsChannel
+            dlg = wx.MultiChoiceDialog(
+                self, caption="Select channels to exclude",
+                message='Which channels should be excluded?',
+                choices=channels)
+            selected = [i for i, e in enumerate(channels)
                         if e in self.Data.Specs.channels2exclude]
             dlg.SetSelections(selected)
             if dlg.ShowModal() == wx.ID_OK:
                 self.Data.Specs.channels2exclude = [
                     channels[x] for x in dlg.GetSelections()]
-                self.Data.Results.updateEpochs(self.Data)
+                sampleRate = self.Data.Datasets[0].sampleRate
+                filelist = [f.filename for f in self.Data.Datasets]
+                newfiles = [ReadEEG(
+                    f, sampleRate, self.Data.Specs.channels2exclude)
+                    for f in filelist]
+                self.Data.Datasets = newfiles
+                self.updateInformation()
+                self.Data.Results.updateAll(self.Data)
             dlg.Destroy()
         event.Skip()
 
@@ -463,7 +500,7 @@ class Specification(wx.Panel):
             markerTxt = [str(m) for m in markers]
             dlg = wx.MultiChoiceDialog(
                 self, caption="Select markers to hide",
-                message='Which markers should be excluded ' +
+                message='Which markers should be hidden ' +
                         'from further analysis?',
                 choices=markerTxt)
             if self.Data.markers2hide == []:
@@ -541,12 +578,13 @@ class Specification(wx.Panel):
         dlg.Destroy()
 
     def resetMarkers(self, event):
-
-        if hasattr(self.Data.Results, 'collapsedMarkers'):
-            del self.Data.Results.collapsedMarkers
-        self.Data.markers2hide = []
-        self.Data.Results.matrixSelected[
-            np.where(
-                self.Data.Results.matrixSelected == 'selected')] = 'ok_normal'
-        self.drawEpochs(event)
-        event.Skip()
+        if self.Data.Datasets != []:
+            if hasattr(self.Data.Results, 'collapsedMarkers'):
+                del self.Data.Results.collapsedMarkers
+            self.Data.markers2hide = []
+            self.Data.Results.matrixSelected[
+                np.where(
+                    self.Data.Results.matrixSelected == 'selected')
+            ] = 'ok_normal'
+            self.drawEpochs(event)
+            event.Skip()

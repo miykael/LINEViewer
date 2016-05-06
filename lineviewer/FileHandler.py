@@ -8,7 +8,7 @@ from scipy.signal import resample
 
 class ReadEEG:
 
-    def __init__(self, filename, newSampleRate):
+    def __init__(self, filename, newSampleRate, channels2exclude):
 
         self.filename = filename
 
@@ -16,6 +16,11 @@ class ReadEEG:
             self.readBDF()
         elif filename[-3:] == 'eeg':
             self.readBrainVision()
+
+        print channels2exclude
+        # Exclude Channels if necessary
+        if channels2exclude != []:
+            self.excludeChannels(channels2exclude)
 
         # Resample Data if necessary
         if newSampleRate != 0:
@@ -198,6 +203,13 @@ class ReadEEG:
             # Rewrite sampleRate
             self.sampleRate = newSampleRate
 
+    def excludeChannels(self, channels2exclude):
+
+        keepID = [i for i, e in enumerate(self.labelsChannel)
+                  if e not in channels2exclude]
+        self.labelsChannel = self.labelsChannel[keepID]
+        self.rawdata = self.rawdata[keepID]
+
 
 class ReadXYZ:
 
@@ -353,8 +365,8 @@ class SaveVerbose:
             f.writelines('Bridge correction\t:\t%s\n' % res.bridgeCorr)
             f.writelines('Thresh. correction\t:\t%s\n' % res.thresholdCorr)
             f.writelines('Threshold [mikroV]\t:\t%s\n' % res.threshold)
-            f.writelines('Channels excluded\t:\t%s\n' %
-                         data.Specs.channels2exclude)
+            f.writelines('Channels ignored\t:\t%s\n' %
+                         data.Specs.channels2ignore)
             f.writelines('\n')
 
             if hasattr(res, 'collapsedTransform'):
