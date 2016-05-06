@@ -47,6 +47,25 @@ class Selecter(wx.Panel):
             label="&Drop Dataset")
         self.ButtonDataDrop.Disable()
         sizerBoxInput.Add(self.ButtonDataDrop, 0, wx.EXPAND)
+        sizerBoxInput.AddSpacer(3)
+
+        # Panel: Resample Signal
+        PanelResample = wx.Panel(PanelDataHandler, wx.ID_ANY)
+        sizerResample = wx.BoxSizer(wx.HORIZONTAL)
+        sizerResample.AddSpacer(3)
+        TextResample = wx.StaticText(PanelResample, wx.ID_ANY,
+                                   label="Resample to", style=wx.CENTRE)
+        sizerResample.Add(TextResample, 0, wx.CENTER)
+        sizerResample.AddSpacer(5)
+
+        self.Resample = wx.TextCtrl(PanelResample, wx.ID_ANY,
+                                    size=(60, 25),
+                                    style=wx.TE_PROCESS_ENTER,
+                                    value='')
+        sizerResample.Add(self.Resample, 0, wx.CENTER)
+        PanelResample.SetSizer(sizerResample)
+        sizerBoxInput.Add(PanelResample, 0, wx.EXPAND)
+
         sizerPanelDataHandler.Add(sizerBoxInput, 0, wx.EXPAND)
         sizerPanelDataHandler.AddSpacer(20)
 
@@ -95,6 +114,8 @@ class Selecter(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonDataDrop.Id, self.dropData)
         wx.EVT_BUTTON(self, self.ButtonDataSaveTVA.Id, self.saveTVA)
         wx.EVT_BUTTON(self, self.ButtonDataSaveEPH.Id, self.saveEPH)
+        wx.EVT_TEXT_ENTER(self.Resample, self.Resample.Id, self.resampleData)
+
 
     def loadData(self, event):
         """Load EEG files"""
@@ -118,7 +139,14 @@ class Selecter(wx.Panel):
                                     for e in newlist])
             if newElements.sum() != 0:
 
-                newfiles = [ReadEEG(f) for f in filelist
+                # Wihch sampling rate to use
+                try:
+                    sampleRate = int(self.Resample.GetValue())
+                except ValueError:
+                    sampleRate = 0
+
+                # Read all the files
+                newfiles = [ReadEEG(f, sampleRate) for f in filelist
                             if os.path.basename(f)[:-4] not in oldlist]
 
                 self.Data.Filenames += [e for e in newlist if e not in oldlist]
@@ -131,6 +159,7 @@ class Selecter(wx.Panel):
                 self.ButtonDataDrop.Enable()
                 self.ButtonDataSaveEPH.Enable()
                 self.ButtonDataSaveTVA.Enable()
+                self.Resample.SetValue(str(self.Data.Results.sampleRate))
         dlg.Destroy()
         event.Skip()
 
@@ -206,6 +235,31 @@ class Selecter(wx.Panel):
                 self.Data.Results.updateAll(self.Data)
             else:
                 self.ButtonDataDrop.Disable()
+                self.Resample.SetValue('')
+        event.Skip()
+
+    def resampleData(self, event):
+        """reload data and resample to given value"""
+
+        if self.Data.Datasets != []:
+
+            oldSampleRate = self.Data.Datasets[0].sampleRate
+
+            try:
+                newSampleRate = int(self.Resample.GetValue())
+            except ValueError:
+                self.Resample.SetValue(str(oldSampleRate))
+                newSampleRate = oldSampleRate
+
+            if oldSampleRate != newSampleRate:
+
+                filelist = [f.filename for f in self.Data.Datasets]
+                newfiles = [ReadEEG(f, newSampleRate) for f in filelist]
+
+                self.Data.Datasets = newfiles
+                self.updateInformation()
+                self.Data.Results.updateAll(self.Data)
+
         event.Skip()
 
     def updateInformation(self):

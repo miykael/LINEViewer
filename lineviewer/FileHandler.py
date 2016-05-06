@@ -1,12 +1,14 @@
+import wx
 import time
 import numpy as np
 from os import makedirs
 from os.path import exists, join, basename
+from scipy.signal import resample
 
 
 class ReadEEG:
 
-    def __init__(self, filename):
+    def __init__(self, filename, newSampleRate):
 
         self.filename = filename
 
@@ -14,6 +16,10 @@ class ReadEEG:
             self.readBDF()
         elif filename[-3:] == 'eeg':
             self.readBrainVision()
+
+        # Resample Data if necessary
+        if newSampleRate != 0:
+            self.resampleData(newSampleRate)
 
     def readBDF(self):
 
@@ -152,6 +158,45 @@ class ReadEEG:
         self.durationRecorded = 1
         self.rawdata = np.rollaxis(rawdata.reshape(timepoints, nbChannels), 1)
         self.fileType = 'BrainVision'
+
+    def resampleData(self, newSampleRate):
+
+        # TODO: Check that only divisors of sampling rate can be selected as vales
+
+        if newSampleRate != self.sampleRate:
+
+            divisor = float(self.sampleRate) / newSampleRate
+
+            # Rewrite markerTime
+            self.markerTime = (self.markerTime / divisor).astype('int')
+
+            # Reslice rawdata with slicer
+            slicer = np.arange(0, self.rawdata.shape[1], int(divisor))
+            self.rawdata = self.rawdata[:, slicer]
+
+            """
+            # Resample rawdata
+            divisor = float(newSampleRate) / self.sampleRate
+            newLength = int(self.rawdata.shape[1] * divisor)
+            newDataset = []
+
+            # Create Progressbar for resampling
+            nChannels = self.rawdata.shape[0]
+            filename = basename(self.filename)
+            dlg = wx.ProgressDialog(
+                "Resampling of %s" % filename,
+                "Time remaining for Resampling %s" % filename, nChannels,
+                style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
+            for i in range(nChannels):
+                newDataset.append(resample(self.rawdata[i], newLength))
+                dlg.Update(i)
+            dlg.Destroy()
+
+            self.rawdata = np.array(newDataset)
+            """
+
+            # Rewrite sampleRate
+            self.sampleRate = newSampleRate
 
 
 class ReadXYZ:
