@@ -24,7 +24,7 @@ class Overview(wx.Panel):
         else:
             # Get relevant information
             self.figure.clear()
-            labelsChannel = np.copy(self.Data.Orig.labelsChannel)
+            labelsChannel = np.copy(self.Data.labelsChannel)
             if hasattr(self.Data.Results, 'collapsedMarkers'):
                 markers = self.Data.Results.collapsedMarkers
             else:

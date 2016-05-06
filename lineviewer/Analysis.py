@@ -72,9 +72,6 @@ class Results():
             self.notchValue = 50.0
             Data.Specs.Notch.SetValue(str(self.notch))
 
-        # Data object to save original epoch information
-        Data.Orig = type('Orig', (object,), {})()
-
         # Filter Channel Signal
         for i, d in enumerate(Data.Datasets):
 
@@ -134,13 +131,13 @@ class Results():
 
             # Accumulate epoch information
             if i == 0:
-                Data.Orig.epochs = epochs
-                Data.Orig.markers = d.markerValue[np.where(cutsIO)]
-                Data.Orig.labelsChannel = d.labelsChannel
+                Data.epochs = epochs
+                Data.markers = d.markerValue[np.where(cutsIO)]
+                Data.labelsChannel = d.labelsChannel
             else:
-                Data.Orig.epochs = np.vstack((Data.Orig.epochs, epochs))
-                Data.Orig.markers = np.hstack(
-                    (Data.Orig.markers, d.markerValue[np.where(cutsIO)]))
+                Data.epochs = np.vstack((Data.epochs, epochs))
+                Data.markers = np.hstack(
+                    (Data.markers, d.markerValue[np.where(cutsIO)]))
 
             # Clean up of temporary files and variables
             del tmpDataset
@@ -163,9 +160,8 @@ class Results():
             Data.Specs.ThreshValue.SetValue(str(self.threshold))
         self.excludeChannel = Data.Specs.channels2exclude
 
-        # Copy epoch and marker values
-        epochs = np.copy(Data.Orig.epochs)
-        markers = np.copy(Data.Orig.markers)
+        # Copy epoch values
+        epochs = np.copy(Data.epochs)
 
         # Baseline Correction
         if self.baselineCorr:
@@ -248,7 +244,7 @@ class Results():
 
             # Exclude Channels from thresholding
             if self.excludeChannel != []:
-                excludeID = [i for i, e in enumerate(Data.Orig.labelsChannel)
+                excludeID = [i for i, e in enumerate(Data.labelsChannel)
                              if e in self.excludeChannel]
                 self.matrixThreshold[:, excludeID] *= False
 
@@ -261,7 +257,7 @@ class Results():
 
         # Connect all epochs and markers to self
         self.epochs = epochs
-        self.markers = markers
+        self.markers = Data.markers
 
         # Correct for selected outliers
         if not hasattr(self, 'matrixSelected'):
@@ -327,7 +323,7 @@ class Results():
 
         # Drop bad Epochs for average
         goodEpochs = epochs[self.okID]
-        goodMarkers = markers[self.okID]
+        goodMarkers = self.markers[self.okID]
 
         # Create average epochs but weighs collapsed markers accordingly
         if not hasattr(self, 'collapsedMarkers'):
@@ -343,7 +339,7 @@ class Results():
             for i, u in enumerate(self.uniqueMarkers):
 
                 # Weigh collapsed markers to get average
-                if len(markers[markers == u]) == 0:
+                if len(self.markers[self.markers == u]) == 0:
 
                     collapseID = [c[1] for c in self.collapsedTransform
                                   if c[0] == u][0]
