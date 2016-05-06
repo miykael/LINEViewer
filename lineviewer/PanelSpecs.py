@@ -481,6 +481,7 @@ class Specification(wx.Panel):
                     f, sampleRate, self.Data.Specs.channels2exclude)
                     for f in filelist]
                 self.Data.Datasets = newfiles
+                del self.Data.Results.matrixSelected
                 self.Data.Results.updateAll(self.Data)
             dlg.Destroy()
         event.Skip()

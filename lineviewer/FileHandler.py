@@ -17,7 +17,6 @@ class ReadEEG:
         elif filename[-3:] == 'eeg':
             self.readBrainVision()
 
-        print channels2exclude
         # Exclude Channels if necessary
         if channels2exclude != []:
             self.excludeChannels(channels2exclude)

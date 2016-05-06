@@ -268,6 +268,7 @@ class Selecter(wx.Panel):
 
                 self.Data.Datasets = newfiles
                 self.updateInformation()
+                del self.Data.Results.matrixSelected
                 self.Data.Results.updateAll(self.Data)
 
         event.Skip()
