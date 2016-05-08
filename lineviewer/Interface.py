@@ -13,7 +13,7 @@ class MainFrame(wx.Frame):
     """
 
     def __init__(self):
-        wx.Frame.__init__(self, None, wx.ID_ANY, title="LINEViewer 0.1.12",
+        wx.Frame.__init__(self, None, wx.ID_ANY, title="LINEViewer 0.2.01",
                           pos=(0, 0), size=(1200, 1000))
         logopath = join(
             dirname(abspath(__file__)), 'static', 'favicon_256.ico')
@@ -21,7 +21,7 @@ class MainFrame(wx.Frame):
 
         # Default variables
         self.Data = type('Data', (object,), {})()
-        self.Data.VERSION = '0.1.12'
+        self.Data.VERSION = '0.2.01'
         self.Data.DirPath = ''
         self.Data.Filenames = []
         self.Data.Datasets = []

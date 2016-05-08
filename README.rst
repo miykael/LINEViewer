@@ -30,8 +30,8 @@ Full distributions like `Anaconda <https://www.continuum.io/why-anaconda>`_ prov
 Windows
 *******
 1. Download and install the `newest Anaconda distribution that includes Python 2.7 <https://www.continuum.io/downloads>`_.
-2. Download and install the `current release of LINEViewer_install.exe <https://github.com/miykael/LINEViewer/releases/download/0.1.12/LINEViewer_install.exe>`_.
-3. Download the `current release of LINEViewer.exe <https://github.com/miykael/LINEViewer/releases/download/0.1.12/LINEViewer.exe>`_, put it on your Desktop and open it to run LINEViewer on your system.
+2. Download and install the `current release of LINEViewer_install.exe <https://github.com/miykael/LINEViewer/releases/download/0.2.01/LINEViewer_install.exe>`_.
+3. Download the `current release of LINEViewer.exe <https://github.com/miykael/LINEViewer/releases/download/0.2.01/LINEViewer.exe>`_, put it on your Desktop and open it to run LINEViewer on your system.
 
 Alternatively, you can also use the installation instruction for Linux / iOS on a Windows machine - as long as you have `Anaconda <https://www.continuum.io/why-anaconda>`_ on your system.
 
