@@ -72,8 +72,27 @@ class Results():
             self.notchValue = 50.0
             Data.Specs.Notch.SetValue(str(self.notch))
 
+        # Calculate number of total iteration steps
+        iterations = self.removeDC
+        iterations += self.average or self.newReference != 'None'
+        iterations += self.doPass and self.lowcut != 0 and self.highcut != 0
+        iterations += self.doNotch
+
+        # Preprocessing Message
+        progText = '\n' * ((1+iterations) * len(Data.Datasets)-2)
+        nChannels = Data.Datasets[0].rawdata.shape[0]
+        progressMax = iterations * len(Data.Datasets) * nChannels
+        dlg = wx.ProgressDialog(
+            "Data Preprocessing", progText, progressMax,
+            style=wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
+        counter = 0
+        progText = ''
+
         # Filter Channel Signal
         for i, d in enumerate(Data.Datasets):
+
+            progFileName = Data.Filenames[i]
+            progText += 'Preprocessing %s:' % progFileName
 
             tmpFilename = splitext(d.filename)[0] + '.lineviewerTempData'
             tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32',
@@ -85,6 +104,12 @@ class Results():
                 dcOffset = np.vstack(tmpDataset.mean(axis=1))
                 for t in range(tmpDataset.shape[0]):
                     tmpDataset[t] -= dcOffset[t]
+
+                    # Update Progress Dialog
+                    progUpdate = '\nRemove DC:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    dlg.Update(counter, progText + progUpdate)
+                    counter += 1
+                progText += '\nRemove DC:\t{:>6}%'.format(100.0)
 
             # 2. Average or specific reference
             if self.average or self.newReference != 'None':
@@ -99,6 +124,12 @@ class Results():
                 for t in range(tmpDataset.shape[0]):
                     tmpDataset[t] -= refOffset[t]
 
+                    # Update Progress Dialog
+                    progUpdate = '\nRereference:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    dlg.Update(counter, progText + progUpdate)
+                    counter += 1
+                progText += '\nRereference:\t{:>6}%'.format(100.0)
+
             # 3. Run Butterworth Low-, High- or Bandpassfilter
             if self.doPass and self.lowcut != 0 and self.highcut != 0:
                 b, a = butter_bandpass_param(d.sampleRate,
@@ -107,12 +138,26 @@ class Results():
                 for t in range(tmpDataset.shape[0]):
                     tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
 
+                    # Update Progress Dialog
+                    progUpdate = '\nFilter Data:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    dlg.Update(counter, progText + progUpdate)
+                    counter += 1
+                progText += '\nFilter Data:\t{:>6}%'.format(100.0)
+
             # 4. Notch Filter
             if self.doNotch:
                 b, a = butter_bandpass_param(d.sampleRate,
                                              notch=self.notchValue)
                 for t in range(tmpDataset.shape[0]):
                     tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
+
+                    # Update Progress Dialog
+                    progUpdate = '\nNotch Filter:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    dlg.Update(counter, progText + progUpdate)
+                    counter += 1
+                progText += '\nNotch Filter:\t{:>6}%'.format(100.0)
+
+            progText += '\n'
 
             # Create epochs
             self.preFrame = int(
@@ -143,6 +188,8 @@ class Results():
             del tmpDataset
             if exists(tmpFilename):
                 remove(tmpFilename)
+
+        dlg.Destroy()
 
         self.updateEpochs(Data)
 
