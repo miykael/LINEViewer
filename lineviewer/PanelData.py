@@ -1,7 +1,8 @@
 ﻿import os
 import wx
 import numpy as np
-from FileHandler import ReadEEG, SaveTVA, SaveEPH, SaveFigures, SaveVerbose
+from FileHandler import (ReadEEG, SaveTVA, SaveERP, SaveEpochs, SaveFigures,
+                         SaveVerbose)
 
 
 class Selecter(wx.Panel):
@@ -65,7 +66,7 @@ class Selecter(wx.Panel):
         sizerResample.Add(self.Resample, 0, wx.CENTER)
         sizerResample.AddSpacer(3)
         TextResampleHz = wx.StaticText(PanelResample, wx.ID_ANY,
-                                     label="[Hz]", style=wx.CENTRE)
+                                       label="[Hz]", style=wx.CENTRE)
         sizerResample.Add(TextResampleHz, 0, wx.CENTER)
         PanelResample.SetSizer(sizerResample)
         sizerBoxInput.Add(PanelResample, 0, wx.EXPAND)
@@ -82,15 +83,22 @@ class Selecter(wx.Panel):
 
         self.ButtonDataSaveTVA = wx.Button(
             PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="&Save TVA files")
+            label="Save &TVA")
         self.ButtonDataSaveTVA.Disable()
         sizerBoxOutput.Add(self.ButtonDataSaveTVA, 0, wx.EXPAND)
 
-        self.ButtonDataSaveEPH = wx.Button(
+        self.ButtonDataSaveEpochs = wx.Button(
             PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="&Save EPH files")
-        self.ButtonDataSaveEPH.Disable()
-        sizerBoxOutput.Add(self.ButtonDataSaveEPH, 0, wx.EXPAND)
+            label="Save &Epochs")
+        self.ButtonDataSaveEpochs.Disable()
+        sizerBoxOutput.Add(self.ButtonDataSaveEpochs, 0, wx.EXPAND)
+
+        self.ButtonDataSaveERP = wx.Button(
+            PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
+            label="Save &ERP + Figures")
+        self.ButtonDataSaveERP.Disable()
+        sizerBoxOutput.Add(self.ButtonDataSaveERP, 0, wx.EXPAND)
+
         sizerPanelDataHandler.Add(sizerBoxOutput, 0, wx.EXPAND)
         sizerPanelDataHandler.AddSpacer(20)
 
@@ -117,7 +125,8 @@ class Selecter(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonDataLoad.Id, self.loadData)
         wx.EVT_BUTTON(self, self.ButtonDataDrop.Id, self.dropData)
         wx.EVT_BUTTON(self, self.ButtonDataSaveTVA.Id, self.saveTVA)
-        wx.EVT_BUTTON(self, self.ButtonDataSaveEPH.Id, self.saveEPH)
+        wx.EVT_BUTTON(self, self.ButtonDataSaveERP.Id, self.saveERP)
+        wx.EVT_BUTTON(self, self.ButtonDataSaveEpochs.Id, self.saveEpochs)
         wx.EVT_TEXT_ENTER(self.Resample, self.Resample.Id, self.resampleData)
 
     def loadData(self, event):
@@ -164,8 +173,9 @@ class Selecter(wx.Panel):
                 self.updateInformation()
                 self.Data.Results.updateAll(self.Data)
                 self.ButtonDataDrop.Enable()
-                self.ButtonDataSaveEPH.Enable()
+                self.ButtonDataSaveERP.Enable()
                 self.ButtonDataSaveTVA.Enable()
+                self.ButtonDataSaveEpochs.Enable()
                 self.Resample.SetValue(str(self.Data.Results.sampleRate))
         dlg.Destroy()
         event.Skip()
@@ -178,7 +188,7 @@ class Selecter(wx.Panel):
 
         event.Skip()
 
-    def saveEPH(self, event):
+    def saveERP(self, event):
         """Saves the dataset averages into EPH files"""
 
         dlgTextName = wx.TextEntryDialog(
@@ -200,10 +210,38 @@ class Selecter(wx.Panel):
                 self.Data.Results.updateAnalysis = False
 
             # Save outputs
-            SaveEPH(resultsName, resultsPath, self.Data.Results,
+            SaveERP(resultsName, resultsPath, self.Data.Results,
                     self.Data.markers2hide, self.Data.Results.preFrame)
             SaveFigures(resultsName, resultsPath, self.Data)
             SaveVerbose(resultsName, resultsPath, self.Data)
+
+        dlgTextName.Destroy()
+        event.Skip()
+
+    def saveEpochs(self, event):
+        """Saves the dataset epochs into individual EPH files"""
+
+        dlgTextName = wx.TextEntryDialog(
+            None, 'Under what name do you want to save the output?',
+            defaultValue=os.path.join('Results01', 'Epochs'))
+        if dlgTextName.ShowModal() == wx.ID_OK:
+            resultsName = dlgTextName.GetValue()
+
+            dlgTextPath = wx.TextEntryDialog(
+                None, 'Where do you want to save the output at?',
+                defaultValue=os.path.join(self.Data.DirPath, resultsName))
+            if dlgTextPath.ShowModal() == wx.ID_OK:
+                resultsPath = dlgTextPath.GetValue()
+            dlgTextPath.Destroy()
+
+            # Update before saving
+            if self.Data.Results.updateAnalysis:
+                self.Data.Results.updateEpochs(self.Data)
+                self.Data.Results.updateAnalysis = False
+
+            # Save Epochs
+            SaveEpochs(resultsPath, self.Data.Results,
+                       self.Data.Results.preFrame)
 
         dlgTextName.Destroy()
         event.Skip()
@@ -264,7 +302,8 @@ class Selecter(wx.Panel):
             if oldSampleRate != newSampleRate:
 
                 filelist = [f.filename for f in self.Data.Datasets]
-                newfiles = [ReadEEG(f, newSampleRate, excludeChannel) for f in filelist]
+                newfiles = [ReadEEG(f, newSampleRate, excludeChannel)
+                            for f in filelist]
 
                 self.Data.Datasets = newfiles
                 self.updateInformation()

@@ -256,7 +256,7 @@ class SaveTVA:
                     counter += 1
 
 
-class SaveEPH:
+class SaveERP:
 
     def __init__(self, resultsName, resultsPath, results, markers2hide,
                  preFrame):
@@ -272,9 +272,9 @@ class SaveEPH:
             if m in markers2hide:
                 continue
 
-            # Write GFP data into EPH file
+            # Write GFP data into ERP file
             nTimepoint = results.avgGFP[0].shape[0]
-            filename = '%s.Epoch_%s.GFP.eph' % (resultsName, m)
+            filename = '%s.ERP_%s.GFP.eph' % (resultsName, m)
             with open(join(resultsPath, filename), 'w') as f:
                 f.writelines('{:>15}\t{:>15}\t{:>25}\n'.format(
                     1, nTimepoint, results.sampleRate))
@@ -288,9 +288,9 @@ class SaveEPH:
                     'TL02\n{:>12}\t{:>12}\t"Origin"\n'.format(preFrame,
                                                               preFrame))
 
-            # Write electrode data into EPH file
+            # Write electrode data into ERP file
             nSignal, nTimepoint = results.avgEpochs[0].shape
-            filename = '%s.Epoch_%s.eph' % (resultsName, m)
+            filename = '%s.ERP_%s.eph' % (resultsName, m)
             with open(join(resultsPath, filename), 'w') as f:
                 f.writelines('{:>15}\t{:>15}\t{:>25}\n'.format(
                     nSignal, nTimepoint, results.sampleRate))
@@ -300,7 +300,39 @@ class SaveEPH:
                     f.writelines(
                         formatString.format(*np.round(tValues, 7).tolist()))
 
-            # Write EPH marker file
+            # Write ERP marker file
+            filename += '.mrk'
+            with open(join(resultsPath, filename), 'w') as f:
+                f.writelines(
+                    'TL02\n{:>12}\t{:>12}\t"Origin"\n'.format(preFrame,
+                                                              preFrame))
+
+
+class SaveEpochs:
+
+    def __init__(self, resultsPath, results, preFrame):
+
+        # Create output folder if it doesn't exist
+        if not exists(resultsPath):
+            makedirs(resultsPath)
+
+        # Go through all epochs
+        for i, epoch in enumerate(results.epochs):
+
+            # Write electrode data into ERP file
+            nSignal, nTimepoint = epoch.shape
+            marker = results.markers[i]
+            filename = 'Epoch_%.4d_%s.eph' % (i + 1, marker)
+            with open(join(resultsPath, filename), 'w') as f:
+                f.writelines('{:>15}\t{:>15}\t{:>25}\n'.format(
+                    nSignal, nTimepoint, results.sampleRate))
+                for tValues in epoch.T:
+                    formatString = '{:>15}\t' * nSignal
+                    formatString = formatString[:-1] + '\n'
+                    f.writelines(
+                        formatString.format(*np.round(tValues, 7).tolist()))
+
+            # Write Epoch marker file
             filename += '.mrk'
             with open(join(resultsPath, filename), 'w') as f:
                 f.writelines(
