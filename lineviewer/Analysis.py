@@ -73,13 +73,14 @@ class Results():
             Data.Specs.Notch.SetValue(str(self.notch))
 
         # Calculate number of total iteration steps
-        iterations = self.removeDC
+        iterations = 1
+        iterations += self.removeDC
         iterations += self.average or self.newReference != 'None'
         iterations += self.doPass and self.lowcut != 0 and self.highcut != 0
         iterations += self.doNotch
 
         # Preprocessing Message
-        progText = '\n' * ((1+iterations) * len(Data.Datasets)-2)
+        progText = '\n' * ((1+iterations) * len(Data.Datasets)-1)
         nChannels = Data.Datasets[0].rawdata.shape[0]
         progressMax = iterations * len(Data.Datasets) * nChannels
         dlg = wx.ProgressDialog(
@@ -94,15 +95,22 @@ class Results():
             progFileName = Data.Filenames[i]
             progText += 'Preprocessing %s:' % progFileName
 
+            # Load Dataset in memmap file
             tmpFilename = splitext(d.filename)[0] + '.lineviewerTempData'
-            tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32',
-                                   shape=d.rawdata.shape)
-            tmpDataset[:] = d.rawdata[:]
+            tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32', shape=d.rawdata.shape)
+            for t in range(nChannels):
+                tmpDataset[t] = d.rawdata[t]
+
+                # Update Progress Dialog
+                progUpdate = '\nRead Data:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                dlg.Update(counter, progText + progUpdate)
+                counter += 1
+            progText += '\nRead Data:\t{:>6}%'.format(100.0)
 
             # 1. Remove DC
             if self.removeDC:
                 dcOffset = np.vstack(tmpDataset.mean(axis=1))
-                for t in range(tmpDataset.shape[0]):
+                for t in range(nChannels):
                     tmpDataset[t] -= dcOffset[t]
 
                     # Update Progress Dialog
@@ -121,7 +129,7 @@ class Results():
                         d.labelsChannel == self.newReference)[0]
                     if self.newReference != 'Average':
                         refOffset = tmpDataset[electrodeID]
-                for t in range(tmpDataset.shape[0]):
+                for t in range(nChannels):
                     tmpDataset[t] -= refOffset[t]
 
                     # Update Progress Dialog
@@ -135,7 +143,7 @@ class Results():
                 b, a = butter_bandpass_param(d.sampleRate,
                                              highcut=self.highcut,
                                              lowcut=self.lowcut)
-                for t in range(tmpDataset.shape[0]):
+                for t in range(nChannels):
                     tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
 
                     # Update Progress Dialog
@@ -148,7 +156,7 @@ class Results():
             if self.doNotch:
                 b, a = butter_bandpass_param(d.sampleRate,
                                              notch=self.notchValue)
-                for t in range(tmpDataset.shape[0]):
+                for t in range(nChannels):
                     tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
 
                     # Update Progress Dialog
