@@ -47,7 +47,7 @@ class Overview(wx.Panel):
 
             # Check for broken Epochs; if 25% of channels are over threshold
             brokenID = np.where(matrixThreshold.sum(axis=1) >
-                                matrixThreshold.shape[1] * 0.5)[0]
+                                matrixThreshold.shape[1] * 0.9)[0]
             matrixThreshold[brokenID] *= False
             matrixBridge[brokenID] *= False
             matrixBlink[brokenID] *= False
