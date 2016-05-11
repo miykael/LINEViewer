@@ -215,6 +215,10 @@ class Results():
             Data.Specs.ThreshValue.SetValue(str(self.threshold))
         self.ignoreChannel = Data.Specs.channels2ignore
 
+        # Don't check ignored channels for thresholding
+        channel2Check = [i for i, e in enumerate(Data.labelsChannel)
+                         if e not in self.ignoreChannel]
+
         # Copy epoch values
         epochs = np.copy(Data.epochs)
 
@@ -265,6 +269,8 @@ class Results():
                     badChannels = np.where(
                         ((e_short > self.threshold) |
                          (e_short < -self.threshold)).mean(axis=1))[0]
+                    badChannels = [b for b in badChannels
+                                   if b in channel2Check]
                     self.matrixThreshold[i][badChannels] = True
 
                 # Check for Bridge outliers
@@ -296,12 +302,6 @@ class Results():
 
                 dlg.Update(i)
             dlg.Destroy()
-
-            # Exclude Channels from thresholding
-            if self.ignoreChannel != []:
-                ignoreID = [i for i, e in enumerate(Data.labelsChannel)
-                             if e in self.ignoreChannel]
-                self.matrixThreshold[:, ignoreID] *= False
 
             # Specifying ID of good and bad epochs
             badIDs = self.matrixThreshold.sum(axis=1) \
@@ -353,6 +353,13 @@ class Results():
                 self.matrixSelected[
                     [i for i in np.where(self.matrixBlink.sum(axis=1))[0]
                      if self.matrixSelected[i] == 'ok_normal']] = 'blink'
+
+        # Make sure that channels are ignored, even in a already loaded dataset
+        if self.ignoreChannel != []:
+            id2threshold = np.where(self.matrixThreshold.sum(axis=1))[0]
+            idSelected = np.where(self.matrixSelected == 'threshold')[0]
+            id2Clean = [ic for ic in idSelected if ic not in id2threshold]
+            self.matrixSelected[id2Clean] = 'ok_normal'
 
         # Correct if correction filters are off
         if not self.thresholdCorr:
