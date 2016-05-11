@@ -80,7 +80,7 @@ class Results():
         iterations += self.doNotch
 
         # Preprocessing Message
-        progText = '\n' * ((1+iterations) * len(Data.Datasets)-1)
+        progText = '\n' * ((1 + iterations) * len(Data.Datasets) - 1)
         nChannels = Data.Datasets[0].rawdata.shape[0]
         progressMax = iterations * len(Data.Datasets) * nChannels
         dlg = wx.ProgressDialog(
@@ -97,12 +97,14 @@ class Results():
 
             # Load Dataset in memmap file
             tmpFilename = splitext(d.filename)[0] + '.lineviewerTempData'
-            tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32', shape=d.rawdata.shape)
+            tmpDataset = np.memmap(tmpFilename, mode='w+', dtype='float32',
+                                   shape=d.rawdata.shape)
             for t in range(nChannels):
                 tmpDataset[t] = d.rawdata[t]
 
                 # Update Progress Dialog
-                progUpdate = '\nRead Data:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                progUpdate = '\nRead Data:\t{:>6}%'.format(
+                    np.round(100. * (t + 1) / nChannels, 1))
                 dlg.Update(counter, progText + progUpdate)
                 counter += 1
             progText += '\nRead Data:\t{:>6}%'.format(100.0)
@@ -114,7 +116,8 @@ class Results():
                     tmpDataset[t] -= dcOffset[t]
 
                     # Update Progress Dialog
-                    progUpdate = '\nRemove DC:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    progUpdate = '\nRemove DC:\t{:>6}%'.format(
+                        np.round(100. * (t + 1) / nChannels, 1))
                     dlg.Update(counter, progText + progUpdate)
                     counter += 1
                 progText += '\nRemove DC:\t{:>6}%'.format(100.0)
@@ -133,7 +136,8 @@ class Results():
                     tmpDataset[t] -= refOffset[t]
 
                     # Update Progress Dialog
-                    progUpdate = '\nRereference:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    progUpdate = '\nRereference:\t{:>6}%'.format(
+                        np.round(100. * (t + 1) / nChannels, 1))
                     dlg.Update(counter, progText + progUpdate)
                     counter += 1
                 progText += '\nRereference:\t{:>6}%'.format(100.0)
@@ -147,7 +151,8 @@ class Results():
                     tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
 
                     # Update Progress Dialog
-                    progUpdate = '\nFilter Data:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    progUpdate = '\nFilter Data:\t{:>6}%'.format(
+                        np.round(100. * (t + 1) / nChannels, 1))
                     dlg.Update(counter, progText + progUpdate)
                     counter += 1
                 progText += '\nFilter Data:\t{:>6}%'.format(100.0)
@@ -160,7 +165,8 @@ class Results():
                     tmpDataset[t] = filtfilt(b, a, tmpDataset[t])
 
                     # Update Progress Dialog
-                    progUpdate = '\nNotch Filter:\t{:>6}%'.format(np.round(100.*(t+1)/nChannels, 1))
+                    progUpdate = '\nNotch Filter:\t{:>6}%'.format(
+                        np.round(100. * (t + 1) / nChannels, 1))
                     dlg.Update(counter, progText + progUpdate)
                     counter += 1
                 progText += '\nNotch Filter:\t{:>6}%'.format(100.0)
