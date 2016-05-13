@@ -334,7 +334,8 @@ class Selecter(wx.Panel):
             # Which channels to exclude from analysis completly
             excludeChannel = self.Data.Specs.channels2exclude
 
-            if oldSampleRate != newSampleRate:
+            if oldSampleRate != newSampleRate and \
+                    oldSampleRate % newSampleRate == 0:
 
                 filelist = [f.filename for f in self.Data.Datasets]
                 newfiles = [ReadEEG(f, newSampleRate, excludeChannel)
