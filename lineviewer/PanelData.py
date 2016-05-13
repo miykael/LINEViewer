@@ -50,26 +50,26 @@ class Selecter(wx.Panel):
         sizerBoxInput.Add(self.ButtonDataDrop, 0, wx.EXPAND)
         sizerBoxInput.AddSpacer(3)
 
-        # Panel: Resample Signal
-        PanelResample = wx.Panel(PanelDataHandler, wx.ID_ANY)
-        sizerResample = wx.BoxSizer(wx.HORIZONTAL)
-        sizerResample.AddSpacer(3)
-        TextResample = wx.StaticText(PanelResample, wx.ID_ANY,
-                                     label="Reslice to", style=wx.CENTRE)
-        sizerResample.Add(TextResample, 0, wx.CENTER)
-        sizerResample.AddSpacer(5)
+        # Panel: Reslice Signal
+        PanelReslice = wx.Panel(PanelDataHandler, wx.ID_ANY)
+        sizerReslice = wx.BoxSizer(wx.HORIZONTAL)
+        sizerReslice.AddSpacer(3)
+        TextReslice = wx.StaticText(PanelReslice, wx.ID_ANY,
+                                    label="Reslice to", style=wx.CENTRE)
+        sizerReslice.Add(TextReslice, 0, wx.CENTER)
+        sizerReslice.AddSpacer(5)
 
-        self.Resample = wx.TextCtrl(PanelResample, wx.ID_ANY,
-                                    size=(60, 25),
-                                    style=wx.TE_PROCESS_ENTER,
-                                    value='')
-        sizerResample.Add(self.Resample, 0, wx.CENTER)
-        sizerResample.AddSpacer(3)
-        TextResampleHz = wx.StaticText(PanelResample, wx.ID_ANY,
-                                       label="[Hz]", style=wx.CENTRE)
-        sizerResample.Add(TextResampleHz, 0, wx.CENTER)
-        PanelResample.SetSizer(sizerResample)
-        sizerBoxInput.Add(PanelResample, 0, wx.EXPAND)
+        self.Reslice = wx.TextCtrl(PanelReslice, wx.ID_ANY,
+                                   size=(60, 25),
+                                   style=wx.TE_PROCESS_ENTER,
+                                   value='')
+        sizerReslice.Add(self.Reslice, 0, wx.CENTER)
+        sizerReslice.AddSpacer(3)
+        TextResliceHz = wx.StaticText(PanelReslice, wx.ID_ANY,
+                                      label="[Hz]", style=wx.CENTRE)
+        sizerReslice.Add(TextResliceHz, 0, wx.CENTER)
+        PanelReslice.SetSizer(sizerReslice)
+        sizerBoxInput.Add(PanelReslice, 0, wx.EXPAND)
 
         sizerPanelDataHandler.Add(sizerBoxInput, 0, wx.EXPAND)
         sizerPanelDataHandler.AddSpacer(20)
@@ -81,11 +81,11 @@ class Selecter(wx.Panel):
         BoxOutput.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxOutput = wx.StaticBoxSizer(BoxOutput, wx.VERTICAL)
 
-        self.ButtonDataSaveTVA = wx.Button(
+        self.ButtonDataSaveERP = wx.Button(
             PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="Save &TVA")
-        self.ButtonDataSaveTVA.Disable()
-        sizerBoxOutput.Add(self.ButtonDataSaveTVA, 0, wx.EXPAND)
+            label="Save &ERP")
+        self.ButtonDataSaveERP.Disable()
+        sizerBoxOutput.Add(self.ButtonDataSaveERP, 0, wx.EXPAND)
 
         self.ButtonDataSaveEpochs = wx.Button(
             PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
@@ -93,11 +93,17 @@ class Selecter(wx.Panel):
         self.ButtonDataSaveEpochs.Disable()
         sizerBoxOutput.Add(self.ButtonDataSaveEpochs, 0, wx.EXPAND)
 
-        self.ButtonDataSaveERP = wx.Button(
+        self.ButtonDataSaveTVA = wx.Button(
             PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
-            label="Save &ERP + Figures")
-        self.ButtonDataSaveERP.Disable()
-        sizerBoxOutput.Add(self.ButtonDataSaveERP, 0, wx.EXPAND)
+            label="Save &TVA")
+        self.ButtonDataSaveTVA.Disable()
+        sizerBoxOutput.Add(self.ButtonDataSaveTVA, 0, wx.EXPAND)
+
+        self.ButtonDataSaveFigures = wx.Button(
+            PanelDataHandler, wx.ID_ANY, size=(200, 28), style=wx.CENTRE,
+            label="Save &Figures")
+        self.ButtonDataSaveFigures.Disable()
+        sizerBoxOutput.Add(self.ButtonDataSaveFigures, 0, wx.EXPAND)
 
         sizerPanelDataHandler.Add(sizerBoxOutput, 0, wx.EXPAND)
         sizerPanelDataHandler.AddSpacer(20)
@@ -126,8 +132,9 @@ class Selecter(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonDataDrop.Id, self.dropData)
         wx.EVT_BUTTON(self, self.ButtonDataSaveTVA.Id, self.saveTVA)
         wx.EVT_BUTTON(self, self.ButtonDataSaveERP.Id, self.saveERP)
+        wx.EVT_BUTTON(self, self.ButtonDataSaveFigures.Id, self.saveFigures)
         wx.EVT_BUTTON(self, self.ButtonDataSaveEpochs.Id, self.saveEpochs)
-        wx.EVT_TEXT_ENTER(self.Resample, self.Resample.Id, self.resampleData)
+        wx.EVT_TEXT_ENTER(self.Reslice, self.Reslice.Id, self.resliceData)
 
     def loadData(self, event):
         """Load EEG files"""
@@ -153,7 +160,7 @@ class Selecter(wx.Panel):
 
                 # Which sampling rate to use
                 try:
-                    sampleRate = int(self.Resample.GetValue())
+                    sampleRate = int(self.Reslice.GetValue())
                 except ValueError:
                     sampleRate = 0
 
@@ -173,10 +180,11 @@ class Selecter(wx.Panel):
                 self.updateInformation()
                 self.Data.Results.updateAll(self.Data)
                 self.ButtonDataDrop.Enable()
-                self.ButtonDataSaveERP.Enable()
                 self.ButtonDataSaveTVA.Enable()
+                self.ButtonDataSaveERP.Enable()
+                self.ButtonDataSaveFigures.Enable()
                 self.ButtonDataSaveEpochs.Enable()
-                self.Resample.SetValue(str(self.Data.Results.sampleRate))
+                self.Reslice.SetValue(str(self.Data.Results.sampleRate))
         dlg.Destroy()
         event.Skip()
 
@@ -212,8 +220,34 @@ class Selecter(wx.Panel):
             # Save outputs
             SaveERP(resultsName, resultsPath, self.Data.Results,
                     self.Data.markers2hide, self.Data.Results.preFrame)
-            SaveFigures(resultsName, resultsPath, self.Data)
             SaveVerbose(resultsName, resultsPath, self.Data)
+
+        dlgTextName.Destroy()
+        event.Skip()
+
+    def saveFigures(self, event):
+        """Saves the Figures"""
+
+        dlgTextName = wx.TextEntryDialog(
+            None, 'Under what name do you want to save the output?',
+            defaultValue='Results01')
+        if dlgTextName.ShowModal() == wx.ID_OK:
+            resultsName = dlgTextName.GetValue()
+
+            dlgTextPath = wx.TextEntryDialog(
+                None, 'Where do you want to save the output at?',
+                defaultValue=os.path.join(self.Data.DirPath, resultsName))
+            if dlgTextPath.ShowModal() == wx.ID_OK:
+                resultsPath = dlgTextPath.GetValue()
+            dlgTextPath.Destroy()
+
+            # Update before saving
+            if self.Data.Results.updateAnalysis:
+                self.Data.Results.updateEpochs(self.Data)
+                self.Data.Results.updateAnalysis = False
+
+            # Save outputs
+            SaveFigures(resultsName, resultsPath, self.Data)
 
         dlgTextName.Destroy()
         event.Skip()
@@ -242,6 +276,7 @@ class Selecter(wx.Panel):
             # Save Epochs
             SaveEpochs(resultsPath, self.Data.Results,
                        self.Data.Results.preFrame)
+            SaveVerbose(resultsName, resultsPath, self.Data)
 
         dlgTextName.Destroy()
         event.Skip()
@@ -280,20 +315,20 @@ class Selecter(wx.Panel):
                 self.Data.Results.updateAll(self.Data)
             else:
                 self.ButtonDataDrop.Disable()
-                self.Resample.SetValue('')
+                self.Reslice.SetValue('')
         event.Skip()
 
-    def resampleData(self, event):
-        """reload data and resample to given value"""
+    def resliceData(self, event):
+        """reload data and reslice to given value"""
 
         if self.Data.Datasets != []:
 
             oldSampleRate = self.Data.Datasets[0].sampleRate
 
             try:
-                newSampleRate = int(self.Resample.GetValue())
+                newSampleRate = int(self.Reslice.GetValue())
             except ValueError:
-                self.Resample.SetValue(str(oldSampleRate))
+                self.Reslice.SetValue(str(oldSampleRate))
                 newSampleRate = oldSampleRate
 
             # Which channels to exclude from analysis completly
