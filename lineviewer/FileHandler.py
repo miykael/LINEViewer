@@ -118,12 +118,12 @@ class ReadEEG:
                 else:
                     readChannelNames = False
             elif 'SamplingInterval=' in line:
-                sampleInterval = int(line[17:-2])
+                sampleInterval = int(line.split('=')[1].strip())
                 self.sampleRate = int(1e6 / float(sampleInterval))
             elif 'BinaryFormat=' in line:
-                binaryFormat = line[13:-2]
+                binaryFormat = line.split('=')[1].strip()
             elif 'recording started at' in line:
-                self.startTime = line[-11:-3]
+                self.startTime = line.split('started at')[-1][1:9]
             elif '[Channel Infos]' in line:
                 readChannelNames = True
 
@@ -133,7 +133,7 @@ class ReadEEG:
         with open(markerFile) as f:
             tmpMarker = f.readlines()
 
-        tmpMarker = [m[:-2].split(',') for m in tmpMarker if m[:2] == 'Mk']
+        tmpMarker = [m.split(',') for m in tmpMarker if m[:2] == 'Mk']
 
         self.markerValue = []
         self.markerTime = []
@@ -141,7 +141,7 @@ class ReadEEG:
             if 'New Segment' in e[0]:
                 recDate = e[5][:8]
                 self.startDate = '%s/%s/%s' % (
-                    recDate[:4], recDate[4:6], recDate[6:])
+                    recDate[6:], recDate[4:6], recDate[:4])
             else:
                 self.markerValue.append(e[1])
                 self.markerTime.append(int(e[2]))
