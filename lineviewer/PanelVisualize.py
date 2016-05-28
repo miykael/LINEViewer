@@ -622,7 +622,7 @@ class ERPSummary(wx.Panel):
 
     def updateOverlay(self, event):
         if hasattr(self, 'markerValue'):
-            self.update(self.markerValue)
+            self.update(self.markerValue, self.shiftView)
         event.Skip()
 
 
@@ -808,7 +808,7 @@ class EpochsDetail(wx.Panel):
                 idSelected = self.Data.Results.matrixSelected[epochID]
 
                 sizer = np.sqrt(
-                    np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 2
+                    np.sum(np.ptp(epoch, axis=1) / epoch.shape[0])) * 4
                 modulator = float(self.ComboAmplitude.GetValue()[:-1])
                 sizer *= modulator / 100.
 
@@ -1022,7 +1022,7 @@ class EpochsDetail(wx.Panel):
 
     def updateOverlay(self, event):
         if hasattr(self, 'markerValue'):
-            self.update(self.markerValue)
+            self.update(self.markerValue, self.shiftView)
         event.Skip()
 
 
