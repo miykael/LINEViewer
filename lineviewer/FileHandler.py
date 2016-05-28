@@ -189,6 +189,7 @@ class ReadXYZ:
 
     def __init__(self, filename):
 
+        # Read XYZ File
         with open(filename) as f:
             content = f.readlines()
             self.coord = []
@@ -202,6 +203,10 @@ class ReadXYZ:
                     self.labels.append(coord[3])
             self.coord = np.array(self.coord)
             self.labels = np.array(self.labels)
+
+        # Get ID of 10% most frontal channels
+        xValue = self.coord[:, 0]
+        self.frontalID = np.where(xValue >= np.percentile(xValue, 90))[0]
 
 
 class SaveTVA:
