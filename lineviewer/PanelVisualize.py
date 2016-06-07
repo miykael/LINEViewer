@@ -24,170 +24,50 @@ class Overview(wx.Panel):
         else:
             # Get relevant information
             self.figure.clear()
-            labelsChannel = np.copy(self.Data.labelsChannel)
-            if hasattr(self.Data.Results, 'collapsedMarkers'):
-                markers = self.Data.Results.collapsedMarkers
-            else:
-                markers = np.copy(self.Data.Results.markers)
-
-            # Correct for selected epochs
-            matrixSelected = np.copy(self.Data.Results.matrixSelected)
-
-            # Disregard outliers if they are selected as being ok
-            self.Data.Results.matrixBridge[
-                np.where(matrixSelected == 'ok_bridge')[0]] = False
-            self.Data.Results.matrixBlink[
-                np.where(matrixSelected == 'ok_blink')[0]] = False
-            self.Data.Results.matrixThreshold[
-                np.where(matrixSelected == 'ok_thresh')[0]] = False
-
-            matrixBridge = np.copy(self.Data.Results.matrixBridge)
-            matrixBlink = np.copy(self.Data.Results.matrixBlink)
-            matrixThreshold = np.copy(self.Data.Results.matrixThreshold)
-
-            # Check for broken Epochs; if 25% of channels are over threshold
-            brokenID = np.where(matrixThreshold.sum(axis=1) >
-                                matrixThreshold.shape[1] * 0.9)[0]
-            matrixThreshold[brokenID] *= False
-            matrixBridge[brokenID] *= False
-            matrixBlink[brokenID] *= False
-
-            # Get distribution of channels
-            distChannelSelected = []
-            distChannelBroken = []
-            distChannelBlink = []
-            distChannelThreshold = []
-            distChannelBridge = []
-            badChannelsLabel = []
-
-            # Disregard any epochs of hidden markers
-            markers2hide = [True if m in self.Data.markers2hide else False
-                            for m in markers]
-            brokenID = [b for b in brokenID
-                        if b not in np.where(markers2hide)[0]]
-            matrixSelected[np.where(markers2hide)] = 'ok_normal'
-            unhiddenEpochID = np.where(np.invert(markers2hide))[0].tolist()
-
-            matrixBad = matrixThreshold + matrixBridge
-            badChannelsID = np.where(matrixBad[unhiddenEpochID].sum(axis=0))[0]
-
-            tmpThreshold = matrixThreshold[:, badChannelsID]
-            tmpThreshold = tmpThreshold[unhiddenEpochID]
-            tmpBridge = matrixBridge[:, badChannelsID]
-            tmpBridge = tmpBridge[unhiddenEpochID]
-
-            # Count how many acceptable epochs are selected as outliers
-            nSelectedOutliers = np.in1d(matrixSelected, 'selected').sum()
-
-            if nSelectedOutliers != 0:
-                distChannelSelected.extend([nSelectedOutliers])
-                distChannelBroken.extend([0])
-                distChannelBlink.extend([0])
-                distChannelThreshold.extend([0])
-                distChannelBridge.extend([0])
-                badChannelsLabel.extend(['Outliers'])
-            if len(brokenID) != 0:
-                distChannelSelected.extend([0])
-                distChannelBroken.extend([len(brokenID)])
-                distChannelBlink.extend([0])
-                distChannelThreshold.extend([0])
-                distChannelBridge.extend([0])
-                badChannelsLabel.extend(['Broken'])
-            if matrixBlink.sum() != 0:
-                distChannelSelected.extend([0])
-                distChannelBroken.extend([0])
-                distChannelBlink.extend([matrixBlink.sum()])
-                distChannelThreshold.extend([0])
-                distChannelBridge.extend([0])
-                badChannelsLabel.extend(['Blink'])
-
-            distChannelThreshold.extend(tmpThreshold.sum(axis=0))
-            distChannelBridge.extend(tmpBridge.sum(axis=0))
-            distChannelBroken.extend([0] * len(badChannelsID))
-            distChannelBlink.extend([0] * len(badChannelsID))
-            distChannelSelected.extend([0] * len(badChannelsID))
-            badChannelsLabel.extend(labelsChannel[badChannelsID])
-
-            # Get distribution of markers
-            markerIDBroken = list(brokenID)
-            markerIDThreshold = list(
-                np.where(matrixThreshold.sum(axis=1).astype('bool'))[0])
-            markerIDBridge = list(
-                np.where(matrixBridge.sum(axis=1).astype('bool'))[0])
-            markerIDBridge = [
-                m for m in markerIDBridge if m not in markerIDThreshold]
-            markerIDBlink = list(
-                np.where(matrixBlink.sum(axis=1).astype('bool'))[0])
-            markerIDBlink = [
-                m for m in markerIDBlink
-                if m not in markerIDThreshold + markerIDBridge]
-            markerIDSelected = list(np.where(matrixSelected == 'selected')[0])
-
-            uniqueMarkers = np.array(
-                [m for m in np.unique(markers)
-                 if m not in self.Data.markers2hide])
-
-            distMarkerBroken = [
-                list(markers[markerIDBroken]).count(u)
-                for u in uniqueMarkers]
-            distMarkerThreshold = [
-                list(markers[markerIDThreshold]).count(u)
-                for u in uniqueMarkers]
-            distMarkerBridge = [
-                list(markers[markerIDBridge]).count(u) for u in uniqueMarkers]
-            distMarkerBlink = [
-                list(markers[markerIDBlink]).count(u) for u in uniqueMarkers]
-            distMarkerSelected = [
-                list(markers[markerIDSelected]).count(u)
-                for u in uniqueMarkers]
-            distMarkerOK = [
-                [m for i, m in enumerate(markers)
-                 if i not in markerIDThreshold + markerIDBridge +
-                 markerIDBlink + markerIDBroken].count(u)
-                for u in uniqueMarkers]
-            distMarkerOK = [m - distMarkerSelected[i]
-                            for i, m in enumerate(distMarkerOK)]
-            self.distMarkerOK = distMarkerOK
 
             # Create bad channel histogram
             axes = self.figure.add_subplot(2, 1, 1)
             axes.clear()
 
-            nChannels = np.arange(len(badChannelsLabel))
-            axes.bar(nChannels, distChannelBroken, 0.75, color='c',
+            nChannels = np.arange(len(Results.badChannelsLabel))
+            axes.bar(nChannels, Results.distChannelBroken, 0.75, color='c',
                      label='Broken', alpha=0.5)
-            axes.bar(nChannels, distChannelThreshold, 0.75, color='r',
+            axes.bar(nChannels, Results.distChannelThreshold, 0.75, color='r',
                      label='Threshold', alpha=0.5)
-            axes.bar(nChannels, distChannelBridge, 0.75, color='b',
-                     bottom=distChannelThreshold, label='Bridge',
+            axes.bar(nChannels, Results.distChannelBridge, 0.75, color='b',
+                     bottom=Results.distChannelThreshold, label='Bridge',
                      alpha=0.5)
-            axes.bar(nChannels, distChannelBlink, 0.75, color='m',
-                     bottom=np.sum(np.vstack((distChannelThreshold,
-                                              distChannelBridge)), axis=0),
+            axes.bar(nChannels, Results.distChannelBlink, 0.75, color='m',
+                     bottom=np.sum(np.vstack(
+                         (Results.distChannelThreshold,
+                          Results.distChannelBridge)), axis=0),
                      label='Blink', alpha=0.5)
-            axes.bar(nChannels, distChannelSelected, 0.75, color='#ff8c00',
-                     label='Broken', alpha=0.5)
+            axes.bar(nChannels, Results.distChannelSelected, 0.75,
+                     color='#ff8c00', label='Broken', alpha=0.5)
 
-            distOutliersChannel = np.vstack([distChannelThreshold,
-                                             distChannelBridge,
-                                             distChannelBroken,
-                                             distChannelBlink,
-                                             distChannelSelected]).sum(axis=0)
+            distOutliersChannel = np.vstack(
+                [Results.distChannelThreshold,
+                 Results.distChannelBridge,
+                 Results.distChannelBroken,
+                 Results.distChannelBlink,
+                 Results.distChannelSelected]).sum(axis=0)
 
             # Needed for verbose file
             self.Data.Results.OoutlierChannels = int(sum(distOutliersChannel))
 
             axes.title.set_text(
                 'Channel Overview - %s Epochs Total (%s Outliers)'
-                % (markers.shape[0], int(sum(distOutliersChannel))))
+                % (Results.markers.shape[0],
+                    int(sum(distOutliersChannel))))
 
             axes.grid(True, axis='y')
             axes.set_ylabel('Epochs')
             axes.set_xticks(nChannels + .75 / 2)
-            axes.set_xticklabels(badChannelsLabel, rotation=90)
+            axes.set_xticklabels(Results.badChannelsLabel, rotation=90)
 
             # Write percentage of outliers in channel overview plot
-            distOutliersChannel = 1. * distOutliersChannel / markers.shape[0]
+            distOutliersChannel = 1. * \
+                distOutliersChannel / Results.markers.shape[0]
             ticks = axes.get_xticks()
             for i, d in enumerate(distOutliersChannel):
                 percentage = np.round(distOutliersChannel[i] * 100., 1)
@@ -206,55 +86,61 @@ class Overview(wx.Panel):
             axes = self.figure.add_subplot(2, 1, 2)
             axes.clear()
 
-            nMarker = np.arange(uniqueMarkers.shape[0])
-            axes.bar(nMarker, distMarkerOK, 0.75, color='g',
+            nMarker = np.arange(Results.uniqueMarkers.shape[0])
+            axes.bar(nMarker, Results.distMarkerOK, 0.75, color='g',
                      label='OK', alpha=0.5)
-            axes.bar(nMarker, distMarkerSelected, 0.75, color='#ff8c00',
-                     bottom=distMarkerOK, label='Outliers', alpha=0.5)
-            axes.bar(nMarker, distMarkerThreshold, 0.75, color='r',
-                     bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerSelected)), axis=0),
+            axes.bar(
+                nMarker, Results.distMarkerSelected, 0.75, color='#ff8c00',
+                bottom=Results.distMarkerOK, label='Outliers', alpha=0.5)
+            axes.bar(nMarker, Results.distMarkerThreshold, 0.75, color='r',
+                     bottom=np.sum(
+                         np.vstack((Results.distMarkerOK,
+                                    Results.distMarkerSelected)), axis=0),
                      label='Threshold', alpha=0.5)
-            axes.bar(nMarker, distMarkerBridge, 0.75, color='b',
-                     bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerSelected,
-                                              distMarkerThreshold)), axis=0),
+            axes.bar(nMarker, Results.distMarkerBridge, 0.75, color='b',
+                     bottom=np.sum(
+                         np.vstack((Results.distMarkerOK,
+                                    Results.distMarkerSelected,
+                                    Results.distMarkerThreshold)), axis=0),
                      label='Bridge', alpha=0.5)
-            axes.bar(nMarker, distMarkerBlink, 0.75, color='m',
-                     bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerSelected,
-                                              distMarkerThreshold,
-                                              distMarkerBridge)), axis=0),
+            axes.bar(nMarker, Results.distMarkerBlink, 0.75, color='m',
+                     bottom=np.sum(
+                         np.vstack((Results.distMarkerOK,
+                                    Results.distMarkerSelected,
+                                    Results.distMarkerThreshold,
+                                    Results.distMarkerBridge)), axis=0),
                      label='Blink', alpha=0.5)
-            axes.bar(nMarker, distMarkerBroken, 0.75, color='c',
-                     bottom=np.sum(np.vstack((distMarkerOK,
-                                              distMarkerSelected,
-                                              distMarkerThreshold,
-                                              distMarkerBridge,
-                                              distMarkerBlink)), axis=0),
+            axes.bar(nMarker, Results.distMarkerBroken, 0.75, color='c',
+                     bottom=np.sum(
+                         np.vstack((Results.distMarkerOK,
+                                    Results.distMarkerSelected,
+                                    Results.distMarkerThreshold,
+                                    Results.distMarkerBridge,
+                                    Results.distMarkerBlink)), axis=0),
                      label='Broken', alpha=0.5)
 
             percentageBad = 1 - float(
-                sum(distMarkerOK)) / self.Data.Results.okID.shape[0]
+                sum(Results.distMarkerOK)) / self.Data.Results.okID.shape[0]
             nOutliers = int(
-                self.Data.Results.okID.shape[0] - sum(distMarkerOK))
+                self.Data.Results.okID.shape[0] - sum(Results.distMarkerOK))
             axes.title.set_text(
                 'Marker Overview - {0} Outliers [{1}%]'.format(
                     nOutliers, round(percentageBad * 100, 1)))
             axes.grid(True, axis='y')
             axes.set_ylabel('Epochs')
             axes.set_xticks(nMarker + .75 / 2)
-            axes.set_xticklabels(uniqueMarkers.astype('str'))
+            axes.set_xticklabels(Results.uniqueMarkers.astype('str'))
 
             # Write percentage of outliers in marker overview plot
-            distOutliersMarker = np.vstack([distMarkerThreshold,
-                                            distMarkerBridge,
-                                            distMarkerBroken,
-                                            distMarkerBlink,
-                                            distMarkerSelected]).sum(axis=0)
+            distOutliersMarker = np.vstack(
+                [Results.distMarkerThreshold,
+                 Results.distMarkerBridge,
+                 Results.distMarkerBroken,
+                 Results.distMarkerBlink,
+                 Results.distMarkerSelected]).sum(axis=0)
             distOutliersMarker = np.divide(
                 distOutliersMarker.astype('float'),
-                distOutliersMarker + distMarkerOK)
+                distOutliersMarker + Results.distMarkerOK)
 
             ticks = axes.get_xticks()
             for i, d in enumerate(distOutliersMarker):
@@ -271,23 +157,23 @@ class Overview(wx.Panel):
 
             # Save distributions for latter access
             dist = self.Data.Results
-            dist.OnSelectedOutliers = nSelectedOutliers
-            dist.OdistChannelThreshold = distChannelThreshold
-            dist.OdistChannelBridge = distChannelBridge
-            dist.OBroken = len(brokenID)
-            dist.OBlink = matrixBlink.sum()
+            dist.OnSelectedOutliers = Results.nSelectedOutliers
+            dist.OdistChannelThreshold = Results.distChannelThreshold
+            dist.OdistChannelBridge = Results.distChannelBridge
+            dist.OBroken = len(Results.brokenID)
+            dist.OBlink = Results.matrixBlink.sum()
             dist.OpercentageChannels = distOutliersChannel
-            dist.OxaxisChannel = labelsChannel[badChannelsID]
+            dist.OxaxisChannel = self.Data.labelsChannel[Results.badChannelsID]
 
             dist.OoutlierEpochs = nOutliers
-            dist.OdistMarkerOK = distMarkerOK
-            dist.OdistMarkerThreshold = distMarkerThreshold
-            dist.OdistMarkerBridge = distMarkerBridge
-            dist.OdistMarkerBroken = distMarkerBroken
-            dist.OdistMarkerBlink = distMarkerBlink
-            dist.OdistMarkerSelected = distMarkerSelected
+            dist.OdistMarkerOK = Results.distMarkerOK
+            dist.OdistMarkerThreshold = Results.distMarkerThreshold
+            dist.OdistMarkerBridge = Results.distMarkerBridge
+            dist.OdistMarkerBroken = Results.distMarkerBroken
+            dist.OdistMarkerBlink = Results.distMarkerBlink
+            dist.OdistMarkerSelected = Results.distMarkerSelected
             dist.OpercentageMarker = distOutliersMarker
-            dist.OxaxisMarker = uniqueMarkers.astype('str')
+            dist.OxaxisMarker = Results.uniqueMarkers.astype('str')
 
 
 class GFPSummary(wx.Panel):
@@ -406,7 +292,7 @@ class GFPDetail(wx.Panel):
                     axes.plot(xaxis, avgGFP[i], 'b')
                 if self.CheckboxGMD.IsChecked():
                     axes.plot(xaxis, avgGMD[i], 'r')
-                nMarkers = self.Data.Overview.distMarkerOK[i]
+                nMarkers = Results.distMarkerOK[i]
 
                 axes.title.set_text(
                     'Marker: %s [N=%s]' % (shownMarkers[i], nMarkers))
