@@ -101,12 +101,13 @@ class ReadEEG:
         # Aggregate Header Information
         with open(hdrFile) as f:
             tmpHeader = f.readlines()
+            tmpHeader = [t.strip() for t in tmpHeader]
 
         self.labelsChannel = []
         readChannelNames = False
         for line in tmpHeader:
             if readChannelNames:
-                if line[0] == ';':
+                if len(line) == 0 or line[0] == ';':
                     continue
                 elif line[0:2] == 'Ch':
                     channelName = line.split(',')[0]
@@ -116,10 +117,10 @@ class ReadEEG:
                 else:
                     readChannelNames = False
             elif 'SamplingInterval=' in line:
-                sampleInterval = int(line.split('=')[1].strip())
+                sampleInterval = int(line.split('=')[1])
                 self.sampleRate = int(1e6 / float(sampleInterval))
             elif 'BinaryFormat=' in line:
-                binaryFormat = line.split('=')[1].strip()
+                binaryFormat = line.split('=')[1]
             elif 'recording started at' in line:
                 self.startTime = line.split('started at')[-1][1:9]
             elif '[Channel Infos]' in line:
@@ -130,6 +131,7 @@ class ReadEEG:
         # Aggregate Marker Information
         with open(markerFile) as f:
             tmpMarker = f.readlines()
+            tmpMarker = [t.strip() for t in tmpMarker]
 
         tmpMarker = [m.split(',') for m in tmpMarker if m[:2] == 'Mk']
 
