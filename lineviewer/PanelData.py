@@ -254,7 +254,7 @@ class Selecter(wx.Panel):
 
         dlgTextName = wx.TextEntryDialog(
             None, 'Under what name do you want to save the output?',
-            defaultValue=os.path.join('Results01', 'Epochs'))
+            defaultValue='Epoch_Results01')
         if dlgTextName.ShowModal() == wx.ID_OK:
             resultsName = dlgTextName.GetValue()
 
