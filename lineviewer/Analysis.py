@@ -18,6 +18,7 @@ class Results():
         self.removeDC = Data.Specs.CheckboxDC.GetValue()
         self.average = Data.Specs.CheckboxAverage.GetValue()
         self.newReference = Data.Specs.DropDownNewRef.GetValue()
+        self.blinkCorr = Data.Specs.CheckboxBlink.GetValue()
         try:
             self.preEpoch = float(Data.Specs.PreEpoch.GetValue())
         except ValueError:
@@ -212,7 +213,6 @@ class Results():
         # Get Specifications
         self.baselineCorr = Data.Specs.DropDownBase.GetSelection()
         self.bridgeCorr = Data.Specs.CheckboxBridge.GetValue()
-        self.blinkCorr = Data.Specs.CheckboxBlink.GetValue()
         self.thresholdCorr = Data.Specs.CheckboxThreshold.GetValue()
         try:
             self.threshold = float(Data.Specs.ThreshValue.GetValue())
@@ -487,7 +487,7 @@ class Results():
         markerIDSelected = list(np.where(self.matrixSelected == 'selected')[0])
 
         self.uniqueMarkers = np.array(
-            [m for m in np.unique(markers)
+            [m for m in self.uniqueMarkers
              if m not in Data.markers2hide])
 
         self.distMarkerBroken = [
