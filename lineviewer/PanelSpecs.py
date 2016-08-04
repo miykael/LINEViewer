@@ -24,7 +24,6 @@ class Specification(wx.Panel):
         BoxSpecData = wx.StaticBox(PanelSpecs,
                                    wx.ID_ANY, style=wx.CENTRE,
                                    label="Dataset Filters")
-        BoxSpecData.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxData = wx.StaticBoxSizer(BoxSpecData, wx.VERTICAL)
 
         # Use DC Filter
@@ -127,7 +126,6 @@ class Specification(wx.Panel):
         # Box: Epoch Filters Specifications
         BoxSpecEpoch = wx.StaticBox(PanelSpecs, wx.ID_ANY, style=wx.CENTRE,
                                     label="Epoch Filters")
-        BoxSpecEpoch.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxEpoch = wx.StaticBoxSizer(BoxSpecEpoch, wx.VERTICAL)
 
         # Epoch Specification
@@ -234,7 +232,6 @@ class Specification(wx.Panel):
         # Box: Marker Specifications
         BoxSpecMarker = wx.StaticBox(PanelSpecs, wx.ID_ANY, style=wx.CENTRE,
                                      label="Marker Options")
-        BoxSpecMarker.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxMarker = wx.StaticBoxSizer(BoxSpecMarker, wx.VERTICAL)
 
         # Box: Marker Specifications
@@ -264,8 +261,6 @@ class Specification(wx.Panel):
         BoxSpecInterpolation = wx.StaticBox(PanelSpecs,
                                             wx.ID_ANY, style=wx.CENTRE,
                                             label="Interpolation")
-        BoxSpecInterpolation.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,
-                                             wx.BOLD))
         sizerBoxInterpolation = wx.StaticBoxSizer(BoxSpecInterpolation,
                                                   wx.VERTICAL)
 

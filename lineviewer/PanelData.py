@@ -25,7 +25,6 @@ class Selecter(wx.Panel):
         BoxInput = wx.StaticBox(PanelDataHandler,
                                 wx.ID_ANY, style=wx.CENTRE,
                                 label="Dataset Input")
-        BoxInput.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxInput = wx.StaticBoxSizer(BoxInput, wx.VERTICAL)
         sizerBoxInput.AddSpacer(3)
 
@@ -78,7 +77,6 @@ class Selecter(wx.Panel):
         BoxOutput = wx.StaticBox(PanelDataHandler,
                                  wx.ID_ANY, style=wx.CENTRE,
                                  label="Dataset Output")
-        BoxOutput.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxOutput = wx.StaticBoxSizer(BoxOutput, wx.VERTICAL)
 
         self.ButtonDataSaveERP = wx.Button(
@@ -112,7 +110,6 @@ class Selecter(wx.Panel):
         BoxInformation = wx.StaticBox(PanelDataHandler,
                                       wx.ID_ANY, style=wx.CENTRE,
                                       label="Dataset Information")
-        BoxInformation.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL, wx.BOLD))
         sizerBoxInformation = wx.StaticBoxSizer(BoxInformation, wx.VERTICAL)
 
         self.TxtInformation = wx.StaticText(PanelDataHandler, wx.ID_ANY,
