@@ -1,0 +1,1 @@
+conda remove -n lineviewer-2.7 --all --yes
