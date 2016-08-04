@@ -23,6 +23,7 @@ The software has the following dependencies:
 * `matplotlib <http://matplotlib.org/>`_: version 1.5 or higher
 * `numpy <http://www.numpy.org/>`_: version 1.9 or higher
 * `scipy <http://www.scipy.org/>`_: version 0.16 or higher
+* `scikit-learn <http://scikit-learn.org/stable/>`_: version 0.17 or higher
 * `wxpython <http://wiki.wxpython.org/How%20to%20install%20wxPython>`_: version 3.0 or higher
 
 Full distributions like `Anaconda <https://www.continuum.io/why-anaconda>`_ provide all those packages, except `wxpython v3.0 <http://wiki.wxpython.org/How%20to%20install%20wxPython>`_.
@@ -30,7 +31,7 @@ Full distributions like `Anaconda <https://www.continuum.io/why-anaconda>`_ prov
 Windows
 *******
 1. Download and install the `newest Anaconda distribution that includes Python 2.7 <https://www.continuum.io/downloads>`_.
-2. Download and install the `current release of LINEViewer_install.exe <https://github.com/miykael/LINEViewer/releases/download/0.2.03/LINEViewer_install.exe>`_.
+2. Download and install the `current release of LINEViewer.exe <https://github.com/miykael/LINEViewer/releases>`_.
 3. Download the `current release of LINEViewer.exe <https://github.com/miykael/LINEViewer/releases/download/0.2.03/LINEViewer.exe>`_, put it on your Desktop and open it to run LINEViewer on your system.
 
 Alternatively, you can also use the installation instruction for Linux / iOS on a Windows machine - as long as you have `Anaconda <https://www.continuum.io/why-anaconda>`_ on your system.
@@ -39,10 +40,14 @@ Linux / iOS
 ***********
 
 1. Download and install the `newest Anaconda distribution that includes Python 2.7 <https://www.continuum.io/downloads>`_.
-2. Install newest version of wxpython on your system with ``conda install -y wxpython``
-3. Update all dependencies to the newest version with ``conda update -y matplotlib numpy scipy wxpython``
-4. Install LINEViewer with the command ``pip install --upgrade lineviewer``
-5. Start LINEViewer on your system with the command ``ipython --c "import lineviewer; lineviewer.gui()"``
+2. Create a conda environment with python 2.7:
+   ``conda create -y -n lineviewer-2.7 python=2.7 pip ipython matplotlib numpy scikit-learn scipy wxpython``
+3. Activate lineviewer environment: ``source activate lineviewer-2.7``
+4. Install LINEViewer via pip: ``pip install --upgrade lineviewer``
+5. Start LINEViewer with: ``ipython --c "import lineviewer; lineviewer.gui()"``
+
+To uninstall lineviewer and the conda environment `lineviewer-2.7` use the following command:
+``conda remove -n lineviewer-2.7 --all --yes``
 
 
 LINEViewer structure
