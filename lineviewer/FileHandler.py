@@ -301,6 +301,10 @@ class SaveEpochs:
         # Go through all epochs
         for i, epoch in enumerate(results.epochs):
 
+            # Only save epochs that were OK
+            if not results.okID[i]:
+                continue
+
             # Write electrode data into ERP file
             nSignal, nTimepoint = epoch.shape
             marker = results.markers[i]
