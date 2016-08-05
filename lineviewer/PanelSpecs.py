@@ -451,7 +451,7 @@ class Specification(wx.Panel):
 
     def excludeChannels(self, event):
         if self.Data.Datasets != []:
-            channels = self.Data.Datasets[0].labelsChannel
+            channels = ReadEEG(self.Data.Datasets[0].filename).labelsChannel
             dlg = wx.MultiChoiceDialog(
                 self, caption="Select channels to exclude",
                 message='Which channels should be excluded?',

@@ -6,7 +6,7 @@ from os.path import exists, join, basename
 
 class ReadEEG:
 
-    def __init__(self, filename, newSampleRate, channels2exclude):
+    def __init__(self, filename, newSampleRate=0, channels2exclude=[]):
 
         self.filename = filename
 
