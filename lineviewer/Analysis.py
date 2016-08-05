@@ -452,7 +452,7 @@ class Results():
 
         # Check for broken Epochs; if 80% of channels are over threshold
         brokenID = np.where(self.matrixThreshold.sum(axis=1) >
-                            self.matrixThreshold.shape[1] * 0.01)[0]
+                            self.matrixThreshold.shape[1] * 0.8)[0]
         self.matrixThreshold[brokenID] *= False
         self.matrixBlink[brokenID] *= False
 
