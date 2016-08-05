@@ -440,7 +440,7 @@ class SaveVerbose:
 
             # Information about the channel overview
             f.writelines(
-                'Overview Channel Outliers:\n----------------------------\n\n')
+                'Overview Channel Outliers:\n--------------------------\n\n')
 
             nFaultyChannels = res.OxaxisChannel.shape[0]
             distChannelThreshold = res.OdistChannelThreshold[-nFaultyChannels:]
@@ -477,7 +477,7 @@ class SaveVerbose:
 
             # Information about the marker overview
             f.writelines(
-                'Overview Marker Outliers:\n---------------------------\n\n')
+                'Overview Marker Outliers:\n-------------------------\n\n')
 
             nMarkers = len(res.OxaxisMarker)
             f.writelines('Outliers Total\t\t:\t{0} / {1}%\n'.format(
@@ -500,6 +500,8 @@ class SaveVerbose:
                          ('{:>6}' * nMarkers).format(*res.OdistMarkerBlink))
             f.writelines('Broken #\t\t\t:%s\n' %
                          ('{:>6}' * nMarkers).format(*res.OdistMarkerBroken))
+            f.writelines('Outlier ID\t\t\t:\t%s\n' %
+                         ', '.join(np.where(res.badID)[0].astype('str')))
             f.writelines('\n\n')
 
             # Information about input files
