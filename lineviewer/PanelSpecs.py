@@ -190,12 +190,6 @@ class Specification(wx.Panel):
         sizerBoxEpoch.Add(PanelBaseDrop, 0, wx.EXPAND)
         sizerBoxEpoch.AddSpacer(5)
 
-        # Bridge Specification
-        self.Data.Specs.CheckboxBridge = wx.CheckBox(PanelSpecs, wx.ID_ANY,
-                                                     'Bridge Detection')
-        self.Data.Specs.CheckboxBridge.SetValue(False)
-        sizerBoxEpoch.Add(self.Data.Specs.CheckboxBridge, 0, wx.EXPAND)
-
         # Blink Specification
         self.Data.Specs.CheckboxBlink = wx.CheckBox(PanelSpecs, wx.ID_ANY,
                                                     'Blink Detection')
@@ -317,8 +311,6 @@ class Specification(wx.Panel):
                         self.useThreshold)
         wx.EVT_COMBOBOX(self.Data.Specs.DropDownBase,
                         self.Data.Specs.DropDownBase.Id, self.drawEpochs)
-        wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBridge,
-                        self.Data.Specs.CheckboxBridge.Id, self.drawEpochs)
         wx.EVT_CHECKBOX(self.Data.Specs.CheckboxBlink,
                         self.Data.Specs.CheckboxBlink.Id, self.drawEpochs)
 

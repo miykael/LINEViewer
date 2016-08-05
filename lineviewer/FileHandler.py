@@ -379,7 +379,6 @@ class SaveVerbose:
                 (res.postEpoch, res.postFrame))
             f.writelines('Baseline correction\t:\t%s\n' % res.baselineCorr)
             f.writelines('Blink correction\t:\t%s\n' % res.blinkCorr)
-            f.writelines('Bridge correction\t:\t%s\n' % res.bridgeCorr)
             f.writelines('Thresh. correction\t:\t%s\n' % res.thresholdCorr)
             f.writelines('Threshold [mikroV]\t:\t%s\n' % res.threshold)
             f.writelines('Channels ignored\t:\t%s\n' %
@@ -425,17 +424,13 @@ class SaveVerbose:
             ok_thresh = len(np.where(res.matrixSelected == 'ok_thresh')[0])
             blink = len(np.where(res.matrixSelected == 'blink')[0])
             ok_blink = len(np.where(res.matrixSelected == 'ok_blink')[0])
-            bridge = len(np.where(res.matrixSelected == 'bridge')[0])
-            ok_bridge = len(np.where(res.matrixSelected == 'ok_bridge')[0])
             modeInfo = '[automatic detection / manually switched]'
             f.writelines('Epochs accepted\t\t:\t%s / %s %s\n' %
                          (ok_normal, selected, modeInfo))
-            f.writelines('Epochs threshold\t:\t%s / %s %s\n' %
+            f.writelines('Epochs Threshold\t:\t%s / %s %s\n' %
                          (threshold, ok_thresh, modeInfo))
             f.writelines('Epochs Blink\t\t:\t%s / %s %s\n' %
                          (blink, ok_blink, modeInfo))
-            f.writelines('Epochs Bridge\t\t:\t%s / %s %s\n' %
-                         (bridge, ok_bridge, modeInfo))
             f.writelines('\n\n')
 
             # Information about the channel overview
@@ -444,12 +439,10 @@ class SaveVerbose:
 
             nFaultyChannels = res.OxaxisChannel.shape[0]
             distChannelThreshold = res.OdistChannelThreshold[-nFaultyChannels:]
-            distChannelBridge = res.OdistChannelBridge[-nFaultyChannels:]
             percentageChannel = np.round(
                 res.OpercentageChannels[-nFaultyChannels:], 3) * 100
             percentageMarker = np.round(res.OpercentageMarker, 3) * 100
-            nChannelOutliers = sum(distChannelThreshold) + \
-                sum(distChannelBridge)
+            nChannelOutliers = sum(distChannelThreshold)
 
             f.writelines('Outliers Total #\t:\t%s\n' % nChannelOutliers)
             f.writelines('Outliers Selected\t:\t{0} / {1}%\n'.format(
@@ -470,9 +463,6 @@ class SaveVerbose:
                 ('{:>6}' * nFaultyChannels).format(*percentageChannel)))
             f.writelines('Threshold #\t\t\t:%s\n' % (
                 '{:>6}' * nFaultyChannels).format(*distChannelThreshold))
-            f.writelines('Bridge #\t\t\t:%s\n' %
-                         ('{:>6}' * nFaultyChannels).format(
-                             *distChannelBridge))
             f.writelines('\n\n')
 
             # Information about the marker overview
@@ -494,8 +484,6 @@ class SaveVerbose:
             f.writelines('Threshold #\t\t\t:%s\n' %
                          ('{:>6}' * nMarkers).format(
                              *res.OdistMarkerThreshold))
-            f.writelines('Bridge #\t\t\t:%s\n' %
-                         ('{:>6}' * nMarkers).format(*res.OdistMarkerBridge))
             f.writelines('Blink #\t\t\t\t:%s\n' %
                          ('{:>6}' * nMarkers).format(*res.OdistMarkerBlink))
             f.writelines('Broken #\t\t\t:%s\n' %

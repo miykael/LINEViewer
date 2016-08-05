@@ -34,20 +34,13 @@ class Overview(wx.Panel):
                      label='Broken', alpha=0.5)
             axes.bar(nChannels, Results.distChannelThreshold, 0.75, color='r',
                      label='Threshold', alpha=0.5)
-            axes.bar(nChannels, Results.distChannelBridge, 0.75, color='b',
-                     bottom=Results.distChannelThreshold, label='Bridge',
-                     alpha=0.5)
             axes.bar(nChannels, Results.distChannelBlink, 0.75, color='m',
-                     bottom=np.sum(np.vstack(
-                         (Results.distChannelThreshold,
-                          Results.distChannelBridge)), axis=0),
                      label='Blink', alpha=0.5)
             axes.bar(nChannels, Results.distChannelSelected, 0.75,
                      color='#ff8c00', label='Broken', alpha=0.5)
 
             distOutliersChannel = np.vstack(
                 [Results.distChannelThreshold,
-                 Results.distChannelBridge,
                  Results.distChannelBroken,
                  Results.distChannelBlink,
                  Results.distChannelSelected]).sum(axis=0)
@@ -97,25 +90,17 @@ class Overview(wx.Panel):
                          np.vstack((Results.distMarkerOK,
                                     Results.distMarkerSelected)), axis=0),
                      label='Threshold', alpha=0.5)
-            axes.bar(nMarker, Results.distMarkerBridge, 0.75, color='b',
-                     bottom=np.sum(
-                         np.vstack((Results.distMarkerOK,
-                                    Results.distMarkerSelected,
-                                    Results.distMarkerThreshold)), axis=0),
-                     label='Bridge', alpha=0.5)
             axes.bar(nMarker, Results.distMarkerBlink, 0.75, color='m',
                      bottom=np.sum(
                          np.vstack((Results.distMarkerOK,
                                     Results.distMarkerSelected,
-                                    Results.distMarkerThreshold,
-                                    Results.distMarkerBridge)), axis=0),
+                                    Results.distMarkerThreshold)), axis=0),
                      label='Blink', alpha=0.5)
             axes.bar(nMarker, Results.distMarkerBroken, 0.75, color='c',
                      bottom=np.sum(
                          np.vstack((Results.distMarkerOK,
                                     Results.distMarkerSelected,
                                     Results.distMarkerThreshold,
-                                    Results.distMarkerBridge,
                                     Results.distMarkerBlink)), axis=0),
                      label='Broken', alpha=0.5)
 
@@ -134,7 +119,6 @@ class Overview(wx.Panel):
             # Write percentage of outliers in marker overview plot
             distOutliersMarker = np.vstack(
                 [Results.distMarkerThreshold,
-                 Results.distMarkerBridge,
                  Results.distMarkerBroken,
                  Results.distMarkerBlink,
                  Results.distMarkerSelected]).sum(axis=0)
@@ -159,7 +143,6 @@ class Overview(wx.Panel):
             dist = self.Data.Results
             dist.OnSelectedOutliers = Results.nSelectedOutliers
             dist.OdistChannelThreshold = Results.distChannelThreshold
-            dist.OdistChannelBridge = Results.distChannelBridge
             dist.OBroken = len(Results.brokenID)
             dist.OBlink = Results.matrixBlink.sum()
             dist.OpercentageChannels = distOutliersChannel
@@ -168,7 +151,6 @@ class Overview(wx.Panel):
             dist.OoutlierEpochs = nOutliers
             dist.OdistMarkerOK = Results.distMarkerOK
             dist.OdistMarkerThreshold = Results.distMarkerThreshold
-            dist.OdistMarkerBridge = Results.distMarkerBridge
             dist.OdistMarkerBroken = Results.distMarkerBroken
             dist.OdistMarkerBlink = Results.distMarkerBlink
             dist.OdistMarkerSelected = Results.distMarkerSelected
@@ -579,8 +561,7 @@ class EpochsDetail(wx.Panel):
             selectedType = self.Data.Results.matrixSelected[selectedID]
 
             # If Epoch is already selected as an outlier
-            if selectedType in ['selected', 'threshold', 'blink',
-                                'bridge']:
+            if selectedType in ['selected', 'threshold', 'blink']:
                 color = 'black'
                 titleObject.set_fontweight('normal')
                 if self.ComboOutliers.GetSelection() <= 2:
@@ -595,9 +576,6 @@ class EpochsDetail(wx.Panel):
                 elif selectedType == 'blink':
                     self.Data.Results.matrixSelected[
                         selectedID] = 'ok_blink'
-                elif selectedType == 'bridge':
-                    self.Data.Results.matrixSelected[
-                        selectedID] = 'ok_bridge'
 
             else:
                 titleObject.set_fontweight('bold')
@@ -616,10 +594,6 @@ class EpochsDetail(wx.Panel):
                     color = 'm'
                     self.Data.Results.matrixSelected[
                         selectedID] = 'blink'
-                elif selectedType == 'ok_bridge':
-                    color = 'b'
-                    self.Data.Results.matrixSelected[
-                        selectedID] = 'bridge'
 
             titleObject.set_color(color)
             for ax in titleObject.axes.spines:
@@ -741,14 +715,6 @@ class EpochsDetail(wx.Panel):
                         axes.title.set_color(color)
                         for ax in axes.spines:
                             axes.spines[ax].set_color(color)
-                    elif Results.matrixBridge[epochID][j]:
-                        color = 'b'
-                        axes.text(postStimuli + 1, c[-1] / sizer - delta,
-                                  self.labelsChannel[j], color=color)
-                        axes.title.set_fontweight('bold')
-                        axes.title.set_color(color)
-                        for ax in axes.spines:
-                            axes.spines[ax].set_color(color)
                     else:
                         color = 'gray'
 
@@ -844,8 +810,7 @@ class EpochsDetail(wx.Panel):
                 selectedType = self.Data.Results.matrixSelected[selectedID]
 
                 # If Epoch is already selected as an outlier
-                if selectedType in ['selected', 'threshold', 'blink',
-                                    'bridge']:
+                if selectedType in ['selected', 'threshold', 'blink']:
                     color = 'black'
                     event.artist.set_fontweight('normal')
                     if self.ComboOutliers.GetSelection() <= 2:
@@ -860,9 +825,6 @@ class EpochsDetail(wx.Panel):
                     elif selectedType == 'blink':
                         self.Data.Results.matrixSelected[
                             selectedID] = 'ok_blink'
-                    elif selectedType == 'bridge':
-                        self.Data.Results.matrixSelected[
-                            selectedID] = 'ok_bridge'
 
                 else:
                     event.artist.set_fontweight('bold')
@@ -881,10 +843,6 @@ class EpochsDetail(wx.Panel):
                         color = 'm'
                         self.Data.Results.matrixSelected[
                             selectedID] = 'blink'
-                    elif selectedType == 'ok_bridge':
-                        color = 'b'
-                        self.Data.Results.matrixSelected[
-                            selectedID] = 'bridge'
 
                 event.artist.set_color(color)
                 for ax in event.artist.axes.spines:

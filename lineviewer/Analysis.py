@@ -212,7 +212,6 @@ class Results():
 
         # Get Specifications
         self.baselineCorr = Data.Specs.DropDownBase.GetSelection()
-        self.bridgeCorr = Data.Specs.CheckboxBridge.GetValue()
         self.thresholdCorr = Data.Specs.CheckboxThreshold.GetValue()
         try:
             self.threshold = float(Data.Specs.ThreshValue.GetValue())
@@ -248,12 +247,11 @@ class Results():
         emptyMatrix = np.zeros(
             (epochs.shape[0], epochs.shape[1])).astype('bool')
         self.matrixThreshold = np.copy(emptyMatrix)
-        self.matrixBridge = np.copy(emptyMatrix)
         self.matrixBlink = np.zeros(
             (epochs.shape[0], epochs.shape[2])).astype('bool')
 
-        # Correct Epochs for Threshold or Bridge outliers
-        if self.thresholdCorr or self.bridgeCorr:
+        # Correct Epochs for Threshold
+        if self.thresholdCorr:
 
             # Create Progressbar for outlier detection
             progressMax = epochs.shape[0]
@@ -278,16 +276,6 @@ class Results():
                                    if b in channel2Check]
                     self.matrixThreshold[i][badChannels] = True
 
-                # Check for Bridge outliers
-                if self.bridgeCorr:
-                    corrMatrix = np.where(np.corrcoef(e_short) > .9999)
-                    badBridgeChannelID = np.unique(
-                        [corrMatrix[0][m] for m in range(len(corrMatrix[0]))
-                         if corrMatrix[0][m] != corrMatrix[1][m]])
-                    if badBridgeChannelID.size != 0:
-                        self.matrixBridge[i][
-                            np.unique(badBridgeChannelID)] = True
-
                 dlg.Update(i)
             dlg.Destroy()
 
@@ -300,8 +288,6 @@ class Results():
             self.matrixSelected = np.repeat('ok_normal', self.epochs.shape[0])
             self.matrixSelected[np.where(
                 self.matrixThreshold.sum(axis=1))[0]] = 'threshold'
-            self.matrixSelected[np.where(
-                self.matrixBridge.sum(axis=1))[0]] = 'bridge'
 
         else:
 
@@ -312,8 +298,6 @@ class Results():
                 newSelectedMatrix = np.repeat('ok_normal', newLength)
                 newSelectedMatrix[np.where(self.matrixThreshold[
                     startID:].sum(axis=1))[0]] = 'threshold'
-                newSelectedMatrix[np.where(self.matrixBridge[
-                    startID:].sum(axis=1))[0]] = 'bridge'
                 self.matrixSelected = np.hstack([self.matrixSelected,
                                                  newSelectedMatrix])
 
@@ -322,10 +306,6 @@ class Results():
                 self.matrixSelected[
                     [i for i in np.where(self.matrixThreshold.sum(axis=1))[0]
                      if self.matrixSelected[i] == 'ok_normal']] = 'threshold'
-            if self.bridgeCorr:
-                self.matrixSelected[
-                    [i for i in np.where(self.matrixBridge.sum(axis=1))[0]
-                     if self.matrixSelected[i] == 'ok_normal']] = 'bridge'
 
         # Make sure that channels are ignored, even in a already loaded dataset
         if self.ignoreChannel != []:
@@ -340,11 +320,6 @@ class Results():
                 [i for i, s in enumerate(self.matrixSelected)
                  if 'thresh' in s]] = 'ok_normal'
             self.matrixThreshold *= False
-        if not self.bridgeCorr:
-            self.matrixSelected[
-                [i for i, s in enumerate(self.matrixSelected)
-                 if 'bridge' in s]] = 'ok_normal'
-            self.matrixBridge *= False
 
         # Update List of ok and bad IDs
         self.okID = np.array([True if 'ok_' in s else False
@@ -394,8 +369,6 @@ class Results():
         # Disregard outliers if they are selected as being ok
         self.matrixThreshold[np.where(
             self.matrixSelected == 'ok_thresh')[0]] = False
-        self.matrixBridge[np.where(
-            self.matrixSelected == 'ok_bridge')[0]] = False
         self.matrixBlink[np.where(
             self.matrixSelected == 'ok_blink')[0]] = False
 
@@ -403,7 +376,6 @@ class Results():
         brokenID = np.where(self.matrixThreshold.sum(axis=1) >
                             self.matrixThreshold.shape[1] * 0.8)[0]
         self.matrixThreshold[brokenID] *= False
-        self.matrixBridge[brokenID] *= False
         self.matrixBlink[brokenID] *= False
 
         # Get distribution of channels
@@ -411,7 +383,6 @@ class Results():
         distChannelBroken = []
         distChannelBlink = []
         distChannelThreshold = []
-        distChannelBridge = []
         badChannelsLabel = []
 
         # Disregard any epochs of hidden markers
@@ -422,14 +393,12 @@ class Results():
         self.matrixSelected[np.where(markers2hide)] = 'ok_normal'
         unhiddenEpochID = np.where(np.invert(markers2hide))[0].tolist()
 
-        matrixBad = self.matrixThreshold + self.matrixBridge
+        matrixBad = self.matrixThreshold
         self.badChannelsID = np.where(
             matrixBad[unhiddenEpochID].sum(axis=0))[0]
 
         tmpThreshold = self.matrixThreshold[:, self.badChannelsID]
         tmpThreshold = tmpThreshold[unhiddenEpochID]
-        tmpBridge = self.matrixBridge[:, self.badChannelsID]
-        tmpBridge = tmpBridge[unhiddenEpochID]
 
         # Count how many acceptable epochs are selected as outliers
         self.nSelectedOutliers = np.in1d(self.matrixSelected, 'selected').sum()
@@ -439,32 +408,27 @@ class Results():
             distChannelBroken.extend([0])
             distChannelBlink.extend([0])
             distChannelThreshold.extend([0])
-            distChannelBridge.extend([0])
             badChannelsLabel.extend(['Outliers'])
         if len(brokenID) != 0:
             distChannelSelected.extend([0])
             distChannelBroken.extend([len(brokenID)])
             distChannelBlink.extend([0])
             distChannelThreshold.extend([0])
-            distChannelBridge.extend([0])
             badChannelsLabel.extend(['Broken'])
         if self.matrixBlink.sum() != 0:
             distChannelSelected.extend([0])
             distChannelBroken.extend([0])
             distChannelBlink.extend([self.matrixBlink.sum()])
             distChannelThreshold.extend([0])
-            distChannelBridge.extend([0])
             badChannelsLabel.extend(['Blink'])
 
         distChannelThreshold.extend(tmpThreshold.sum(axis=0))
-        distChannelBridge.extend(tmpBridge.sum(axis=0))
         distChannelBroken.extend([0] * len(self.badChannelsID))
         distChannelBlink.extend([0] * len(self.badChannelsID))
         distChannelSelected.extend([0] * len(self.badChannelsID))
         badChannelsLabel.extend(Data.labelsChannel[self.badChannelsID])
 
         self.distChannelThreshold = distChannelThreshold
-        self.distChannelBridge = distChannelBridge
         self.distChannelBroken = distChannelBroken
         self.distChannelBlink = distChannelBlink
         self.distChannelSelected = distChannelSelected
@@ -475,15 +439,10 @@ class Results():
         markerIDBroken = list(brokenID)
         markerIDThreshold = list(
             np.where(self.matrixThreshold.sum(axis=1).astype('bool'))[0])
-        markerIDBridge = list(
-            np.where(self.matrixBridge.sum(axis=1).astype('bool'))[0])
-        markerIDBridge = [
-            m for m in markerIDBridge if m not in markerIDThreshold]
         markerIDBlink = list(
             np.where(self.matrixBlink.sum(axis=1).astype('bool'))[0])
         markerIDBlink = [
-            m for m in markerIDBlink
-            if m not in markerIDThreshold + markerIDBridge]
+            m for m in markerIDBlink if m not in markerIDThreshold]
         markerIDSelected = list(np.where(self.matrixSelected == 'selected')[0])
 
         self.uniqueMarkers = np.array(
@@ -496,8 +455,6 @@ class Results():
         self.distMarkerThreshold = [
             list(markers[markerIDThreshold]).count(u)
             for u in self.uniqueMarkers]
-        self.distMarkerBridge = [
-            list(markers[markerIDBridge]).count(u) for u in self.uniqueMarkers]
         self.distMarkerBlink = [
             list(markers[markerIDBlink]).count(u) for u in self.uniqueMarkers]
         self.distMarkerSelected = [
@@ -505,7 +462,7 @@ class Results():
             for u in self.uniqueMarkers]
         self.distMarkerOK = [
             [m for i, m in enumerate(markers)
-             if i not in markerIDThreshold + markerIDBridge +
+             if i not in markerIDThreshold +
              markerIDBlink + markerIDBroken].count(u)
             for u in self.uniqueMarkers]
         self.distMarkerOK = [m - self.distMarkerSelected[i]
