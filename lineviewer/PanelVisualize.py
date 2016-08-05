@@ -34,15 +34,12 @@ class Overview(wx.Panel):
                      label='Broken', alpha=0.5)
             axes.bar(nChannels, Results.distChannelThreshold, 0.75, color='r',
                      label='Threshold', alpha=0.5)
-            axes.bar(nChannels, Results.distChannelBlink, 0.75, color='m',
-                     label='Blink', alpha=0.5)
             axes.bar(nChannels, Results.distChannelSelected, 0.75,
                      color='#ff8c00', label='Broken', alpha=0.5)
 
             distOutliersChannel = np.vstack(
                 [Results.distChannelThreshold,
                  Results.distChannelBroken,
-                 Results.distChannelBlink,
                  Results.distChannelSelected]).sum(axis=0)
 
             # Needed for verbose file
@@ -90,7 +87,7 @@ class Overview(wx.Panel):
                          np.vstack((Results.distMarkerOK,
                                     Results.distMarkerSelected)), axis=0),
                      label='Threshold', alpha=0.5)
-            axes.bar(nMarker, Results.distMarkerBlink, 0.75, color='m',
+            axes.bar(nMarker, Results.distMarkerBlink, 0.75, color='b',
                      bottom=np.sum(
                          np.vstack((Results.distMarkerOK,
                                     Results.distMarkerSelected,
@@ -591,7 +588,7 @@ class EpochsDetail(wx.Panel):
                     self.Data.Results.matrixSelected[
                         selectedID] = 'threshold'
                 elif selectedType == 'ok_blink':
-                    color = 'm'
+                    color = 'b'
                     self.Data.Results.matrixSelected[
                         selectedID] = 'blink'
 
@@ -631,14 +628,22 @@ class EpochsDetail(wx.Panel):
 
         if self.ComboOutliers.GetSelection() == 0:
             restrictedList = [
-                i for i, m in enumerate(self.Data.Results.matrixSelected)
-                if 'ok_' not in m]
+                i for i, m in enumerate(self.Data.Results.matrixSelected) if 'ok_' not in m]
             self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         elif self.ComboOutliers.GetSelection() == 1:
             restrictedList = [
-                i for i, m in enumerate(self.Data.Results.matrixSelected)
-                if 'ok_' in m]
+                i for i, m in enumerate(self.Data.Results.matrixSelected) if m == 'threshold']
+            self.id2Show = [r for r in restrictedList if r in self.id2Show]
+
+        elif self.ComboOutliers.GetSelection() == 2:
+            restrictedList = [
+                i for i, m in enumerate(self.Data.Results.matrixSelected) if m == 'blink']
+            self.id2Show = [r for r in restrictedList if r in self.id2Show]
+
+        elif self.ComboOutliers.GetSelection() == 3:
+            restrictedList = [
+                i for i, m in enumerate(self.Data.Results.matrixSelected) if 'ok_' in m]
             self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
@@ -673,26 +678,7 @@ class EpochsDetail(wx.Panel):
                 sizer *= modulator / 100.
 
                 # Check if the epoch is broken
-                isBroken = Results.matrixThreshold[
-                    epochID].sum() > (Results.matrixThreshold.shape[1] * 0.2)
-
-                # Draw blink periods in figure
-                if Results.matrixBlink[epochID].sum() != 0:
-                    blinkEpoch = np.append(Results.matrixBlink[epochID], False)
-                    blinkPhase = np.where(blinkEpoch[:-1] != blinkEpoch[1:])[0]
-                    color = 'm'
-                    for i in range(blinkPhase.shape[0] / 2):
-                        axes.axvspan(xaxis[blinkPhase[2 * i]],
-                                     xaxis[blinkPhase[2 * i + 1]],
-                                     facecolor=color, alpha=0.2)
-                    stimuliSegment = Results.matrixBlink[
-                        epochID, Results.preCut -
-                        Results.preFrame:Results.preCut + Results.postFrame]
-                    if stimuliSegment.sum() != 0:
-                        axes.title.set_fontweight('bold')
-                        axes.title.set_color(color)
-                        for ax in axes.spines:
-                            axes.spines[ax].set_color(color)
+                isBroken = epochID in Results.brokenID
 
                 # Draw single channels
                 minmax = [0, 0]
@@ -727,6 +713,24 @@ class EpochsDetail(wx.Panel):
                         minmax[0] = lineMin
                     if minmax[1] < lineMax:
                         minmax[1] = lineMax
+
+                # Draw blink periods in figure
+                if Results.matrixBlink[epochID].sum() != 0:
+                    blinkEpoch = np.append(Results.matrixBlink[epochID], False)
+                    blinkPhase = np.where(blinkEpoch[:-1] != blinkEpoch[1:])[0]
+                    color = 'm'
+                    for i in range(blinkPhase.shape[0] / 2):
+                        axes.axvspan(xaxis[blinkPhase[2 * i]],
+                                     xaxis[blinkPhase[2 * i + 1]],
+                                     facecolor=color, alpha=0.2)
+                    stimuliSegment = Results.matrixBlink[
+                        epochID, Results.preCut -
+                        Results.preFrame:Results.preCut + Results.postFrame]
+                    if stimuliSegment.sum() != 0:
+                        axes.title.set_fontweight('bold')
+                        axes.title.set_color(color)
+                        for ax in axes.spines:
+                            axes.spines[ax].set_color(color)
 
                 delta = np.abs(minmax).sum() * .01
                 minmax = [minmax[0] - delta, minmax[1] + delta]
@@ -840,7 +844,7 @@ class EpochsDetail(wx.Panel):
                         self.Data.Results.matrixSelected[
                             selectedID] = 'threshold'
                     elif selectedType == 'ok_blink':
-                        color = 'm'
+                        color = 'b'
                         self.Data.Results.matrixSelected[
                             selectedID] = 'blink'
 
@@ -937,7 +941,7 @@ def newFigure(self, showGrid=False, showGFP=False, showGMD=False,
 
         self.ComboOutliers = wx.ComboBox(
             self, style=wx.CB_READONLY,
-            choices=['Outliers', 'Accepted', 'All'])
+            choices=['Outliers', 'Threshold', 'Blink', 'Accepted', 'All'])
         self.ComboOutliers.SetSelection(0)
         wx.EVT_COMBOBOX(self.ComboOutliers, self.ComboOutliers.Id,
                         self.updateFigure)
