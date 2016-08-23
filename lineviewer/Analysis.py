@@ -372,12 +372,12 @@ class Results():
             if self.blinkCorr:
                 self.matrixSelected[
                     [i for i in np.where(self.matrixBlink.sum(axis=1))[0]
-                     if self.matrixSelected[i] == 'ok_normal'
-                     or self.matrixSelected[i] == 'threshold']] = 'blink'
+                     if self.matrixSelected[i] == 'ok_normal' or
+                     self.matrixSelected[i] == 'threshold']] = 'blink'
             else:
                 self.matrixSelected[
-                    [i for i, e in enumerate(self.matrixSelected)
-                     if 'blink' in e]] = 'ok_normal'
+                    [i for i, bl in enumerate(self.matrixSelected)
+                     if 'blink' in bl]] = 'ok_normal'
             if self.thresholdCorr:
                 self.matrixSelected[
                     [i for i in np.where(self.matrixThreshold.sum(axis=1))[0]
@@ -386,8 +386,8 @@ class Results():
         # Make sure that channels are ignored, even in a already loaded dataset
         if self.ignoreChannel != []:
             id2threshold = np.where(self.matrixThreshold.sum(axis=1))[0]
-            idSelected = np.where(self.matrixSelected == 'threshold'
-                                  or self.matrixSelected == 'blink')[0]
+            idSelected = np.any([self.matrixSelected == 'threshold',
+                                 self.matrixSelected == 'blink'], axis=0)
             id2Clean = [ic for ic in idSelected if ic not in id2threshold]
             self.matrixSelected[id2Clean] = 'ok_normal'
 
@@ -440,8 +440,6 @@ class Results():
         # Make sure to have the newest names of markers
         if hasattr(self, 'collapsedMarkers'):
             self.markers = self.collapsedMarkers
-        else:
-            markers = np.copy(self.markers)
 
         # Disregard outliers if they are selected as being ok
         self.matrixThreshold[np.where(
@@ -459,13 +457,12 @@ class Results():
         # Get distribution of channels
         distChannelSelected = []
         distChannelBroken = []
-        distChannelBlink = []
         distChannelThreshold = []
         badChannelsLabel = []
 
         # Disregard any epochs of hidden markers
         markers2hide = [True if m in Data.markers2hide else False
-                        for m in markers]
+                        for m in self.markers]
         brokenID = [br for br in brokenID
                     if br not in np.where(markers2hide)[0]]
         self.matrixSelected[np.where(markers2hide)] = 'ok_normal'
@@ -518,18 +515,19 @@ class Results():
              if m not in Data.markers2hide])
 
         self.distMarkerBroken = [
-            list(markers[markerIDBroken]).count(u)
+            list(self.markers[markerIDBroken]).count(u)
             for u in self.uniqueMarkers]
         self.distMarkerThreshold = [
-            list(markers[markerIDThreshold]).count(u)
+            list(self.markers[markerIDThreshold]).count(u)
             for u in self.uniqueMarkers]
         self.distMarkerBlink = [
-            list(markers[markerIDBlink]).count(u) for u in self.uniqueMarkers]
+            list(self.markers[markerIDBlink]).count(u)
+            for u in self.uniqueMarkers]
         self.distMarkerSelected = [
-            list(markers[markerIDSelected]).count(u)
+            list(self.markers[markerIDSelected]).count(u)
             for u in self.uniqueMarkers]
         self.distMarkerOK = [
-            [m for i, m in enumerate(markers)
+            [m for i, m in enumerate(self.markers)
              if i not in markerIDThreshold +
              markerIDBlink + markerIDBroken].count(u)
             for u in self.uniqueMarkers]

@@ -628,22 +628,26 @@ class EpochsDetail(wx.Panel):
 
         if self.ComboOutliers.GetSelection() == 0:
             restrictedList = [
-                i for i, m in enumerate(self.Data.Results.matrixSelected) if 'ok_' not in m]
+                i for i, m in enumerate(self.Data.Results.matrixSelected)
+                if 'ok_' not in m]
             self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         elif self.ComboOutliers.GetSelection() == 1:
             restrictedList = [
-                i for i, m in enumerate(self.Data.Results.matrixSelected) if m == 'threshold']
+                i for i, m in enumerate(self.Data.Results.matrixSelected)
+                if m == 'threshold']
             self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         elif self.ComboOutliers.GetSelection() == 2:
             restrictedList = [
-                i for i, m in enumerate(self.Data.Results.matrixSelected) if m == 'blink']
+                i for i, m in enumerate(self.Data.Results.matrixSelected)
+                if m == 'blink']
             self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         elif self.ComboOutliers.GetSelection() == 3:
             restrictedList = [
-                i for i, m in enumerate(self.Data.Results.matrixSelected) if 'ok_' in m]
+                i for i, m in enumerate(self.Data.Results.matrixSelected)
+                if 'ok_' in m]
             self.id2Show = [r for r in restrictedList if r in self.id2Show]
 
         self.labelsChannel = self.Data.Datasets[0].labelsChannel
