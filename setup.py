@@ -12,7 +12,7 @@ if __name__ == "__main__":
         name='LINEViewer',
         packages=['lineviewer'],
         include_package_data=True,
-        version='0.2.06',
+        version='0.2.07',
         description='Python based EEG analysis tool for a rough data overview',
         long_description="""
         Python based EEG analysis tool to give you a rough data overview""",
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         author='Michael Notter',
         author_email='michaelnotter@hotmail.com',
         url='https://github.com/miykael/LINEViewer',
-        download_url='https://github.com/miykael/LINEViewer/releases/tag/0.2.06',
+        download_url='https://github.com/miykael/LINEViewer/releases/tag/0.2.07',
         keywords=['LINE', 'LINEViewer', 'EEG'],
         classifiers=[
             'Development Status :: 4 - Beta',

@@ -5,7 +5,7 @@
 from LINEViewer import StartLINEViewer
 
 # version info for LINEViewer
-__version__ = '0.2.06'
+__version__ = '0.2.07'
 __package__ = 'lineviewer'
 __license__ = 'GNU GPLv3 (or more recent equivalent)'
 __author__ = 'Michael Notter'
