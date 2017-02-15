@@ -2,14 +2,25 @@
 LINEViewer
 ==========
 
+.. |doi| image :: https://zenodo.org/badge/doi/10.5281/zenodo.291867.svg
+
 .. |logo| image:: lineviewer/static/favicon_256.ico
    :width: 256pt
 
 .. |introText| replace:: LINEViewer is a python based EEG analysis toolbox that helps you to get a first impression of your data. The softwares is very fast in analysing your data and can compute subject averages of hour long datasets within seconds. You have all the preprocessing options that you know from other EEG analysis softwares.
 
+
 +-------------+--------+
 | |introText| | |logo| |
 +-------------+--------+
+
+
+Citation
+--------
+
+|doi|
+
+If you used LINEViewer in your project, please cite as:Notter, Michael Philipp. (2017). LINEViewer: a Python based EEG analysis tool that provides a rough data overview [Data set]. Zenodo. `http://doi.org/10.5281/zenodo.291867 <http://doi.org/10.5281/zenodo.291867>`_.
 
 
 Installation
