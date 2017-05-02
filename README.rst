@@ -7,14 +7,13 @@ LINEViewer
 
 .. |introText| replace:: LINEViewer is a python based EEG analysis toolbox that helps you to get a first impression of your data. The softwares is very fast in analysing your data and can compute subject averages of hour long datasets within seconds. LINEViewer provides all the preprocessing options that you know from other EEG analysis softwares.
 
-.. image:: static/overview.png
-
-As you can see in the example above, LINEViewer gives you a fast and general information about the quality of your data. Given a specific threshold value, LINEViewer tells you how many events you could keep per marker and how many times a given electrode is above a certain threshold. With this fully automatic way, you can have preliminary epoch averages for hour long recordings within a few seconds.
-
-
 +-------------+--------+
 | |introText| | |logo| |
 +-------------+--------+
+
+.. image:: static/overview.png
+
+As you can see in the example above, LINEViewer gives you a fast and general information about the quality of your data. Given a specific threshold value, LINEViewer tells you how many events you could keep per marker and how many times a given electrode is above a certain threshold. With this fully automatic way, you can have preliminary epoch averages for hour long recordings within a few seconds.
 
 
 Citation
