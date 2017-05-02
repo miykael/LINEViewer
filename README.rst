@@ -13,7 +13,7 @@ LINEViewer
 
 .. image:: static/overview.png
 
-As you can see in the example above, LINEViewer gives you a fast and general information about the quality of your data. Given a specific threshold value, LINEViewer tells you how many events you could keep per marker and how many times a given electrode is above a certain threshold. With this fully automatic way, you can have preliminary epoch averages for hour long recordings within a few seconds.
+As you can see in the example above, LINEViewer gives you a fast and general information about the quality of your data. Given a specific threshold value, LINEViewer tells you how many events you could keep per marker (lower part of figure) and how many times a given electrode is above a certain threshold (upper part of figure). With this fully automatic way, you can have preliminary epoch averages for hour long recordings within a few seconds.
 
 
 Citation
