@@ -22,7 +22,7 @@ Citation
 .. image:: https://zenodo.org/badge/doi/10.5281/zenodo.291867.svg
    :target: http://doi.org/10.5281/zenodo.291867
 
-If you used LINEViewer in your project, please cite as: Notter, Michael Philipp. (2017). LINEViewer: a Python based EEG analysis tool for a rough data overview [Data set]. Zenodo. `http://doi.org/10.5281/zenodo.291867 <http://doi.org/10.5281/zenodo.291867>`_.
+If you used LINEViewer in your project, please cite as: Notter, Michael P., & Murray, Micah M. (2017). LINEViewer: a Python based EEG analysis tool for a rough data overview. Zenodo. `http://doi.org/10.5281/zenodo.291867 <http://doi.org/10.5281/zenodo.291867>`_.
 
 
 Installation
