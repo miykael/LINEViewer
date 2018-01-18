@@ -1,4 +1,7 @@
 {
+  "title": "LINEViewer: a Python based EEG analysis tool for a rough data overview",
+  "publication_date": "2017-02-15",
+  "version": "",
   "creators": [
     {
       "affiliation": "The Laboratory for Investigative Neurophysiology (The LINE), Department of Radiology and Department of Clinical Neurosciences, Lausanne, Switzerland; Center for Biomedical Imaging (CIBM), Lausanne, Switzerland",
@@ -9,12 +12,12 @@
       "affiliation": "The Laboratory for Investigative Neurophysiology (The LINE), Department of Radiology and Department of Clinical Neurosciences, Lausanne, Switzerland; Center for Biomedical Imaging (CIBM), Lausanne, Switzerland",
       "name": "Murray, Micah M.",
       "orcid": "0000-0002-7821-117X"
-    },
+    }
   ],
   "keywords": [
     "neuroimaging",
-    "EEG analysis",
+    "EEG analysis"
   ],
-  "license": "gpl-3.0",
+  "license": "GPL-3.0",
   "upload_type": "software"
 }
