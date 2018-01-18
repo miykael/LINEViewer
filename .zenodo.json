@@ -1,0 +1,20 @@
+{
+  "creators": [
+    {
+      "affiliation": "The Laboratory for Investigative Neurophysiology (The LINE), Department of Radiology and Department of Clinical Neurosciences, Lausanne, Switzerland; Center for Biomedical Imaging (CIBM), Lausanne, Switzerland",
+      "name": "Notter, Michael Philipp",
+      "orcid": "0000-0002-5866-047X"
+    },
+    {
+      "affiliation": "The Laboratory for Investigative Neurophysiology (The LINE), Department of Radiology and Department of Clinical Neurosciences, Lausanne, Switzerland; Center for Biomedical Imaging (CIBM), Lausanne, Switzerland",
+      "name": "Murray, Micah M.",
+      "orcid": "0000-0002-7821-117X"
+    },
+  ],
+  "keywords": [
+    "neuroimaging",
+    "EEG analysis",
+  ],
+  "license": "gpl-3.0",
+  "upload_type": "software"
+}
