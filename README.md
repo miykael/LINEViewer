@@ -31,8 +31,8 @@ The software has the following dependencies:
 
 Full distributions like [Anaconda](https://www.continuum.io/why-anaconda) provide all those packages, except [wxpython v3.0](http://wiki.wxpython.org/How%20to%20install%20wxPython).
 
-Windows
-*******
+### Windows
+
 1. Download and install the newest [Anaconda](https://www.continuum.io/downloads) distribution that includes Python 2.7.
 2. Download and run [LINEViewer.exe](https://github.com/miykael/LINEViewer/releases). The first time, it will take some time to open as it first needs to install all necessary packages.
 
@@ -41,11 +41,11 @@ Alternatively, you can also use the installation instruction for Linux / iOS on 
 To **uninstall** lineviewer use the following command: ``conda remove -n lineviewer-2.7 --all --yes``
 
 
-Linux / iOS
-***********
+### Linux / iOS
 
-1. Download and install the `newest Anaconda distribution that includes Python 2.7 <https://www.continuum.io/downloads>`_.
-2. Create a conda environment with python 2.7:  ``conda create -y -n lineviewer-2.7 python=2.7 pip ipython matplotlib numpy scikit-learn scipy wxpython``
+1. Download and install the [newest Anaconda distribution that includes Python 2.7](https://www.continuum.io/downloads).
+2. Create a conda environment with python 2.7:
+    ``conda create -y -n lineviewer-2.7 python=2.7 pip ipython matplotlib numpy scikit-learn scipy wxpython``
 3. Activate lineviewer environment: ``source activate lineviewer-2.7``
 4. Install LINEViewer via pip: ``pip install --upgrade lineviewer``
 5. Start LINEViewer with: ``ipython --c "import lineviewer; lineviewer.gui()"``
