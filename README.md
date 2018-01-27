@@ -9,7 +9,7 @@ As you can see in the example above, LINEViewer gives you a fast and general inf
 
 ## Citation
 
-![http://doi.org/10.5281/zenodo.593318](https://zenodo.org/badge/doi/10.5281/zenodo.593318.svg)
+[![doi.org/10.5281/zenodo.593318](https://zenodo.org/badge/doi/10.5281/zenodo.593318.svg)](http://doi.org/10.5281/zenodo.593318)
 
 If you used LINEViewer in your project, please cite as: Notter, Michael P., & Murray, Micah M. (2017). LINEViewer: a Python based EEG analysis tool for a rough data overview. *Zenodo*. [http://doi.org/10.5281/zenodo.593318](http://doi.org/10.5281/zenodo.593318).
 
