@@ -1,8 +1,6 @@
-==========
-LINEViewer
-==========
+# LINEViewer
 
-<img align="right" src="lineviewer/static/favicon_256.ico">  LINEViewer is a python based EEG analysis toolbox that helps you to get a first impression of your data. The softwares is very fast in analysing your data and can compute subject averages of hour long datasets within seconds. LINEViewer provides all the preprocessing options that you know from other EEG analysis softwares.
+<img align="right" height=100 src="lineviewer/static/favicon_256.ico"> LINEViewer is a python based EEG analysis toolbox that helps you to get a first impression of your data. The softwares is very fast in analysing your data and can compute subject averages of hour long datasets within seconds. LINEViewer provides all the preprocessing options that you know from other EEG analysis softwares.
 
 
 .. image:: static/overview.png
@@ -10,8 +8,7 @@ LINEViewer
 As you can see in the example above, LINEViewer gives you a fast and general information about the quality of your data. Given a specific threshold value, LINEViewer tells you how many events you could keep per marker (lower part of figure) and how many times a given electrode is above a certain threshold (upper part of figure). With this fully automatic way, you can have preliminary epoch averages for hour long recordings within a few seconds.
 
 
-Citation
---------
+## Citation
 
 .. image:: https://zenodo.org/badge/doi/10.5281/zenodo.593318.svg
    :target: http://doi.org/10.5281/zenodo.593318
@@ -19,8 +16,7 @@ Citation
 If you used LINEViewer in your project, please cite as: Notter, Michael P., & Murray, Micah M. (2017). LINEViewer: a Python based EEG analysis tool for a rough data overview. *Zenodo*. [http://doi.org/10.5281/zenodo.593318](http://doi.org/10.5281/zenodo.593318).
 
 
-Installation
--------------
+## Installation
 
 LINEViewer is distributed via [https://github.com/miykael/LINEViewer/](https://github.com/miykael/LINEViewer/). You can download the newest version under [releases](https://github.com/miykael/LINEViewer/releases).
 
@@ -37,8 +33,8 @@ Full distributions like [Anaconda](https://www.continuum.io/why-anaconda) provid
 
 Windows
 *******
-1. Download and install the newest (Anaconda](https://www.continuum.io/downloads>) distribution that includes Python 2.7.
-2. Download and run (LINEViewer.exe](https://github.com/miykael/LINEViewer/releases>). The first time, it will take some time to open as it first needs to install all necessary packages.
+1. Download and install the newest [Anaconda](https://www.continuum.io/downloads) distribution that includes Python 2.7.
+2. Download and run [LINEViewer.exe](https://github.com/miykael/LINEViewer/releases). The first time, it will take some time to open as it first needs to install all necessary packages.
 
 Alternatively, you can also use the installation instruction for Linux / iOS on a Windows machine - as long as you have (Anaconda](https://www.continuum.io/why-anaconda>) on your system.
 
@@ -57,8 +53,7 @@ Linux / iOS
 To **uninstall** lineviewer use the following command: ``conda remove -n lineviewer-2.7 --all --yes``
 
 
-LINEViewer structure
---------------------
+## LINEViewer structure
 
 * ``bin/``: Contains the executables for Windows, as well as the corresponding batch files
 * ``lineviewer/``: Contains the source code
@@ -67,13 +62,7 @@ LINEViewer structure
 * ``setup.py``: Script for building and installing LINEViewer
 
 
-License information
+## License information
 -------------------
 
 The full license is in the file ``LICENSE``. The image of the brain in the logo was created with [MRIcroGL](http://www.mccauslandcenter.sc.edu/mricrogl/) and the font used is called Ethnocentric Regular, created and licensed by Ray Larabie ([http://typodermicfonts.com/](http://typodermicfonts.com/)).
-
-
-
-
-
-
