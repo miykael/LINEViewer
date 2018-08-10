@@ -23,6 +23,6 @@
     "Neuroimaging",
     "EEG analysis"
   ],
-  "license": "GPL-3.0",
+  "license": "BSD-3-Clause",
   "upload_type": "software"
 }
