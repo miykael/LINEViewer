@@ -5,7 +5,6 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/miykael/LINEViewer.svg)](https://GitHub.com/miykael/LINEViewer/graphs/contributors/)
 [![GitHub Commits](https://github-basic-badges.herokuapp.com/commits/miykael/LINEViewer.svg)](https://github.com/miykael/LINEViewer/commits/master)
 [![GitHub size](https://github-size-badge.herokuapp.com/miykael/LINEViewer.svg)](https://github.com/miykael/LINEViewer/archive/master.zip)
-[![GitHub HitCount](http://hits.dwyl.io/miykael/LINEViewer.svg)](http://hits.dwyl.io/miykael/LINEViewer)
 
 <img align="right" height=100 src="lineviewer/static/favicon_256.ico"> LINEViewer is a python based EEG analysis toolbox that helps you to get a first impression of your data. The softwares is very fast in analysing your data and can compute subject averages of hour long datasets within seconds. LINEViewer provides all the preprocessing options that you know from other EEG analysis softwares.
 
